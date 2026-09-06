@@ -64,7 +64,7 @@
       <!-- Overlay Backdrop Mobile Drawer -->
       <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-30 hidden md:hidden"></div>
 
-      <!-- Main Sidebar Drawer (Sesuai Desain Referensi) -->
+      <!-- Main Sidebar Drawer -->
       <aside id="main-drawer" class="fixed md:relative inset-y-0 left-0 w-80 bg-brand-darkNavy text-white flex flex-col justify-between p-5 shrink-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800">
         <div class="space-y-4 overflow-y-auto pr-1">
           
@@ -102,7 +102,7 @@
             <span id="active-materi-title" class="text-xs font-black text-brand-yellow block mt-0.5 uppercase">USAHA DAN ENERGI</span>
           </div>
 
-          <!-- Navigation Menu Items (Reflects Reference Image) -->
+          <!-- Navigation Menu Items -->
           <nav id="sidebar-nav" class="space-y-1.5 font-medium text-xs">
             <!-- Rendered dynamically by JS -->
           </nav>
@@ -178,7 +178,7 @@
     </div>
   </div>
 
-  <!-- 2. Modal Builder Konten (Guru - Dual Option Gambar: Drive vs URL) -->
+  <!-- 2. Modal Builder Konten (Guru) -->
   <div id="konten-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -226,12 +226,10 @@
             <button type="button" id="tab-btn-drive" onclick="switchImageMethod('drive')" class="px-3 py-1 bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg">Upload Google Drive</button>
           </div>
 
-          <!-- Input Option A: Direct URL -->
           <div id="method-url-container">
             <input type="text" id="konten-form-gambar-url" placeholder="https://..." class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
           </div>
 
-          <!-- Input Option B: Drive File Upload -->
           <div id="method-drive-container" class="hidden space-y-2">
             <input type="file" id="konten-form-file-drive" accept="image/*" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
             <button type="button" id="btn-upload-drive" onclick="uploadImageFileToDrive()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[11px]">
@@ -239,7 +237,6 @@
             </button>
           </div>
 
-          <!-- Image Preview -->
           <div id="image-preview-box" class="hidden pt-1">
             <span class="text-[10px] font-bold text-slate-500 block mb-1">Pratinjau Gambar:</span>
             <img id="image-preview-img" src="" class="max-h-36 rounded-xl border mx-auto object-contain bg-white p-1" />
@@ -264,11 +261,91 @@
     const state = {
       currentUser: null,
       currentView: 'home',
-      cachedData: { users: [], konten: [], soal: [], submissions: [] }
+      cachedData: { users: [], konten: [], soal: [], submissions: [] },
+      siswaAnswers: { pg: {} }
     };
 
     /* ==========================================================
-       2. UI LOADING & BUTTON STATE HELPERS
+       2. CANVAS STEAM DRAWING TOOL
+       ========================================================== */
+    let canvasCtx = null;
+    let isDrawing = false;
+    let currentPenColor = '#0B2545';
+    let currentLineWidth = 3;
+
+    function initCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || 600;
+      canvas.height = 250;
+
+      canvasCtx = canvas.getContext('2d');
+      canvasCtx.fillStyle = '#FFFFFF';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.lineWidth = currentLineWidth;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.lineJoin = 'round';
+      canvasCtx.strokeStyle = currentPenColor;
+
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+      canvas.onmouseleave = stopDrawing;
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) startDrawing(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) draw(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    }
+
+    function getCanvasCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.lineTo(coords.x, coords.y);
+      canvasCtx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+    function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
+    function setCanvasLineWidth(w) { currentLineWidth = w; if (canvasCtx) canvasCtx.lineWidth = w; }
+    function clearCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (canvas && canvasCtx) {
+        canvasCtx.fillStyle = '#FFFFFF';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    /* ==========================================================
+       3. UI LOADING & BUTTON STATE HELPERS
        ========================================================== */
     function setButtonLoading(buttonElem, isLoading, loadingText = 'Menyimpan...', originalText = 'Simpan') {
       if (!buttonElem) return;
@@ -298,7 +375,7 @@
     }
 
     /* ==========================================================
-       3. API FETCH HELPERS
+       4. API FETCH HELPERS
        ========================================================== */
     async function apiGet(action) {
       try {
@@ -325,7 +402,7 @@
     }
 
     /* ==========================================================
-       4. AUTHENTICATION LOGIC
+       5. AUTHENTICATION LOGIC
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
@@ -411,13 +488,12 @@
     }
 
     /* ==========================================================
-       5. SIDEBAR NAVIGATION DRAWER (MATCHING REFERENCE IMAGE)
+       6. SIDEBAR NAVIGATION DRAWER
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
       navContainer.innerHTML = '';
 
-      // Tampilan Menu Navigasi yang Disesuaikan dengan Gambar Referensi
       const navItems = [
         { id: 'home', title: 'Beranda & Cover', icon: '🏠' },
         { id: 'menu-utama', title: 'Menu Utama', icon: '📋' },
@@ -430,7 +506,6 @@
         { id: 'profil', title: 'Profil Pengembang', icon: '👤' }
       ];
 
-      // Tambahan Menu Pengelolaan Khusus jika Login sebagai Admin/Guru
       if (state.currentUser?.role === 'admin' || state.currentUser?.role === 'guru') {
         navItems.push(
           { id: 'guru-builder', title: '⚡ Builder Content (Guru)', icon: '✏️' }
@@ -458,7 +533,7 @@
     }
 
     /* ==========================================================
-       6. ROUTER VIEW SWITCHER
+       7. ROUTER VIEW SWITCHER (DYNAMIC CONTENT RENDERING)
        ========================================================== */
     async function switchView(viewId) {
       state.currentView = viewId;
@@ -470,11 +545,63 @@
 
       viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat data dari server...</div>`;
 
+      // Selalu perbarui cache data konten saat berpindah halaman
+      const allKonten = await apiGet('get_konten');
+      state.cachedData.konten = allKonten;
+
       switch (viewId) {
         case 'home':
           titleElem.textContent = 'BERANDA & COVER';
           subtitleElem.textContent = 'E-LKPD Interaktif IPA STEAM Universitas Negeri Gorontalo';
           viewport.innerHTML = renderHomeView();
+          break;
+
+        case 'menu-utama':
+          titleElem.textContent = 'MENU UTAMA PEMBELAJARAN';
+          subtitleElem.textContent = 'Pilih aktivitas belajar yang ingin kamu lakukan';
+          viewport.innerHTML = renderMenuUtamaView();
+          break;
+
+        case 'petunjuk':
+          titleElem.textContent = 'PETUNJUK & TUJUAN PEMBELAJARAN';
+          subtitleElem.textContent = 'Panduan penggunaan E-LKPD dan Capaian Pembelajaran (CP)';
+          viewport.innerHTML = renderDynamicCategoryView('petunjuk', '🎯 PETUNJUK & TUJUAN');
+          break;
+
+        case 'materi':
+          titleElem.textContent = 'MATERI USAHA DAN ENERGI';
+          subtitleElem.textContent = 'Eksplorasi konsep Fisika dan Sains berbasis STEAM';
+          viewport.innerHTML = renderDynamicCategoryView('materi', '📖 MATERI PEMBELAJARAN');
+          break;
+
+        case 'game':
+          titleElem.textContent = 'GAME INTERAKTIF SIMULASI';
+          subtitleElem.textContent = 'Uji pemahamanmu lewat simulasi fisika interaktif';
+          viewport.innerHTML = renderGameView();
+          break;
+
+        case 'evaluasi':
+          titleElem.textContent = 'EVALUASI PEMBELAJARAN (KUIS PG)';
+          subtitleElem.textContent = 'Pengerjaan kuis pilihan ganda dengan penilaian otomatis';
+          await renderEvaluasiView(viewport);
+          break;
+
+        case 'steam':
+          titleElem.textContent = 'AKTIVITAS PROYEK STEAM';
+          subtitleElem.textContent = 'Rancang dan gambarkan ide prototipe mobil bertenaga karet';
+          await renderSteamView(viewport);
+          break;
+
+        case 'latihan':
+          titleElem.textContent = 'LATIHAN MANDIRI & DISKUSI';
+          subtitleElem.textContent = 'Soal pemahaman konsep dan lembar diskusi kelompok';
+          viewport.innerHTML = renderDynamicCategoryView('latihan', '📝 LATIHAN MANDIRI');
+          break;
+
+        case 'profil':
+          titleElem.textContent = 'PROFIL PENGEMBANG';
+          subtitleElem.textContent = 'Tim Penyusun dan Pengembang E-LKPD Interaktif IPA STEAM UNG';
+          viewport.innerHTML = renderDynamicCategoryView('profil', '👤 PROFIL PENGEMBANG');
           break;
 
         case 'guru-builder':
@@ -484,12 +611,13 @@
           break;
 
         default:
-          titleElem.textContent = viewId.toUpperCase();
-          subtitleElem.textContent = 'Modul E-LKPD IPA STEAM';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul ${viewId} - Siap dikembangkan di Tahap 3]</h3></div>`;
+          switchView('home');
       }
     }
 
+    /* ==========================================================
+       8. TEMPLATE VIEWS (DYNAMIC CONTENT FILTERS)
+       ========================================================== */
     function renderHomeView() {
       return `
         <div class="space-y-4 max-w-4xl mx-auto">
@@ -501,15 +629,20 @@
               E-LKPD INTERAKTIF BERBASIS STEAM
             </h2>
             <p class="text-xs text-slate-300 max-w-xl leading-relaxed">
-              Platform lembar kerja peserta didik digital interaktif berbasis Science, Technology, Engineering, Arts, dan Mathematics untuk materi Usaha dan Energi.
+              Platform Lembar Kerja Peserta Didik Digital interaktif berbasis Science, Technology, Engineering, Arts, dan Mathematics untuk materi Usaha dan Energi.
             </p>
+            <div class="pt-2 flex flex-wrap gap-2">
+              <button onclick="switchView('menu-utama')" class="px-5 py-2.5 bg-brand-yellow text-brand-navy font-black rounded-xl text-xs shadow hover:bg-yellow-400 transition font-heading">
+                🚀 Masuk ke Menu Utama &rarr;
+              </button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
               <span class="text-2xl block">📖</span>
               <h4 class="font-black text-brand-navy text-xs font-heading">Materi Mandiri Guru</h4>
-              <p class="text-[11px] text-slate-500">Guru dapat membuat dan mempublikasikan materi dari nol secara dinamis.</p>
+              <p class="text-[11px] text-slate-500">Materi dibuat dan dipublikasikan mandiri oleh guru secara dinamis.</p>
             </div>
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
               <span class="text-2xl block">☁️</span>
@@ -526,8 +659,289 @@
       `;
     }
 
+    function renderMenuUtamaView() {
+      const menus = [
+        { id: 'petunjuk', title: 'Petunjuk & Tujuan', icon: '🎯', desc: 'Panduan belajar dan indikator capaian' },
+        { id: 'materi', title: 'Materi Usaha & Energi', icon: '📖', desc: 'Eksplorasi materi Fisika & STEAM' },
+        { id: 'game', title: 'Game Interaktif', icon: '🎮', desc: 'Simulasi dan permainan usaha energi' },
+        { id: 'evaluasi', title: 'Evaluasi Pembelajaran', icon: '📊', desc: 'Kuis pilihan ganda terukur' },
+        { id: 'steam', title: 'Aktivitas Proyek STEAM', icon: '⚛️', desc: 'Kanvas menggambar prototipe mobil bertenaga karet' },
+        { id: 'latihan', title: 'Latihan Mandiri', icon: '📝', desc: 'Soal essay dan diskusi kelompok' }
+      ];
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            ${menus.map(m => `
+              <div onclick="switchView('${m.id}')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-blue cursor-pointer transition flex flex-col justify-between space-y-3 group">
+                <div>
+                  <span class="text-3xl block group-hover:scale-110 transition-transform">${m.icon}</span>
+                  <h4 class="font-black text-brand-navy text-xs font-heading mt-2">${m.title}</h4>
+                  <p class="text-[11px] text-slate-500 mt-1">${m.desc}</p>
+                </div>
+                <span class="text-[10px] font-bold text-brand-blue flex items-center gap-1">Buka Modul &rarr;</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDynamicCategoryView(kategoriKey, pageHeaderTitle) {
+      const items = state.cachedData.konten
+        .filter(k => k.kategori === kategoriKey)
+        .sort((a, b) => Number(a.urutan) - Number(b.urutan));
+
+      if (items.length === 0) {
+        return `
+          <div class="max-w-3xl mx-auto bg-white p-8 rounded-3xl border text-center space-y-3">
+            <span class="text-3xl block">📌</span>
+            <h3 class="font-black text-brand-navy">${pageHeaderTitle}</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Belum ada konten materi yang ditambahkan oleh guru untuk bagian ini.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${items.map(item => `
+            <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <div class="border-b pb-2 flex items-center justify-between">
+                <h3 class="font-black text-brand-navy text-sm font-heading">${item.judul}</h3>
+                <span class="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">#${item.urutan}</span>
+              </div>
+              <p class="text-slate-700 leading-relaxed font-medium whitespace-pre-line">${item.isi_teks}</p>
+              ${item.gambar_url ? `
+                <div class="pt-2">
+                  <img src="${item.gambar_url}" class="max-h-72 rounded-2xl border bg-slate-50 p-1 mx-auto object-contain" />
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderGameView() {
+      const items = state.cachedData.konten.filter(k => k.kategori === 'game');
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">🎮 SIMULASI INTERAKTIF USAHA & ENERGI</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Coba atur besar gaya (F) dan jarak (s) pada kontrol di bawah ini untuk melihat besarnya Usaha (W) yang dihasilkan!
+            </p>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border space-y-3 max-w-md mx-auto text-center">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700">Gaya (F): <b id="game-f-val" class="text-brand-blue">10 N</b></label>
+                  <input type="range" id="game-f-input" min="1" max="100" value="10" oninput="updateGameSim()" class="w-full mt-1" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700">Jarak (s): <b id="game-s-val" class="text-emerald-600">5 m</b></label>
+                  <input type="range" id="game-s-input" min="0" max="50" value="5" oninput="updateGameSim()" class="w-full mt-1" />
+                </div>
+              </div>
+
+              <div class="p-3 bg-brand-navy text-white rounded-2xl space-y-1">
+                <span class="text-[10px] font-bold text-brand-yellow block uppercase">Hasil Kalkulasi Usaha (W = F × s):</span>
+                <span id="game-w-res" class="text-2xl font-black">50 Joule</span>
+              </div>
+            </div>
+          </div>
+
+          ${items.length > 0 ? `
+            <div class="bg-white p-5 rounded-3xl border space-y-3">
+              <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📌 Instuksi Tambahan Game dari Guru:</h4>
+              ${items.map(i => `
+                <div class="p-3 bg-slate-50 rounded-2xl border">
+                  <h5 class="font-bold text-brand-blue">${i.judul}</h5>
+                  <p class="text-slate-700 mt-1">${i.isi_teks}</p>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function updateGameSim() {
+      const f = document.getElementById('game-f-input').value;
+      const s = document.getElementById('game-s-input').value;
+      document.getElementById('game-f-val').textContent = `${f} N`;
+      document.getElementById('game-s-val').textContent = `${s} m`;
+      document.getElementById('game-w-res').textContent = `${f * s} Joule`;
+    }
+
+    async function renderEvaluasiView(container) {
+      const soalList = await apiGet('get_soal');
+      state.cachedData.soal = soalList;
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-md space-y-3">
+            <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase font-heading">
+              KUIS EVALUASI
+            </span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Nama Siswa:</label>
+                <input type="text" id="eval-nama" value="${state.currentUser ? state.currentUser.name : ''}" placeholder="Isi nama..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Kelas:</label>
+                <input type="text" id="eval-kelas" value="${state.currentUser ? state.currentUser.kelas : 'VIII-A'}" placeholder="VIII-A" class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">NIS:</label>
+                <input type="text" id="eval-username" value="${state.currentUser ? state.currentUser.username : ''}" placeholder="Isi NIS..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+            <h4 class="font-black text-brand-navy text-sm font-heading border-b pb-2">DAFTAR SOAL PILIHAN GANDA</h4>
+            
+            ${soalList.length === 0 ? `
+              <p class="text-slate-400 italic">Belum ada soal evaluasi yang ditambahkan oleh guru.</p>
+            ` : `
+              <div class="space-y-4">
+                ${soalList.map((s, idx) => `
+                  <div class="p-3 bg-slate-50 rounded-2xl border space-y-2">
+                    <p class="font-bold text-slate-800"><b>${idx + 1}.</b> ${s.pertanyaan}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      ${['a', 'b', 'c', 'd'].map(opt => `
+                        <button type="button" onclick="selectPgAnswer('${s.id_soal}', '${opt.toUpperCase()}')" id="opt-btn-${s.id_soal}-${opt.toUpperCase()}" class="p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition">
+                          <b>${opt.toUpperCase()}.</b> ${s['opsi_' + opt]}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="pt-3 border-t">
+                <button type="button" id="btn-submit-eval" onclick="submitEvaluasiKuis()" class="w-full py-3 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow transition text-xs font-heading">
+                  🚀 Kirim Jawaban Kuis Evaluasi
+                </button>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function selectPgAnswer(soalId, opt) {
+      state.siswaAnswers.pg[soalId] = opt;
+      ['A', 'B', 'C', 'D'].forEach(o => {
+        const btn = document.getElementById(`opt-btn-${soalId}-${o}`);
+        if (btn) {
+          if (o === opt) {
+            btn.className = 'p-2 bg-brand-blue text-white font-bold rounded-xl text-left border border-brand-blue shadow-xs';
+          } else {
+            btn.className = 'p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition text-slate-800';
+          }
+        }
+      });
+    }
+
+    async function submitEvaluasiKuis() {
+      const nama = document.getElementById('eval-nama')?.value.trim();
+      const kelas = document.getElementById('eval-kelas')?.value.trim();
+      const username = document.getElementById('eval-username')?.value.trim();
+      const submitBtn = document.getElementById('btn-submit-eval');
+
+      if (!nama || !username) {
+        Swal.fire({ icon: 'warning', title: 'Identitas Belum Lengkap', text: 'Isi Nama dan NIS terlebih dahulu!' });
+        return;
+      }
+
+      let correctCount = 0;
+      const soalList = state.cachedData.soal;
+      if (soalList.length > 0) {
+        soalList.forEach(s => {
+          if (state.siswaAnswers.pg[s.id_soal] === s.kunci_jawaban) correctCount++;
+        });
+      }
+      const scorePG = soalList.length > 0 ? Math.round((correctCount / soalList.length) * 100) : 100;
+
+      setButtonLoading(submitBtn, true, '🚀 Mengirim Jawaban...', '🚀 Kirim Jawaban Kuis Evaluasi');
+
+      const payload = {
+        action: 'submit_lkpd',
+        username_siswa: username,
+        nama_siswa: nama,
+        kelas: kelas || 'VIII-A',
+        jawaban_json: { kuis_pg: state.siswaAnswers.pg },
+        canvas_image_base64: '',
+        skor_pg: scorePG
+      };
+
+      const res = await apiPost(payload);
+
+      setButtonLoading(submitBtn, false, '', '🚀 Kirim Jawaban Kuis Evaluasi');
+
+      if (res.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Kuis Berhasil Dikirim!',
+          text: `Skor Kamu: ${scorePG}/100`
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Kirim', text: res.message });
+      }
+    }
+
+    async function renderSteamView(container) {
+      setTimeout(initCanvas, 150);
+
+      const items = state.cachedData.konten.filter(k => k.kategori === 'steam');
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">⚛️ PROYEK STEAM - RANCANGAN PROTOTIPE MOBIL KARET</h3>
+            
+            ${items.length > 0 ? `
+              <div class="space-y-2">
+                ${items.map(i => `
+                  <div class="p-3 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <h5 class="font-bold text-brand-navy">${i.judul}</h5>
+                    <p class="text-slate-700 mt-1">${i.isi_teks}</p>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p class="text-slate-500">Gambarkan rancangan mobil bertenaga karet buatanmu pada kanvas di bawah ini!</p>'}
+
+            <!-- Canvas Tools Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl border">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-600">Warna Pen:</span>
+                <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#F39C12')" class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-xs"></button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="setCanvasLineWidth(2)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tipis</button>
+                <button onclick="setCanvasLineWidth(5)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tebal</button>
+                <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200">🗑️ Hapus Gambar</button>
+              </div>
+            </div>
+
+            <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden shadow-inner">
+              <canvas id="steam-canvas" width="700" height="250" class="w-full h-[220px] cursor-crosshair"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     /* ==========================================================
-       7. GURU KONTEN BUILDER & DRIVE IMAGE UPLOADER
+       9. GURU KONTEN BUILDER VIEW
        ========================================================== */
     async function renderGuruBuilderView(container) {
       const konten = await apiGet('get_konten');
@@ -591,7 +1005,7 @@
       const uploadBtn = document.getElementById('btn-upload-drive');
 
       if (!fileInput.files || fileInput.files.length === 0) {
-        Swal.fire({ icon: 'warning', title: 'File Belum Dipilih', text: 'Pilih file gambar dari perangkatmu terlebih dahulu!' });
+        Swal.fire({ icon: 'warning', title: 'File Belum Dipilih', text: 'Pilih file gambar terlebih dahulu!' });
         return;
       }
 
@@ -617,7 +1031,7 @@
           Swal.fire({
             icon: 'success',
             title: 'Berhasil Diunggah!',
-            text: 'Gambar telah tersimpan di Google Drive.',
+            text: 'Gambar tersimpan di Google Drive.',
             timer: 1500,
             showConfirmButton: false
           });
@@ -710,7 +1124,7 @@
     }
 
     /* ==========================================================
-       8. MODAL UTILITIES
+       10. MODAL UTILITIES
        ========================================================== */
     function openLoginModal() {
       document.getElementById('login-modal').classList.remove('hidden');

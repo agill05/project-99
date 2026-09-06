@@ -92,7 +92,7 @@
           <!-- Active User Badge -->
           <div id="user-info-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center">
             <span class="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Status Akses Login</span>
-            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Mode Tamu / Siswa</span>
+            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Mode Tamu / Guest</span>
             <span id="user-display-role" class="inline-block mt-1 px-2.5 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-extrabold rounded-full uppercase border border-slate-700">GUEST</span>
           </div>
 
@@ -212,7 +212,9 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kelas (Khusus Siswa)</label>
-            <input type="text" id="user-form-kelas" placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+            <select id="user-form-kelas" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
+              <!-- Populated dynamically from state.cachedData.kelas -->
+            </select>
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -223,7 +225,36 @@
     </div>
   </div>
 
-  <!-- 3. Modal Builder Konten Materi (Guru) -->
+  <!-- 3. Modal Kelas (Admin) -->
+  <div id="kelas-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="kelas-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Kelas Baru</h3>
+        <button onclick="closeKelasModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleKelasSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="kelas-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Kelas / Rombel</label>
+          <input type="text" id="kelas-form-nama" required placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tingkat / Jenjang</label>
+          <input type="text" id="kelas-form-tingkat" required placeholder="Contoh: Kelas 8 SMP" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Keterangan Tambahan</label>
+          <input type="text" id="kelas-form-keterangan" placeholder="Contoh: Kelas IPA Reguler" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeKelasModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-kelas" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">Simpan Kelas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Modal Builder Konten Materi (Guru) -->
   <div id="konten-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -261,7 +292,6 @@
           <textarea id="konten-form-teks" rows="4" required placeholder="Tuliskan uraian materi pembelajaran di sini..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
         </div>
 
-        <!-- Pengaturan Gambar (Drive / URL) -->
         <div class="p-3 bg-slate-50 border rounded-2xl space-y-2">
           <label class="block font-bold text-slate-800">Media Gambar (Opsional)</label>
           
@@ -295,7 +325,7 @@
     </div>
   </div>
 
-  <!-- 4. Modal Interactive Game Builder (Guru) -->
+  <!-- 5. Modal Interactive Game Builder (Guru) -->
   <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -353,18 +383,47 @@
     /* ==========================================================
        1. CONFIG & GLOBAL STATE
        ========================================================== */
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxJurBBF96tNDItgAW9w4RJAlhRcJhPPj35v8zg6Nh2QoKSE3GntkGEo3K5Z0oWnITf/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzXz6aS-XjnoO8CFtI0sSYzVwsHUskf4htrR0Ipf6SWWAybg30NzeKsLiorktgL8iCM/exec';
 
     const state = {
       currentUser: null,
       currentView: 'home',
       isDataLoaded: false,
-      cachedData: { users: [], konten: [], soal: [], games: [], submissions: [] },
+      cachedData: { users: [], kelas: [], konten: [], soal: [], games: [], submissions: [] },
       siswaAnswers: { pg: {}, gameScores: {} }
     };
 
     /* ==========================================================
-       2. BATCH DATA PRE-FETCH & CACHING
+       2. GUEST ACCESS GUARD (GUEST RESTRICTION CONTROL)
+       ========================================================== */
+    function requireStudentAuth(actionCallback) {
+      if (!state.currentUser) {
+        Swal.fire({
+          icon: 'info',
+          title: 'Akses Terbatas (Mode Guest)',
+          text: 'Kamu sedang dalam Mode Guest (Pratonton). Silakan login sebagai Siswa untuk mengerjakan kuis, bermain game, dan menyimpan nilai!',
+          showCancelButton: true,
+          confirmButtonColor: '#0D6EFD',
+          cancelButtonColor: '#64748B',
+          confirmButtonText: '🔑 Login Siswa',
+          cancelButtonText: 'Lanjut Mlihat'
+        }).then((res) => {
+          if (res.isConfirmed) openLoginModal();
+        });
+        return false;
+      }
+
+      if (state.currentUser.role !== 'siswa' && state.currentUser.role !== 'admin') {
+        Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Sesi ini khusus untuk akun Siswa!' });
+        return false;
+      }
+
+      if (actionCallback) actionCallback();
+      return true;
+    }
+
+    /* ==========================================================
+       3. BATCH DATA PRE-FETCH & CACHING
        ========================================================== */
     async function fetchAllInitialData(forceRefresh = false) {
       if (state.isDataLoaded && !forceRefresh) return;
@@ -375,6 +434,7 @@
         
         if (result.success && result.data) {
           state.cachedData.users = result.data.users || [];
+          state.cachedData.kelas = result.data.kelas || [];
           state.cachedData.konten = result.data.konten || [];
           state.cachedData.soal = result.data.soal || [];
           state.cachedData.games = result.data.games || [];
@@ -387,7 +447,7 @@
     }
 
     /* ==========================================================
-       3. CANVAS STEAM DRAWING TOOL
+       4. CANVAS STEAM DRAWING TOOL
        ========================================================== */
     let canvasCtx = null;
     let isDrawing = false;
@@ -437,6 +497,10 @@
     }
 
     function startDrawing(e) {
+      if (!state.currentUser) {
+        requireStudentAuth();
+        return;
+      }
       isDrawing = true;
       const canvas = document.getElementById('steam-canvas');
       if (!canvas || !canvasCtx) return;
@@ -466,7 +530,7 @@
     }
 
     /* ==========================================================
-       4. UI HELPERS & BUTTON LOADING STATE
+       5. UI HELPERS & BUTTON LOADING STATE
        ========================================================== */
     function setButtonLoading(buttonElem, isLoading, loadingText = 'Menyimpan...', originalText = 'Simpan') {
       if (!buttonElem) return;
@@ -509,7 +573,7 @@
     }
 
     /* ==========================================================
-       5. AUTHENTICATION LOGIC
+       6. AUTHENTICATION LOGIC
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
@@ -584,7 +648,7 @@
         authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
         authBtn.onclick = logout;
       } else {
-        nameElem.textContent = 'Mode Tamu / Siswa';
+        nameElem.textContent = 'Mode Tamu / Guest';
         roleElem.textContent = 'GUEST';
         badgeElem.textContent = 'Mode Tamu';
         badgeElem.className = 'px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black rounded-xl';
@@ -598,7 +662,7 @@
     }
 
     /* ==========================================================
-       6. DYNAMIC SIDEBAR NAV PER ROLE
+       7. DYNAMIC SIDEBAR NAV PER ROLE
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
@@ -609,7 +673,7 @@
       if (state.currentUser?.role === 'admin') {
         navItems = [
           { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥' },
-          { id: 'admin-classes', title: 'Kelola Kelas & Rombel', icon: '🏫' },
+          { id: 'admin-classes', title: 'Kelola Data Kelas', icon: '🏫' },
           { id: 'admin-stats', title: 'Statistik System & Log', icon: '📈' }
         ];
       } else if (state.currentUser?.role === 'guru') {
@@ -655,7 +719,7 @@
     }
 
     /* ==========================================================
-       7. ROUTER SWITCHER & VIEW CONTROLLER
+       8. ROUTER SWITCHER & VIEW CONTROLLER
        ========================================================== */
     async function switchView(viewId) {
       state.currentView = viewId;
@@ -679,8 +743,8 @@
           break;
 
         case 'admin-classes':
-          titleElem.textContent = 'KELOLA KELAS & ROMBEL';
-          subtitleElem.textContent = 'Daftar kelas aktif untuk pengelompokan siswa';
+          titleElem.textContent = 'KELOLA DATA KELAS';
+          subtitleElem.textContent = 'Daftar kelas/rombel aktif untuk pengelompokan siswa dan materi';
           renderAdminClassesView(viewport);
           break;
 
@@ -721,7 +785,7 @@
           renderGuruRekapView(viewport);
           break;
 
-        // === VIEWS SISWA ===
+        // === VIEWS SISWA / GUEST ===
         case 'home':
           titleElem.textContent = 'BERANDA & COVER';
           subtitleElem.textContent = 'E-LKPD Interaktif IPA STEAM Universitas Negeri Gorontalo';
@@ -782,7 +846,7 @@
     }
 
     /* ==========================================================
-       8. SISWA VIEWS & GAME RENDERER ENGINE (10 TEMPLATES)
+       9. SISWA / GUEST VIEWS & GAME RENDERER ENGINE
        ========================================================== */
     function renderHomeView() {
       return `
@@ -886,6 +950,13 @@
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${!state.currentUser ? `
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800">
+              <span class="font-bold text-[11px]">👁️ Mode Pratonton (Guest) — Kamu dapat melihat pratinjau game, tetapi wajib login Siswa untuk mengerjakan & menyimpan skor.</span>
+              <button onclick="openLoginModal()" class="px-3 py-1 bg-amber-600 text-white font-bold rounded-lg text-[10px]">Login Siswa</button>
+            </div>
+          ` : ''}
+
           ${games.map((g, idx) => `
             <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
               <div class="flex items-center justify-between border-b pb-2">
@@ -898,7 +969,6 @@
               
               <p class="text-slate-600 font-medium"><b>💡 Instruksi:</b> ${g.instruksi}</p>
 
-              <!-- Interactive Play Engine Container -->
               <div id="game-play-area-${g.id_game}" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
                 ${renderGamePlayEngine(g)}
               </div>
@@ -931,7 +1001,7 @@
                 ${pairs.map((p, i) => `<div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl font-bold text-brand-blue">${p.b}</div>`).join('')}
               </div>
             </div>
-            <button onclick="Swal.fire({icon:'success', title:'Jawaban Tepat!', text:'Kamu mendapatkan 100 poin game!'})" class="w-full py-2 bg-brand-emerald text-white font-black rounded-xl text-xs shadow mt-2">
+            <button onclick="requireStudentAuth(() => Swal.fire({icon:'success', title:'Jawaban Tepat!', text:'Kamu mendapatkan 100 poin game!'}))" class="w-full py-2 bg-brand-emerald text-white font-black rounded-xl text-xs shadow mt-2">
               ✅ Periksa Jawaban Pasangan
             </button>
           </div>
@@ -945,7 +1015,7 @@
               ${targetWord.split('').sort(() => Math.random() - 0.5).map(c => `<span class="px-3 py-1.5 bg-white border rounded-xl shadow-xs">${c}</span>`).join('')}
             </div>
             <input type="text" id="scramble-input-${g.id_game}" placeholder="Ketik kata yang benar..." class="w-full p-2.5 rounded-xl border text-center font-bold uppercase" />
-            <button onclick="checkScrambleAnswer('${g.id_game}', '${targetWord}')" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
+            <button onclick="requireStudentAuth(() => checkScrambleAnswer('${g.id_game}', '${targetWord}'))" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
               🚀 Cek Susunan Kata
             </button>
           </div>
@@ -955,7 +1025,7 @@
           <div class="space-y-2 text-center max-w-sm mx-auto">
             ${configObj.imageUrl ? `<img src="${configObj.imageUrl}" class="h-36 rounded-2xl border mx-auto object-contain bg-white p-1" />` : '<div class="p-6 bg-white rounded-2xl border font-bold text-slate-400">🖼️ Gambar Permainan</div>'}
             <input type="text" id="guess-input-${g.id_game}" placeholder="Jawaban kamu..." class="w-full p-2.5 rounded-xl border font-bold text-center" />
-            <button onclick="checkGuessAnswer('${g.id_game}', '${configObj.answerKey || ''}')" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
+            <button onclick="requireStudentAuth(() => checkGuessAnswer('${g.id_game}', '${configObj.answerKey || ''}'))" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
               🔍 Cek Jawaban Tebakan
             </button>
           </div>
@@ -965,8 +1035,8 @@
           <div class="space-y-3 text-center max-w-md mx-auto">
             <p class="font-bold text-slate-800 text-sm">"${configObj.statement || 'Pernyataan Soal'}"</p>
             <div class="flex gap-2">
-              <button onclick="checkTfAnswer('benar', '${configObj.key}')" class="flex-1 py-2.5 bg-emerald-600 text-white font-black rounded-xl shadow">BENAR</button>
-              <button onclick="checkTfAnswer('salah', '${configObj.key}')" class="flex-1 py-2.5 bg-red-600 text-white font-black rounded-xl shadow">SALAH</button>
+              <button onclick="requireStudentAuth(() => checkTfAnswer('benar', '${configObj.key}'))" class="flex-1 py-2.5 bg-emerald-600 text-white font-black rounded-xl shadow">BENAR</button>
+              <button onclick="requireStudentAuth(() => checkTfAnswer('salah', '${configObj.key}'))" class="flex-1 py-2.5 bg-red-600 text-white font-black rounded-xl shadow">SALAH</button>
             </div>
           </div>
         `;
@@ -1021,6 +1091,13 @@
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${!state.currentUser ? `
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800">
+              <span class="font-bold text-[11px]">👁️ Mode Pratonton (Guest) — Kamu dapat melihat daftar soal, tetapi wajib login Siswa untuk mengirim jawaban.</span>
+              <button onclick="openLoginModal()" class="px-3 py-1 bg-amber-600 text-white font-bold rounded-lg text-[10px]">Login Siswa</button>
+            </div>
+          ` : ''}
+
           <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-md space-y-3">
             <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase font-heading">
               KUIS EVALUASI
@@ -1028,15 +1105,15 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               <div>
                 <label class="block text-[10px] font-bold text-slate-300">Nama Siswa:</label>
-                <input type="text" id="eval-nama" value="${state.currentUser ? state.currentUser.name : ''}" placeholder="Isi nama..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+                <input type="text" id="eval-nama" value="${state.currentUser ? state.currentUser.name : ''}" ${!state.currentUser ? 'disabled' : ''} placeholder="Isi nama..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-300">Kelas:</label>
-                <input type="text" id="eval-kelas" value="${state.currentUser ? state.currentUser.kelas : 'VIII-A'}" placeholder="VIII-A" class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+                <input type="text" id="eval-kelas" value="${state.currentUser ? state.currentUser.kelas : 'VIII-A'}" ${!state.currentUser ? 'disabled' : ''} placeholder="VIII-A" class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-300">NIS:</label>
-                <input type="text" id="eval-username" value="${state.currentUser ? state.currentUser.username : ''}" placeholder="Isi NIS..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+                <input type="text" id="eval-username" value="${state.currentUser ? state.currentUser.username : ''}" ${!state.currentUser ? 'disabled' : ''} placeholder="Isi NIS..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
               </div>
             </div>
           </div>
@@ -1049,7 +1126,7 @@
                   <p class="font-bold text-slate-800"><b>${idx + 1}.</b> ${s.pertanyaan}</p>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     ${['a', 'b', 'c', 'd'].map(opt => `
-                      <button type="button" onclick="selectPgAnswer('${s.id_soal}', '${opt.toUpperCase()}')" id="opt-btn-${s.id_soal}-${opt.toUpperCase()}" class="p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition">
+                      <button type="button" onclick="requireStudentAuth(() => selectPgAnswer('${s.id_soal}', '${opt.toUpperCase()}'))" id="opt-btn-${s.id_soal}-${opt.toUpperCase()}" class="p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition">
                         <b>${opt.toUpperCase()}.</b> ${s['opsi_' + opt]}
                       </button>
                     `).join('')}
@@ -1059,7 +1136,7 @@
             </div>
 
             <div class="pt-3 border-t">
-              <button type="button" id="btn-submit-eval" onclick="submitEvaluasiKuis()" class="w-full py-3 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow transition text-xs font-heading">
+              <button type="button" id="btn-submit-eval" onclick="requireStudentAuth(submitEvaluasiKuis)" class="w-full py-3 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow transition text-xs font-heading">
                 🚀 Kirim Jawaban Kuis Evaluasi
               </button>
             </div>
@@ -1138,6 +1215,13 @@
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${!state.currentUser ? `
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-amber-800">
+              <span class="font-bold text-[11px]">👁️ Mode Pratonton (Guest) — Kamu dapat melihat modul STEAM, tetapi wajib login Siswa untuk menggambar & menyimpan.</span>
+              <button onclick="openLoginModal()" class="px-3 py-1 bg-amber-600 text-white font-bold rounded-lg text-[10px]">Login Siswa</button>
+            </div>
+          ` : ''}
+
           <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
             <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">⚛️ PROYEK STEAM - RANCANGAN PROTOTIPE MOBIL KARET</h3>
             
@@ -1177,7 +1261,7 @@
     }
 
     /* ==========================================================
-       9. DASHBOARD ADMIN IMPLEMENTATION
+       10. DASHBOARD ADMIN IMPLEMENTATION
        ========================================================== */
     function renderAdminUsersView(container) {
       const users = state.cachedData.users || [];
@@ -1227,14 +1311,45 @@
     }
 
     function renderAdminClassesView(container) {
+      const kelasList = state.cachedData.kelas || [];
+
       container.innerHTML = `
-        <div class="bg-white p-6 rounded-3xl border space-y-3 max-w-xl">
-          <h3 class="font-black text-brand-navy text-sm font-heading">🏫 Kelola Daftar Kelas</h3>
-          <p class="text-xs text-slate-500">Kelas digunakan oleh siswa saat mendaftar dan mengisi E-LKPD.</p>
-          <div class="flex gap-2">
-            <span class="px-3 py-1.5 bg-blue-50 text-brand-blue font-bold rounded-xl text-xs border border-blue-200">VIII-A</span>
-            <span class="px-3 py-1.5 bg-blue-50 text-brand-blue font-bold rounded-xl text-xs border border-blue-200">VIII-B</span>
-            <span class="px-3 py-1.5 bg-blue-50 text-brand-blue font-bold rounded-xl text-xs border border-blue-200">VIII-C</span>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+            <span class="text-xs font-bold text-slate-700">Total Kelas Terdaftar: <b>${kelasList.length} Kelas</b></span>
+            <button onclick="openKelasModal()" class="px-4 py-2 bg-brand-blue text-white font-bold text-xs rounded-xl shadow hover:bg-blue-600 transition">
+              + Tambah Kelas Baru
+            </button>
+          </div>
+
+          <div class="bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-brand-navy text-white font-heading">
+                  <tr>
+                    <th class="p-3">ID Kelas</th>
+                    <th class="p-3">Nama Kelas / Rombel</th>
+                    <th class="p-3">Tingkat / Jenjang</th>
+                    <th class="p-3">Keterangan</th>
+                    <th class="p-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${kelasList.map(k => `
+                    <tr class="hover:bg-slate-50">
+                      <td class="p-3 font-mono font-bold text-slate-500">${k.id_kelas}</td>
+                      <td class="p-3 font-bold text-brand-blue">${k.nama_kelas}</td>
+                      <td class="p-3 text-slate-700 font-semibold">${k.tingkat}</td>
+                      <td class="p-3 text-slate-500">${k.keterangan || '-'}</td>
+                      <td class="p-3 text-center space-x-1">
+                        <button onclick="editKelas('${k.id_kelas}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg">Edit</button>
+                        <button onclick="deleteKelas('${k.id_kelas}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[10px] rounded-lg">Hapus</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;
@@ -1242,15 +1357,20 @@
 
     function renderAdminStatsView(container) {
       const users = state.cachedData.users || [];
+      const kelas = state.cachedData.kelas || [];
       const konten = state.cachedData.konten || [];
       const games = state.cachedData.games || [];
       const subs = state.cachedData.submissions || [];
 
       container.innerHTML = `
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center text-xs">
           <div class="p-5 bg-white rounded-3xl border shadow-xs space-y-1">
             <span class="text-slate-500 font-bold">Total User</span>
             <span class="text-2xl font-black text-brand-blue block">${users.length}</span>
+          </div>
+          <div class="p-5 bg-white rounded-3xl border shadow-xs space-y-1">
+            <span class="text-slate-500 font-bold">Data Kelas</span>
+            <span class="text-2xl font-black text-emerald-600 block">${kelas.length}</span>
           </div>
           <div class="p-5 bg-white rounded-3xl border shadow-xs space-y-1">
             <span class="text-slate-500 font-bold">Materi Terbit</span>
@@ -1258,7 +1378,7 @@
           </div>
           <div class="p-5 bg-white rounded-3xl border shadow-xs space-y-1">
             <span class="text-slate-500 font-bold">Game Aktif</span>
-            <span class="text-2xl font-black text-emerald-600 block">${games.length}</span>
+            <span class="text-2xl font-black text-pink-600 block">${games.length}</span>
           </div>
           <div class="p-5 bg-white rounded-3xl border shadow-xs space-y-1">
             <span class="text-slate-500 font-bold">Jawaban Siswa</span>
@@ -1269,7 +1389,7 @@
     }
 
     /* ==========================================================
-       10. DASHBOARD GURU IMPLEMENTATION
+       11. DASHBOARD GURU IMPLEMENTATION
        ========================================================== */
     function renderGuruDashboardView(container) {
       const subs = state.cachedData.submissions || [];
@@ -1449,7 +1569,7 @@
     }
 
     /* ==========================================================
-       11. GAME BUILDER FORMS (GURU)
+       12. GAME BUILDER FORMS
        ========================================================== */
     function openGameModal() {
       document.getElementById('game-form-id').value = '';
@@ -1640,15 +1760,20 @@
     }
 
     /* ==========================================================
-       12. ADMIN & MATERI HANDLERS
+       13. ADMIN HANDLERS (USER & KELAS CRUD)
        ========================================================== */
     function openUserModal(user = null) {
+      const kelasList = state.cachedData.kelas || [];
+      const kelasSelect = document.getElementById('user-form-kelas');
+      kelasSelect.innerHTML = `<option value="-">Tanpa Kelas (Guru/Admin)</option>` + 
+        kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas} (${k.tingkat})</option>`).join('');
+
       document.getElementById('user-form-id').value = user ? user.user_id : '';
       document.getElementById('user-form-nama').value = user ? user.nama_lengkap : '';
       document.getElementById('user-form-username').value = user ? user.username : '';
       document.getElementById('user-form-password').value = user ? user.password : '';
       document.getElementById('user-form-role').value = user ? user.role : 'siswa';
-      document.getElementById('user-form-kelas').value = user ? user.kelas : '';
+      document.getElementById('user-form-kelas').value = user ? user.kelas : (kelasList[0]?.nama_kelas || '-');
       
       document.getElementById('user-modal-title').textContent = user ? 'Edit Akun Pengguna' : 'Tambah Pengguna Baru';
       document.getElementById('user-modal').classList.remove('hidden');
@@ -1715,6 +1840,77 @@
       });
     }
 
+    function openKelasModal(k = null) {
+      document.getElementById('kelas-form-id').value = k ? k.id_kelas : '';
+      document.getElementById('kelas-form-nama').value = k ? k.nama_kelas : '';
+      document.getElementById('kelas-form-tingkat').value = k ? k.tingkat : 'Kelas 8 SMP';
+      document.getElementById('kelas-form-keterangan').value = k ? k.keterangan : '';
+
+      document.getElementById('kelas-modal-title').textContent = k ? 'Edit Data Kelas' : 'Tambah Kelas Baru';
+      document.getElementById('kelas-modal').classList.remove('hidden');
+      document.getElementById('kelas-modal').classList.add('flex');
+    }
+
+    function closeKelasModal() {
+      document.getElementById('kelas-modal').classList.add('hidden');
+      document.getElementById('kelas-modal').classList.remove('flex');
+    }
+
+    function editKelas(idKelas) {
+      const k = (state.cachedData.kelas || []).find(x => x.id_kelas === idKelas);
+      if (k) openKelasModal(k);
+    }
+
+    async function handleKelasSubmit(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('btn-save-kelas');
+      setButtonLoading(saveBtn, true, '💾 Menyimpan...', 'Simpan Kelas');
+
+      const payload = {
+        action: 'save_kelas',
+        id_kelas: document.getElementById('kelas-form-id').value,
+        nama_kelas: document.getElementById('kelas-form-nama').value,
+        tingkat: document.getElementById('kelas-form-tingkat').value,
+        keterangan: document.getElementById('kelas-form-keterangan').value
+      };
+
+      const res = await apiPost(payload);
+      setButtonLoading(saveBtn, false, '', 'Simpan Kelas');
+
+      if (res.success) {
+        closeKelasModal();
+        await fetchAllInitialData(true);
+        Swal.fire({ icon: 'success', title: 'Tersimpan!', text: res.message, timer: 1500, showConfirmButton: false });
+        switchView('admin-classes');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+      }
+    }
+
+    async function deleteKelas(idKelas) {
+      Swal.fire({
+        title: 'Hapus Data Kelas?',
+        text: 'Kelas yang dihapus akan mempengaruhi pengelompokan akun siswa.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const res = await apiPost({ action: 'delete_kelas', id_kelas: idKelas });
+          if (res.success) {
+            await fetchAllInitialData(true);
+            Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+            switchView('admin-classes');
+          }
+        }
+      });
+    }
+
+    /* ==========================================================
+       14. KONTEN MATERI HANDLERS
+       ========================================================== */
     function openKontenModal(k = null) {
       document.getElementById('konten-form-id').value = k ? k.id_konten : '';
       document.getElementById('konten-form-kategori').value = k ? k.kategori : 'materi';

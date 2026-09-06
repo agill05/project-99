@@ -256,17 +256,40 @@
     /* ==========================================================
        1. CONFIG & GLOBAL STATE
        ========================================================== */
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzoQBYkl7GkvtODX3-qXxfGAVGaBm6Ni-eKucG0X6Ffh6gdLtK3Gs0kRSw7skahHike/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyALZTFWQt1M9BPe_zQMy8KVunVqZrtdNGCIMNyaoXFJHQoqYhCnuYIrstjfC9wtLZu/exec';
 
     const state = {
       currentUser: null,
       currentView: 'home',
+      isDataLoaded: false,
       cachedData: { users: [], konten: [], soal: [], submissions: [] },
       siswaAnswers: { pg: {} }
     };
 
     /* ==========================================================
-       2. CANVAS STEAM DRAWING TOOL
+       2. BATCH DATA PRE-FETCH & SMART CACHING (INSTANT NAV)
+       ========================================================== */
+    async function fetchAllInitialData(forceRefresh = false) {
+      if (state.isDataLoaded && !forceRefresh) return;
+
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=get_all_data`);
+        const result = await res.json();
+        
+        if (result.success && result.data) {
+          state.cachedData.users = result.data.users || [];
+          state.cachedData.konten = result.data.konten || [];
+          state.cachedData.soal = result.data.soal || [];
+          state.cachedData.submissions = result.data.submissions || [];
+          state.isDataLoaded = true;
+        }
+      } catch (err) {
+        console.error('Gagal memuat pre-fetch data:', err);
+      }
+    }
+
+    /* ==========================================================
+       3. CANVAS STEAM DRAWING TOOL
        ========================================================== */
     let canvasCtx = null;
     let isDrawing = false;
@@ -345,7 +368,7 @@
     }
 
     /* ==========================================================
-       3. UI LOADING & BUTTON STATE HELPERS
+       4. UI LOADING & BUTTON STATE HELPERS
        ========================================================== */
     function setButtonLoading(buttonElem, isLoading, loadingText = 'Menyimpan...', originalText = 'Simpan') {
       if (!buttonElem) return;
@@ -375,19 +398,8 @@
     }
 
     /* ==========================================================
-       4. API FETCH HELPERS
+       5. API FETCH HELPERS
        ========================================================== */
-    async function apiGet(action) {
-      try {
-        const res = await fetch(`${GAS_API_URL}?action=${action}`);
-        const result = await res.json();
-        return result.success ? result.data : [];
-      } catch (err) {
-        console.error('API GET Error:', err);
-        return [];
-      }
-    }
-
     async function apiPost(payload) {
       try {
         const res = await fetch(GAS_API_URL, {
@@ -402,7 +414,7 @@
     }
 
     /* ==========================================================
-       5. AUTHENTICATION LOGIC
+       6. AUTHENTICATION LOGIC
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
@@ -488,7 +500,7 @@
     }
 
     /* ==========================================================
-       6. SIDEBAR NAVIGATION DRAWER
+       7. SIDEBAR NAVIGATION DRAWER
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
@@ -533,7 +545,7 @@
     }
 
     /* ==========================================================
-       7. ROUTER VIEW SWITCHER (DYNAMIC CONTENT RENDERING)
+       8. ROUTER VIEW SWITCHER (INSTANT RENDERING FROM CACHE)
        ========================================================== */
     async function switchView(viewId) {
       state.currentView = viewId;
@@ -543,11 +555,11 @@
       const titleElem = document.getElementById('view-title');
       const subtitleElem = document.getElementById('view-subtitle');
 
-      viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat data dari server...</div>`;
-
-      // Selalu perbarui cache data konten saat berpindah halaman
-      const allKonten = await apiGet('get_konten');
-      state.cachedData.konten = allKonten;
+      // Jika data belum terisi sama sekali, muat sebentar di awal
+      if (!state.isDataLoaded) {
+        viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat awal data E-LKPD...</div>`;
+        await fetchAllInitialData();
+      }
 
       switch (viewId) {
         case 'home':
@@ -583,13 +595,13 @@
         case 'evaluasi':
           titleElem.textContent = 'EVALUASI PEMBELAJARAN (KUIS PG)';
           subtitleElem.textContent = 'Pengerjaan kuis pilihan ganda dengan penilaian otomatis';
-          await renderEvaluasiView(viewport);
+          renderEvaluasiView(viewport);
           break;
 
         case 'steam':
           titleElem.textContent = 'AKTIVITAS PROYEK STEAM';
           subtitleElem.textContent = 'Rancang dan gambarkan ide prototipe mobil bertenaga karet';
-          await renderSteamView(viewport);
+          renderSteamView(viewport);
           break;
 
         case 'latihan':
@@ -607,7 +619,7 @@
         case 'guru-builder':
           titleElem.textContent = 'BUILDER KONTEN PEMBELAJARAN';
           subtitleElem.textContent = 'Kelola materi, gambar, dan proyek STEAM secara mandiri';
-          await renderGuruBuilderView(viewport);
+          renderGuruBuilderView(viewport);
           break;
 
         default:
@@ -616,7 +628,7 @@
     }
 
     /* ==========================================================
-       8. TEMPLATE VIEWS (DYNAMIC CONTENT FILTERS)
+       9. TEMPLATE VIEWS (DYNAMIC CACHED RENDERING)
        ========================================================== */
     function renderHomeView() {
       return `
@@ -651,8 +663,8 @@
             </div>
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
               <span class="text-2xl block">⚡</span>
-              <h4 class="font-black text-brand-navy text-xs font-heading">Status Menyimpan</h4>
-              <p class="text-[11px] text-slate-500">Indikator proses jelas untuk setiap pengiriman dan penyimpanan data.</p>
+              <h4 class="font-black text-brand-navy text-xs font-heading">Navigasi Super Cepat</h4>
+              <p class="text-[11px] text-slate-500">Caching pintar memuat seluruh halaman secara instan tanpa jeda.</p>
             </div>
           </div>
         </div>
@@ -688,7 +700,7 @@
     }
 
     function renderDynamicCategoryView(kategoriKey, pageHeaderTitle) {
-      const items = state.cachedData.konten
+      const items = (state.cachedData.konten || [])
         .filter(k => k.kategori === kategoriKey)
         .sort((a, b) => Number(a.urutan) - Number(b.urutan));
 
@@ -723,7 +735,7 @@
     }
 
     function renderGameView() {
-      const items = state.cachedData.konten.filter(k => k.kategori === 'game');
+      const items = (state.cachedData.konten || []).filter(k => k.kategori === 'game');
 
       return `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
@@ -754,7 +766,7 @@
 
           ${items.length > 0 ? `
             <div class="bg-white p-5 rounded-3xl border space-y-3">
-              <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📌 Instuksi Tambahan Game dari Guru:</h4>
+              <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📌 Instruksi Tambahan Game dari Guru:</h4>
               ${items.map(i => `
                 <div class="p-3 bg-slate-50 rounded-2xl border">
                   <h5 class="font-bold text-brand-blue">${i.judul}</h5>
@@ -775,9 +787,8 @@
       document.getElementById('game-w-res').textContent = `${f * s} Joule`;
     }
 
-    async function renderEvaluasiView(container) {
-      const soalList = await apiGet('get_soal');
-      state.cachedData.soal = soalList;
+    function renderEvaluasiView(container) {
+      const soalList = state.cachedData.soal || [];
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
@@ -859,7 +870,7 @@
       }
 
       let correctCount = 0;
-      const soalList = state.cachedData.soal;
+      const soalList = state.cachedData.soal || [];
       if (soalList.length > 0) {
         soalList.forEach(s => {
           if (state.siswaAnswers.pg[s.id_soal] === s.kunci_jawaban) correctCount++;
@@ -884,6 +895,7 @@
       setButtonLoading(submitBtn, false, '', '🚀 Kirim Jawaban Kuis Evaluasi');
 
       if (res.success) {
+        await fetchAllInitialData(true); // Perbarui cache di background
         Swal.fire({
           icon: 'success',
           title: 'Kuis Berhasil Dikirim!',
@@ -894,10 +906,10 @@
       }
     }
 
-    async function renderSteamView(container) {
+    function renderSteamView(container) {
       setTimeout(initCanvas, 150);
 
-      const items = state.cachedData.konten.filter(k => k.kategori === 'steam');
+      const items = (state.cachedData.konten || []).filter(k => k.kategori === 'steam');
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-4 text-xs">
@@ -941,11 +953,10 @@
     }
 
     /* ==========================================================
-       9. GURU KONTEN BUILDER VIEW
+       10. GURU KONTEN BUILDER VIEW
        ========================================================== */
-    async function renderGuruBuilderView(container) {
-      const konten = await apiGet('get_konten');
-      state.cachedData.konten = konten;
+    function renderGuruBuilderView(container) {
+      const konten = state.cachedData.konten || [];
 
       container.innerHTML = `
         <div class="space-y-4">
@@ -1069,7 +1080,7 @@
     }
 
     function editKonten(id) {
-      const k = state.cachedData.konten.find(x => x.id_konten === id);
+      const k = (state.cachedData.konten || []).find(x => x.id_konten === id);
       if (k) openKontenModal(k);
     }
 
@@ -1096,6 +1107,7 @@
 
       if (res.success) {
         closeKontenModal();
+        await fetchAllInitialData(true); // Refresh cache
         Swal.fire({ icon: 'success', title: 'Tersimpan!', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('guru-builder');
       } else {
@@ -1116,6 +1128,7 @@
         if (result.isConfirmed) {
           const res = await apiPost({ action: 'delete_konten', id_konten: id });
           if (res.success) {
+            await fetchAllInitialData(true); // Refresh cache
             Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
             switchView('guru-builder');
           }
@@ -1124,7 +1137,7 @@
     }
 
     /* ==========================================================
-       10. MODAL UTILITIES
+       11. MODAL UTILITIES
        ========================================================== */
     function openLoginModal() {
       document.getElementById('login-modal').classList.remove('hidden');
@@ -1137,9 +1150,9 @@
     }
 
     // INIT
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       updateUIForAuthenticatedUser();
-      switchView('home');
+      await switchView('home');
     });
   </script>
 </body>

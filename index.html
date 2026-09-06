@@ -111,7 +111,9 @@
     </div>
   </div>
 
-  <!-- MODAL AUTHENTICATION (LOGIN) -->
+  <!-- MODALS SECTION -->
+
+  <!-- 1. Modal Login -->
   <div id="login-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
       <div class="text-center space-y-1">
@@ -134,14 +136,171 @@
         <div id="login-error-msg" class="hidden text-xs text-red-600 font-bold text-center bg-red-50 p-2 rounded-xl border border-red-200"></div>
 
         <div class="flex gap-2 pt-2">
-          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">
-            Batal
-          </button>
-          <button type="submit" id="btn-submit-login" class="flex-1 py-2.5 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-600 transition">
-            Masuk
-          </button>
+          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">Batal</button>
+          <button type="submit" id="btn-submit-login" class="flex-1 py-2.5 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-600 transition">Masuk</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 2. Modal User (Admin) -->
+  <div id="user-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="user-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Pengguna Baru</h3>
+        <button onclick="closeUserModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleUserSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="user-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
+          <input type="text" id="user-form-nama" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Username / NIS</label>
+            <input type="text" id="user-form-username" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Password</label>
+            <input type="text" id="user-form-password" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Role Peran</label>
+            <select id="user-form-role" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
+              <option value="siswa">Siswa</option>
+              <option value="guru">Guru</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kelas (Khusus Siswa)</label>
+            <input type="text" id="user-form-kelas" placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Modal Konten LKPD (Guru) -->
+  <div id="konten-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="konten-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Konten LKPD</h3>
+        <button onclick="closeKontenModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleKontenSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="konten-form-id" />
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kategori Bagian</label>
+            <select id="konten-form-kategori" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
+              <option value="fenomena">A. Fenomena</option>
+              <option value="usaha">B. Usaha</option>
+              <option value="energi">C. Energi</option>
+              <option value="steam">D. Proyek STEAM</option>
+              <option value="latihan">F. Latihan Mandiri</option>
+              <option value="refleksi">G. Refleksi</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Urutan Tampil</label>
+            <input type="number" id="konten-form-urutan" value="1" min="1" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Judul Bagian</label>
+          <input type="text" id="konten-form-judul" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Isi Teks / Pertanyaan</label>
+          <textarea id="konten-form-teks" rows="4" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">URL Gambar (Opsional)</label>
+          <input type="text" id="konten-form-gambar" placeholder="https://..." class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeKontenModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">Simpan Konten</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Modal Bank Soal (Guru) -->
+  <div id="soal-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="soal-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Soal Evaluasi</h3>
+        <button onclick="closeSoalModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleSoalSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="soal-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pertanyaan Soal</label>
+          <textarea id="soal-form-pertanyaan" rows="3" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi A</label>
+            <input type="text" id="soal-form-a" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi B</label>
+            <input type="text" id="soal-form-b" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi C</label>
+            <input type="text" id="soal-form-c" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi D</label>
+            <input type="text" id="soal-form-d" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Kunci Jawaban Benar</label>
+          <select id="soal-form-kunci" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
+            <option value="A">Opsi A</option>
+            <option value="B">Opsi B</option>
+            <option value="C">Opsi C</option>
+            <option value="D">Opsi D</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeSoalModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">Simpan Soal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Modal Koreksi LKPD Siswa (Guru) -->
+  <div id="grading-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <div>
+          <h3 class="text-base font-black text-brand-navy font-heading">🔍 KOREKSI LEMBAR E-LKPD</h3>
+          <p id="grading-student-info" class="text-xs text-slate-500">Siswa: -</p>
+        </div>
+        <button onclick="closeGradingModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <div id="grading-modal-body" class="overflow-y-auto flex-1 space-y-4 text-xs pr-1">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="pt-3 border-t flex items-center justify-between gap-2">
+        <button onclick="closeGradingModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Tutup</button>
+        <button onclick="submitTeacherGrading()" class="px-5 py-2 bg-brand-emerald text-white font-black rounded-xl text-xs shadow hover:bg-emerald-600 transition">💾 Simpan Penilaian</button>
+      </div>
     </div>
   </div>
 
@@ -154,12 +313,46 @@
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxb6KPt_wknC7BiqMSkd9QSMF2t158GLj5xxHUVQOCzIgbndw8ysQbTEZHWud8Gnlu0/exec';
 
     const state = {
-      currentUser: null, // { id, username, name, role, kelas }
-      currentView: 'home'
+      currentUser: null,
+      currentView: 'home',
+      cachedData: {
+        users: [],
+        konten: [],
+        soal: [],
+        submissions: []
+      },
+      reviewTargetId: null
     };
 
     /* ==========================================================
-       2. AUTENTIKASI & KONTROL AKSES (ROLE-BASED)
+       2. HELPER FETCH REST API
+       ========================================================== */
+    async function apiGet(action) {
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=${action}`);
+        const result = await res.json();
+        return result.success ? result.data : [];
+      } catch (err) {
+        console.error('API GET Error:', err);
+        return [];
+      }
+    }
+
+    async function apiPost(payload) {
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (err) {
+        console.error('API POST Error:', err);
+        return { success: false, message: 'Gagal terhubung ke server database!' };
+      }
+    }
+
+    /* ==========================================================
+       3. AUTENTIKASI & USER MANAGEMENT
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
@@ -172,34 +365,23 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Memproses...';
 
-      try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'login', username: un, password: pw })
-        });
-        const result = await res.json();
+      const result = await apiPost({ action: 'login', username: un, password: pw });
 
-        if (result.success) {
-          state.currentUser = result.user;
-          closeLoginModal();
-          updateUIForAuthenticatedUser();
-          
-          // Redirect sesuai Role
-          if (result.user.role === 'admin') switchView('admin-users');
-          else if (result.user.role === 'guru') switchView('guru-dashboard');
-          else switchView('siswa-materi');
-
-        } else {
-          errorMsg.textContent = result.message || 'Login gagal!';
-          errorMsg.classList.remove('hidden');
-        }
-      } catch (err) {
-        errorMsg.textContent = 'Gagal terhubung ke server database!';
+      if (result.success) {
+        state.currentUser = result.user;
+        closeLoginModal();
+        updateUIForAuthenticatedUser();
+        
+        if (result.user.role === 'admin') switchView('admin-users');
+        else if (result.user.role === 'guru') switchView('guru-dashboard');
+        else switchView('siswa-materi');
+      } else {
+        errorMsg.textContent = result.message || 'Login gagal!';
         errorMsg.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Masuk';
       }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Masuk';
     }
 
     function logout() {
@@ -238,38 +420,35 @@
     }
 
     /* ==========================================================
-       3. NAVIGATION & SIDEBAR MANAGER
+       4. NAVIGATION & SIDEBAR MANAGER
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
       navContainer.innerHTML = '';
 
       let items = [
-        { id: 'home', title: 'Beranda E-LKPD', icon: '🏠', roles: ['guest', 'admin', 'guru', 'siswa'] }
+        { id: 'home', title: 'Beranda E-LKPD', icon: '🏠' }
       ];
 
-      // Menu Khusus Admin
       if (state.currentUser?.role === 'admin') {
         items.push(
-          { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥', roles: ['admin'] }
+          { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥' }
         );
       }
 
-      // Menu Khusus Guru
       if (state.currentUser?.role === 'guru') {
         items.push(
-          { id: 'guru-dashboard', title: 'Dashboard Guru', icon: '📊', roles: ['guru'] },
-          { id: 'guru-konten', title: 'Kelola Konten LKPD', icon: '📝', roles: ['guru'] },
-          { id: 'guru-soal', title: 'Kelola Bank Soal', icon: '❓', roles: ['guru'] }
+          { id: 'guru-dashboard', title: 'Dashboard Koreksi', icon: '📊' },
+          { id: 'guru-konten', title: 'Kelola Konten LKPD', icon: '📝' },
+          { id: 'guru-soal', title: 'Kelola Bank Soal', icon: '❓' }
         );
       }
 
-      // Menu Khusus Siswa / Tamu
       if (!state.currentUser || state.currentUser?.role === 'siswa') {
         items.push(
-          { id: 'siswa-materi', title: 'Materi IPA Interaktif', icon: '📖', roles: ['siswa', 'guest'] },
-          { id: 'siswa-lkpd', title: 'Isi Lembar E-LKPD', icon: '✏️', roles: ['siswa'] },
-          { id: 'siswa-nilai', title: 'Hasil & Nilai Saya', icon: '🏆', roles: ['siswa'] }
+          { id: 'siswa-materi', title: 'Materi IPA Interaktif', icon: '📖' },
+          { id: 'siswa-lkpd', title: 'Isi Lembar E-LKPD', icon: '✏️' },
+          { id: 'siswa-nilai', title: 'Hasil & Nilai Saya', icon: '🏆' }
         );
       }
 
@@ -286,15 +465,17 @@
     }
 
     /* ==========================================================
-       4. ROUTER VIEW SWITCHER
+       5. ROUTER VIEW SWITCHER
        ========================================================== */
-    function switchView(viewId) {
+    async function switchView(viewId) {
       state.currentView = viewId;
       renderSidebarNav();
 
       const viewport = document.getElementById('content-viewport');
       const titleElem = document.getElementById('view-title');
       const subtitleElem = document.getElementById('view-subtitle');
+
+      viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat data dari server...</div>`;
 
       switch (viewId) {
         case 'home':
@@ -306,43 +487,25 @@
         case 'admin-users':
           titleElem.textContent = 'MANAJEMEN PENGGUNA';
           subtitleElem.textContent = 'Tambah dan atur akun Admin, Guru, dan Siswa';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Admin: Kelola User - Akan dibangun di Tahap 3]</h3></div>`;
+          await renderAdminUsersView(viewport);
           break;
 
         case 'guru-dashboard':
-          titleElem.textContent = 'DASHBOARD GURU';
-          subtitleElem.textContent = 'Rekapitulasi dan penilain lembar kerja siswa';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: Koreksi & Rekap - Akan dibangun di Tahap 3]</h3></div>`;
+          titleElem.textContent = 'DASHBOARD KOREKSI GURU';
+          subtitleElem.textContent = 'Rekapitulasi dan penilaian lembar kerja siswa';
+          await renderGuruDashboardView(viewport);
           break;
 
         case 'guru-konten':
           titleElem.textContent = 'KELOLA KONTEN LKPD';
           subtitleElem.textContent = 'Tambah dan ubah materi serta instruksi LKPD';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: CRUD Konten - Akan dibangun di Tahap 3]</h3></div>`;
+          await renderGuruKontenView(viewport);
           break;
 
         case 'guru-soal':
           titleElem.textContent = 'KELOLA BANK SOAL';
           subtitleElem.textContent = 'Tambah dan ubah soal kuis evaluasi';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: CRUD Soal - Akan dibangun di Tahap 3]</h3></div>`;
-          break;
-
-        case 'siswa-materi':
-          titleElem.textContent = 'MATERI USAHA & ENERGI';
-          subtitleElem.textContent = 'Pelajari konsep IPA berbasis STEAM';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Materi & Simulasi - Akan dibangun di Tahap 4]</h3></div>`;
-          break;
-
-        case 'siswa-lkpd':
-          titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK';
-          subtitleElem.textContent = 'Isi jawaban dan gambar rancangan STEAM';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Kanvas STEAM & Isian - Akan dibangun di Tahap 4]</h3></div>`;
-          break;
-
-        case 'siswa-nilai':
-          titleElem.textContent = 'HASIL BELAJAR SAYA';
-          subtitleElem.textContent = 'Lihat skor evaluasi dan catatan dari guru';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Hasil & Nilai - Akan dibangun di Tahap 4]</h3></div>`;
+          await renderGuruSoalView(viewport);
           break;
 
         default:
@@ -371,13 +534,11 @@
               <h4 class="font-black text-brand-navy text-xs font-heading">Role Admin</h4>
               <p class="text-[11px] text-slate-500">Mendaftarkan akun Guru dan Siswa ke sistem.</p>
             </div>
-
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
               <span class="text-2xl block">👨‍🏫</span>
               <h4 class="font-black text-brand-navy text-xs font-heading">Role Guru</h4>
               <p class="text-[11px] text-slate-500">Mengelola materi/soal dan memberikan nilai LKPD.</p>
             </div>
-
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
               <span class="text-2xl block">🎓</span>
               <h4 class="font-black text-brand-navy text-xs font-heading">Role Siswa</h4>
@@ -389,7 +550,409 @@
     }
 
     /* ==========================================================
-       5. MODAL UTILITIES
+       6. VIEW & CRUD: ADMIN USERS
+       ========================================================== */
+    async function renderAdminUsersView(container) {
+      const users = await apiGet('get_users');
+      state.cachedData.users = users;
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+            <span class="text-xs font-bold text-slate-700">Total Pengguna: <b>${users.length} Akun</b></span>
+            <button onclick="openUserModal()" class="px-4 py-2 bg-brand-blue text-white font-bold text-xs rounded-xl shadow hover:bg-blue-600 transition">
+              + Tambah Akun Baru
+            </button>
+          </div>
+
+          <div class="bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-brand-navy text-white font-heading">
+                  <tr>
+                    <th class="p-3">Nama Lengkap</th>
+                    <th class="p-3">Username</th>
+                    <th class="p-3">Role</th>
+                    <th class="p-3">Kelas</th>
+                    <th class="p-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${users.map(u => `
+                    <tr class="hover:bg-slate-50">
+                      <td class="p-3 font-bold text-slate-800">${u.nama_lengkap}</td>
+                      <td class="p-3 font-mono text-slate-600">${u.username}</td>
+                      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : u.role === 'guru' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${u.role}</span></td>
+                      <td class="p-3 text-slate-600">${u.kelas || '-'}</td>
+                      <td class="p-3 text-center space-x-1">
+                        <button onclick="editUser('${u.user_id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg">Edit</button>
+                        <button onclick="deleteUser('${u.user_id}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[10px] rounded-lg">Hapus</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openUserModal(user = null) {
+      document.getElementById('user-form-id').value = user ? user.user_id : '';
+      document.getElementById('user-form-nama').value = user ? user.nama_lengkap : '';
+      document.getElementById('user-form-username').value = user ? user.username : '';
+      document.getElementById('user-form-password').value = user ? user.password : '';
+      document.getElementById('user-form-role').value = user ? user.role : 'siswa';
+      document.getElementById('user-form-kelas').value = user ? user.kelas : '';
+      
+      document.getElementById('user-modal-title').textContent = user ? 'Edit Akun Pengguna' : 'Tambah Pengguna Baru';
+      document.getElementById('user-modal').classList.remove('hidden');
+      document.getElementById('user-modal').classList.add('flex');
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').classList.add('hidden');
+      document.getElementById('user-modal').classList.remove('flex');
+    }
+
+    function editUser(userId) {
+      const u = state.cachedData.users.find(x => x.user_id === userId);
+      if (u) openUserModal(u);
+    }
+
+    async function handleUserSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('user-form-id').value;
+      const payload = {
+        action: id ? 'update_user' : 'add_user',
+        user_id: id,
+        nama_lengkap: document.getElementById('user-form-nama').value,
+        username: document.getElementById('user-form-username').value,
+        password: document.getElementById('user-form-password').value,
+        role: document.getElementById('user-form-role').value,
+        kelas: document.getElementById('user-form-kelas').value
+      };
+
+      const res = await apiPost(payload);
+      alert(res.message);
+      if (res.success) {
+        closeUserModal();
+        switchView('admin-users');
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('Apakah kamu yakin ingin menghapus akun ini?')) return;
+      const res = await apiPost({ action: 'delete_user', user_id: userId });
+      alert(res.message);
+      if (res.success) switchView('admin-users');
+    }
+
+    /* ==========================================================
+       7. VIEW & CRUD: GURU KONTEN LKPD
+       ========================================================== */
+    async function renderGuruKontenView(container) {
+      const konten = await apiGet('get_konten');
+      state.cachedData.konten = konten;
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+            <span class="text-xs font-bold text-slate-700">Total Konten: <b>${konten.length} Item</b></span>
+            <button onclick="openKontenModal()" class="px-4 py-2 bg-brand-blue text-white font-bold text-xs rounded-xl shadow hover:bg-blue-600 transition">
+              + Tambah Konten LKPD
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${konten.map(k => `
+              <div class="bg-white p-4 rounded-3xl border shadow-sm flex flex-col justify-between space-y-2">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-black text-[10px] rounded-full uppercase">${k.kategori}</span>
+                    <span class="text-[10px] text-slate-400 font-bold">Urutan: ${k.urutan}</span>
+                  </div>
+                  <h4 class="font-black text-brand-navy text-xs font-heading">${k.judul}</h4>
+                  <p class="text-xs text-slate-600 font-medium mt-1">${k.isi_teks}</p>
+                </div>
+                <div class="flex justify-end gap-1 pt-2 border-t">
+                  <button onclick="editKonten('${k.id_konten}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg">Edit</button>
+                  <button onclick="deleteKonten('${k.id_konten}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[10px] rounded-lg">Hapus</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function openKontenModal(k = null) {
+      document.getElementById('konten-form-id').value = k ? k.id_konten : '';
+      document.getElementById('konten-form-kategori').value = k ? k.kategori : 'fenomena';
+      document.getElementById('konten-form-urutan').value = k ? k.urutan : '1';
+      document.getElementById('konten-form-judul').value = k ? k.judul : '';
+      document.getElementById('konten-form-teks').value = k ? k.isi_teks : '';
+      document.getElementById('konten-form-gambar').value = k ? k.gambar_url : '';
+
+      document.getElementById('konten-modal-title').textContent = k ? 'Edit Konten LKPD' : 'Tambah Konten LKPD';
+      document.getElementById('konten-modal').classList.remove('hidden');
+      document.getElementById('konten-modal').classList.add('flex');
+    }
+
+    function closeKontenModal() {
+      document.getElementById('konten-modal').classList.add('hidden');
+      document.getElementById('konten-modal').classList.remove('flex');
+    }
+
+    function editKonten(id) {
+      const k = state.cachedData.konten.find(x => x.id_konten === id);
+      if (k) openKontenModal(k);
+    }
+
+    async function handleKontenSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'save_konten',
+        id_konten: document.getElementById('konten-form-id').value,
+        kategori: document.getElementById('konten-form-kategori').value,
+        urutan: document.getElementById('konten-form-urutan').value,
+        judul: document.getElementById('konten-form-judul').value,
+        isi_teks: document.getElementById('konten-form-teks').value,
+        gambar_url: document.getElementById('konten-form-gambar').value
+      };
+
+      const res = await apiPost(payload);
+      alert(res.message);
+      if (res.success) {
+        closeKontenModal();
+        switchView('guru-konten');
+      }
+    }
+
+    async function deleteKonten(id) {
+      if (!confirm('Hapus konten ini?')) return;
+      const res = await apiPost({ action: 'delete_konten', id_konten: id });
+      alert(res.message);
+      if (res.success) switchView('guru-konten');
+    }
+
+    /* ==========================================================
+       8. VIEW & CRUD: GURU BANK SOAL
+       ========================================================== */
+    async function renderGuruSoalView(container) {
+      const soal = await apiGet('get_soal');
+      state.cachedData.soal = soal;
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+            <span class="text-xs font-bold text-slate-700">Total Soal: <b>${soal.length} Soal Evaluasi</b></span>
+            <button onclick="openSoalModal()" class="px-4 py-2 bg-brand-blue text-white font-bold text-xs rounded-xl shadow hover:bg-blue-600 transition">
+              + Tambah Soal Baru
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${soal.map((s, idx) => `
+              <div class="bg-white p-4 rounded-3xl border shadow-sm space-y-2 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-xs text-brand-navy">Soal #${idx + 1}</span>
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black text-[10px] rounded-full">Kunci: ${s.kunci_jawaban}</span>
+                  </div>
+                  <p class="text-xs font-bold text-slate-800">${s.pertanyaan}</p>
+                  <div class="mt-2 space-y-1 text-[11px] text-slate-600">
+                    <div><b>A.</b> ${s.opsi_a}</div>
+                    <div><b>B.</b> ${s.opsi_b}</div>
+                    <div><b>C.</b> ${s.opsi_c}</div>
+                    <div><b>D.</b> ${s.opsi_d}</div>
+                  </div>
+                </div>
+                <div class="flex justify-end gap-1 pt-2 border-t">
+                  <button onclick="editSoal('${s.id_soal}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg">Edit</button>
+                  <button onclick="deleteSoal('${s.id_soal}')" class="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[10px] rounded-lg">Hapus</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function openSoalModal(s = null) {
+      document.getElementById('soal-form-id').value = s ? s.id_soal : '';
+      document.getElementById('soal-form-pertanyaan').value = s ? s.pertanyaan : '';
+      document.getElementById('soal-form-a').value = s ? s.opsi_a : '';
+      document.getElementById('soal-form-b').value = s ? s.opsi_b : '';
+      document.getElementById('soal-form-c').value = s ? s.opsi_c : '';
+      document.getElementById('soal-form-d').value = s ? s.opsi_d : '';
+      document.getElementById('soal-form-kunci').value = s ? s.kunci_jawaban : 'A';
+
+      document.getElementById('soal-modal-title').textContent = s ? 'Edit Soal Evaluasi' : 'Tambah Soal Baru';
+      document.getElementById('soal-modal').classList.remove('hidden');
+      document.getElementById('soal-modal').classList.add('flex');
+    }
+
+    function closeSoalModal() {
+      document.getElementById('soal-modal').classList.add('hidden');
+      document.getElementById('soal-modal').classList.remove('flex');
+    }
+
+    function editSoal(id) {
+      const s = state.cachedData.soal.find(x => x.id_soal === id);
+      if (s) openSoalModal(s);
+    }
+
+    async function handleSoalSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'save_soal',
+        id_soal: document.getElementById('soal-form-id').value,
+        pertanyaan: document.getElementById('soal-form-pertanyaan').value,
+        opsi_a: document.getElementById('soal-form-a').value,
+        opsi_b: document.getElementById('soal-form-b').value,
+        opsi_c: document.getElementById('soal-form-c').value,
+        opsi_d: document.getElementById('soal-form-d').value,
+        kunci_jawaban: document.getElementById('soal-form-kunci').value
+      };
+
+      const res = await apiPost(payload);
+      alert(res.message);
+      if (res.success) {
+        closeSoalModal();
+        switchView('guru-soal');
+      }
+    }
+
+    async function deleteSoal(id) {
+      if (!confirm('Hapus soal ini?')) return;
+      const res = await apiPost({ action: 'delete_soal', id_soal: id });
+      alert(res.message);
+      if (res.success) switchView('guru-soal');
+    }
+
+    /* ==========================================================
+       9. VIEW & GRADINGS: GURU DASHBOARD PENILAIAN
+       ========================================================== */
+    async function renderGuruDashboardView(container) {
+      const subs = await apiGet('get_submissions');
+      state.cachedData.submissions = subs;
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+            <span class="text-xs font-bold text-slate-700">Total Pengumpulan Siswa: <b>${subs.length} Lembar</b></span>
+            <button onclick="switchView('guru-dashboard')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">🔄 Refresh Data</button>
+          </div>
+
+          <div class="bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-brand-navy text-white font-heading">
+                  <tr>
+                    <th class="p-3">Nama Siswa</th>
+                    <th class="p-3">Kelas</th>
+                    <th class="p-3">Skor PG</th>
+                    <th class="p-3">Nilai Esai/STEAM</th>
+                    <th class="p-3">Nilai Akhir</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${subs.length === 0 ? `
+                    <tr><td colspan="7" class="p-5 text-center text-slate-400">Belum ada siswa yang mengirim E-LKPD.</td></tr>
+                  ` : subs.map(s => `
+                    <tr class="hover:bg-slate-50">
+                      <td class="p-3 font-bold text-slate-800">${s.nama_siswa}</td>
+                      <td class="p-3 text-slate-600">${s.kelas}</td>
+                      <td class="p-3 font-mono font-bold text-brand-blue">${s.skor_pg}</td>
+                      <td class="p-3 font-mono font-bold ${s.nilai_esai !== '' ? 'text-emerald-600' : 'text-amber-600'}">${s.nilai_esai !== '' ? s.nilai_esai : 'Belum Dinilai'}</td>
+                      <td class="p-3 font-mono font-black text-brand-navy">${s.nilai_akhir}</td>
+                      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
+                      <td class="p-3 text-center">
+                        <button onclick="openReviewModal('${s.submission_id}')" class="px-3 py-1 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[10px] rounded-lg shadow">Periksa</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openReviewModal(subId) {
+      const sub = state.cachedData.submissions.find(s => s.submission_id === subId);
+      if (!sub) return;
+
+      state.reviewTargetId = subId;
+      document.getElementById('grading-student-info').textContent = `Siswa: ${sub.nama_siswa} (${sub.kelas}) | Tanggal: ${sub.tanggal}`;
+
+      let answersObj = {};
+      try { answersObj = JSON.parse(sub.jawaban_json); } catch(e) {}
+
+      const modalBody = document.getElementById('grading-modal-body');
+      modalBody.innerHTML = `
+        <div class="space-y-3">
+          <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
+            <span class="font-bold text-brand-navy block">A. Jawaban Teks Siswa:</span>
+            ${Object.entries(answersObj).map(([key, val]) => `
+              <div><b>${key}:</b> ${val || '-'}</div>
+            `).join('')}
+          </div>
+
+          <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200">
+            <span class="font-bold text-amber-950 block mb-1">🖼️ Hasil Gambar Rancangan STEAM Siswa:</span>
+            ${sub.canvas_image_base64 ? `
+              <img src="${sub.canvas_image_base64}" class="w-full max-w-md mx-auto rounded-xl border bg-white shadow-xs my-2" />
+            ` : '<p class="text-slate-400">Siswa tidak menggambar rancangan.</p>'}
+          </div>
+
+          <div class="p-3 bg-slate-50 rounded-2xl border space-y-2">
+            <div>
+              <label class="block font-bold text-slate-800 mb-1">Input Nilai Esai & STEAM (0 - 100)</label>
+              <input type="number" id="grading-input-esai" value="${sub.nilai_esai !== '' ? sub.nilai_esai : 85}" min="0" max="100" class="w-full p-2.5 rounded-xl border font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-800 mb-1">Catatan / Umpan Balik Guru</label>
+              <textarea id="grading-input-catatan" rows="2" class="w-full p-2.5 rounded-xl border" placeholder="Komentar apresiasi atau evaluasi...">${sub.catatan_guru || ''}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('grading-modal').classList.remove('hidden');
+      document.getElementById('grading-modal').classList.add('flex');
+    }
+
+    function closeGradingModal() {
+      document.getElementById('grading-modal').classList.add('hidden');
+      document.getElementById('grading-modal').classList.remove('flex');
+    }
+
+    async function submitTeacherGrading() {
+      if (!state.reviewTargetId) return;
+
+      const payload = {
+        action: 'grade_submission',
+        submission_id: state.reviewTargetId,
+        nilai_esai: document.getElementById('grading-input-esai').value,
+        catatan_guru: document.getElementById('grading-input-catatan').value
+      };
+
+      const res = await apiPost(payload);
+      alert(res.message);
+      if (res.success) {
+        closeGradingModal();
+        switchView('guru-dashboard');
+      }
+    }
+
+    /* ==========================================================
+       10. MODAL UTILITIES
        ========================================================== */
     function openLoginModal() {
       document.getElementById('login-modal').classList.remove('hidden');

@@ -2,11 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>E-LKPD Interaktif IPA - Usaha & Energi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>E-LKPD Interaktif IPA STEAM - Usaha & Energi</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!-- Google Fonts: Poppins & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,9 +43,13 @@
       font-family: 'Nunito', sans-serif;
       background-color: #F8FAFC;
       color: #1E293B;
+      user-select: none;
     }
     h1, h2, h3, h4, .font-heading {
       font-family: 'Poppins', sans-serif;
+    }
+    canvas {
+      touch-action: none;
     }
   </style>
 </head>
@@ -309,7 +316,6 @@
     /* ==========================================================
        1. KONFIGURASI API & STATE GLOBAL
        ========================================================== */
-    // TEMPELKAN URL WEB APP GAS HASIL DEPLOY TAHAP 1 DI SINI:
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxb6KPt_wknC7BiqMSkd9QSMF2t158GLj5xxHUVQOCzIgbndw8ysQbTEZHWud8Gnlu0/exec';
 
     const state = {
@@ -321,11 +327,93 @@
         soal: [],
         submissions: []
       },
+      siswaAnswers: {
+        pg: {}
+      },
       reviewTargetId: null
     };
 
     /* ==========================================================
-       2. HELPER FETCH REST API
+       2. CANVAS Menggambar (STEAM)
+       ========================================================== */
+    let canvasCtx = null;
+    let isDrawing = false;
+    let currentPenColor = '#0B2545';
+    let currentLineWidth = 3;
+
+    function initCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || 600;
+      canvas.height = 250;
+
+      canvasCtx = canvas.getContext('2d');
+      canvasCtx.fillStyle = '#FFFFFF';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.lineWidth = currentLineWidth;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.lineJoin = 'round';
+      canvasCtx.strokeStyle = currentPenColor;
+
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+      canvas.onmouseleave = stopDrawing;
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) startDrawing(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) draw(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    }
+
+    function getCanvasCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.lineTo(coords.x, coords.y);
+      canvasCtx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+    function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
+    function setCanvasLineWidth(w) { currentLineWidth = w; if (canvasCtx) canvasCtx.lineWidth = w; }
+    function clearCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (canvas && canvasCtx) {
+        canvasCtx.fillStyle = '#FFFFFF';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    /* ==========================================================
+       3. HELPER FETCH REST API
        ========================================================== */
     async function apiGet(action) {
       try {
@@ -352,16 +440,14 @@
     }
 
     /* ==========================================================
-       3. AUTENTIKASI & USER MANAGEMENT
+       4. AUTENTIKASI & USER MANAGEMENT
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
       const un = document.getElementById('login-username').value.trim();
       const pw = document.getElementById('login-password').value.trim();
-      const errorMsg = document.getElementById('login-error-msg');
       const submitBtn = document.getElementById('btn-submit-login');
 
-      errorMsg.classList.add('hidden');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Memproses...';
 
@@ -371,13 +457,24 @@
         state.currentUser = result.user;
         closeLoginModal();
         updateUIForAuthenticatedUser();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Berhasil!',
+          text: `Selamat datang, ${result.user.name}!`,
+          timer: 1500,
+          showConfirmButton: false
+        });
         
         if (result.user.role === 'admin') switchView('admin-users');
         else if (result.user.role === 'guru') switchView('guru-dashboard');
         else switchView('siswa-materi');
       } else {
-        errorMsg.textContent = result.message || 'Login gagal!';
-        errorMsg.classList.remove('hidden');
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Login',
+          text: result.message || 'Username atau password salah!'
+        });
       }
 
       submitBtn.disabled = false;
@@ -385,9 +482,22 @@
     }
 
     function logout() {
-      state.currentUser = null;
-      updateUIForAuthenticatedUser();
-      switchView('home');
+      Swal.fire({
+        title: 'Keluar dari Sistem?',
+        text: 'Sesi kamu akan diakhiri.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Logout!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          state.currentUser = null;
+          updateUIForAuthenticatedUser();
+          switchView('home');
+          Swal.fire({ icon: 'success', title: 'Berhasil Logout', timer: 1200, showConfirmButton: false });
+        }
+      });
     }
 
     function updateUIForAuthenticatedUser() {
@@ -420,7 +530,7 @@
     }
 
     /* ==========================================================
-       4. NAVIGATION & SIDEBAR MANAGER
+       5. NAVIGATION & SIDEBAR MANAGER
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
@@ -465,7 +575,7 @@
     }
 
     /* ==========================================================
-       5. ROUTER VIEW SWITCHER
+       6. ROUTER VIEW SWITCHER
        ========================================================== */
     async function switchView(viewId) {
       state.currentView = viewId;
@@ -506,6 +616,24 @@
           titleElem.textContent = 'KELOLA BANK SOAL';
           subtitleElem.textContent = 'Tambah dan ubah soal kuis evaluasi';
           await renderGuruSoalView(viewport);
+          break;
+
+        case 'siswa-materi':
+          titleElem.textContent = 'MATERI INTERAKTIF IPA STEAM';
+          subtitleElem.textContent = 'Konsep Usaha dan Energi Kelas VIII SMP';
+          await renderSiswaMateriView(viewport);
+          break;
+
+        case 'siswa-lkpd':
+          titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK (E-LKPD)';
+          subtitleElem.textContent = 'Isi jawaban, gambar rancangan STEAM, dan kuis evaluasi';
+          await renderSiswaLkpdView(viewport);
+          break;
+
+        case 'siswa-nilai':
+          titleElem.textContent = 'HASIL & NILAI BELAJAR SAYA';
+          subtitleElem.textContent = 'Status pengerjaan, skor kuis, dan umpan balik guru';
+          await renderSiswaNilaiView(viewport);
           break;
 
         default:
@@ -550,7 +678,7 @@
     }
 
     /* ==========================================================
-       6. VIEW & CRUD: ADMIN USERS
+       7. VIEW & CRUD: ADMIN USERS
        ========================================================== */
     async function renderAdminUsersView(container) {
       const users = await apiGet('get_users');
@@ -635,22 +763,37 @@
       };
 
       const res = await apiPost(payload);
-      alert(res.message);
       if (res.success) {
         closeUserModal();
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('admin-users');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
       }
     }
 
     async function deleteUser(userId) {
-      if (!confirm('Apakah kamu yakin ingin menghapus akun ini?')) return;
-      const res = await apiPost({ action: 'delete_user', user_id: userId });
-      alert(res.message);
-      if (res.success) switchView('admin-users');
+      Swal.fire({
+        title: 'Hapus Akun Pengguna?',
+        text: 'Data yang dihapus tidak dapat dikembalikan!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const res = await apiPost({ action: 'delete_user', user_id: userId });
+          if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+            switchView('admin-users');
+          }
+        }
+      });
     }
 
     /* ==========================================================
-       7. VIEW & CRUD: GURU KONTEN LKPD
+       8. VIEW & CRUD: GURU KONTEN LKPD
        ========================================================== */
     async function renderGuruKontenView(container) {
       const konten = await apiGet('get_konten');
@@ -723,22 +866,37 @@
       };
 
       const res = await apiPost(payload);
-      alert(res.message);
       if (res.success) {
         closeKontenModal();
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('guru-konten');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
       }
     }
 
     async function deleteKonten(id) {
-      if (!confirm('Hapus konten ini?')) return;
-      const res = await apiPost({ action: 'delete_konten', id_konten: id });
-      alert(res.message);
-      if (res.success) switchView('guru-konten');
+      Swal.fire({
+        title: 'Hapus Konten Ini?',
+        text: 'Konten akan dihapus dari modul LKPD!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const res = await apiPost({ action: 'delete_konten', id_konten: id });
+          if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+            switchView('guru-konten');
+          }
+        }
+      });
     }
 
     /* ==========================================================
-       8. VIEW & CRUD: GURU BANK SOAL
+       9. VIEW & CRUD: GURU BANK SOAL
        ========================================================== */
     async function renderGuruSoalView(container) {
       const soal = await apiGet('get_soal');
@@ -818,22 +976,37 @@
       };
 
       const res = await apiPost(payload);
-      alert(res.message);
       if (res.success) {
         closeSoalModal();
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('guru-soal');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
       }
     }
 
     async function deleteSoal(id) {
-      if (!confirm('Hapus soal ini?')) return;
-      const res = await apiPost({ action: 'delete_soal', id_soal: id });
-      alert(res.message);
-      if (res.success) switchView('guru-soal');
+      Swal.fire({
+        title: 'Hapus Soal Ini?',
+        text: 'Soal akan dihapus dari bank soal evaluasi!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const res = await apiPost({ action: 'delete_soal', id_soal: id });
+          if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Terhapus!', text: res.message, timer: 1500, showConfirmButton: false });
+            switchView('guru-soal');
+          }
+        }
+      });
     }
 
     /* ==========================================================
-       9. VIEW & GRADINGS: GURU DASHBOARD PENILAIAN
+       10. VIEW & GRADINGS: GURU DASHBOARD PENILAIAN
        ========================================================== */
     async function renderGuruDashboardView(container) {
       const subs = await apiGet('get_submissions');
@@ -944,15 +1117,373 @@
       };
 
       const res = await apiPost(payload);
-      alert(res.message);
       if (res.success) {
         closeGradingModal();
+        Swal.fire({ icon: 'success', title: 'Nilai Tersimpan!', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('guru-dashboard');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
       }
     }
 
     /* ==========================================================
-       10. MODAL UTILITIES
+       11. MODUL SISWA: MATERI, LKPD, & HASIL NILAI
+       ========================================================== */
+    async function renderSiswaMateriView(container) {
+      const konten = await apiGet('get_konten');
+
+      container.innerHTML = `
+        <div class="space-y-4 max-w-4xl mx-auto">
+          <div class="p-5 bg-gradient-to-r from-brand-navy to-blue-900 text-white rounded-3xl shadow-md space-y-1">
+            <span class="text-[10px] font-black text-brand-yellow uppercase tracking-wider font-heading block">MODUL PEMBELAJARAN IPA STEAM</span>
+            <h3 class="text-xl font-black font-heading">Usaha dan Energi Dalam Kehidupan Sehari-hari</h3>
+            <p class="text-xs text-slate-200">Pelajari fenomena, rumus fisika, dan aplikasi proyek STEAM di bawah ini.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+              <span class="px-2.5 py-1 bg-blue-100 text-brand-blue font-black text-[10px] rounded-full uppercase">1. Pengertian Usaha</span>
+              <h4 class="font-black text-slate-800 text-xs">Rumus: W = F × s</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <b>Usaha (W)</b> terjadi jika gaya <b>F</b> yang diberikan pada benda menyebabkan perpindahan sejauh <b>s</b>.
+              </p>
+            </div>
+
+            <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+              <span class="px-2.5 py-1 bg-amber-100 text-amber-800 font-black text-[10px] rounded-full uppercase">2. Energi Kinetik</span>
+              <h4 class="font-black text-slate-800 text-xs">Rumus: Ek = ½ × m × v²</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Energi yang dimiliki oleh benda yang sedang bergerak dengan massa <b>m</b> dan kecepatan <b>v</b>.
+              </p>
+            </div>
+
+            <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+              <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black text-[10px] rounded-full uppercase">3. Energi Potensial</span>
+              <h4 class="font-black text-slate-800 text-xs">Rumus: Ep = m × g × h</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Energi posisi benda yang berada di ketinggian <b>h</b> dari permukaan tanah.
+              </p>
+            </div>
+
+            <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+              <span class="px-2.5 py-1 bg-purple-100 text-purple-800 font-black text-[10px] rounded-full uppercase">4. Proyek STEAM</span>
+              <h4 class="font-black text-slate-800 text-xs">Aplikasi Mobil Karet</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Mengubah Energi Potensial elastisitas karet menjadi Energi Kinetik gerak roda prototipe.
+              </p>
+            </div>
+          </div>
+
+          ${konten.length > 0 ? `
+            <div class="bg-white p-5 rounded-3xl border space-y-3">
+              <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📌 Catatan & Materi Tambahan Guru:</h4>
+              <div class="space-y-3 text-xs">
+                ${konten.map(k => `
+                  <div class="p-3 bg-slate-50 rounded-2xl border">
+                    <span class="font-bold text-brand-blue uppercase text-[10px]">[${k.kategori}] ${k.judul}</span>
+                    <p class="text-slate-700 font-medium mt-1">${k.isi_teks}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="text-center pt-2">
+            <button onclick="switchView('siswa-lkpd')" class="px-6 py-3 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition text-xs font-heading">
+              Lanjut Isi E-LKPD Interaktif &rarr;
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderSiswaLkpdView(container) {
+      const soalList = await apiGet('get_soal');
+      state.cachedData.soal = soalList;
+
+      setTimeout(initCanvas, 150);
+
+      container.innerHTML = `
+        <div class="space-y-5 max-w-4xl mx-auto text-xs">
+          
+          <!-- Section 1: Identitas Siswa -->
+          <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-md space-y-3">
+            <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase font-heading">
+              LEMBAR KERJA PESERTA DIDIK
+            </span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Nama Lengkap Siswa:</label>
+                <input type="text" id="lkpd-nama" value="${state.currentUser ? state.currentUser.name : ''}" placeholder="Isi nama..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Kelas:</label>
+                <input type="text" id="lkpd-kelas" value="${state.currentUser ? state.currentUser.kelas : 'VIII-A'}" placeholder="VIII-A" class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">NIS / No. Absen:</label>
+                <input type="text" id="lkpd-username" value="${state.currentUser ? state.currentUser.username : ''}" placeholder="Isi NIS..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Isian Teks LKPD (Fenomena & Analisis) -->
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+            <h4 class="font-black text-brand-navy text-sm font-heading border-b pb-2">A. FENOMENA & ANALISIS USAHA</h4>
+            
+            <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100 text-slate-700">
+              <p><b>Fenomena:</b> Seorang siswa mendorong meja dengan gaya F, namun meja tidak berpindah sama sekali (s = 0 meter).</p>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block font-bold text-slate-800 mb-1">1. Menurut pendapatmu, apakah kegiatan mendorong meja yang tidak berpindah termasuk usaha dalam fisika? Jelaskan!</label>
+                <textarea id="lkpd-fenomena-1" rows="2" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Tuliskan penjelasanmu..."></textarea>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-800 mb-1">2. Berapakah nilai usaha W jika benda didorong dengan gaya F = 30 N sejauh s = 4 m?</label>
+                <input type="text" id="lkpd-usaha-1" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Tuliskan rumus W = F x s dan hasil perhitungannya..." />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Canvas Menggambar Rancangan STEAM -->
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-black text-brand-navy text-sm font-heading">⚛️ D. AKTIVITAS STEAM - RANCANGAN PROTOTIPE</h4>
+                <p class="text-[11px] text-slate-500">Gambarkan lintasan atau ide rancangan prototipe mobil bertenaga karet pada kanvas di bawah ini!</p>
+              </div>
+            </div>
+
+            <!-- Canvas Tools Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl border">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-600">Pilih Warna:</span>
+                <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#F39C12')" class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-xs"></button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="setCanvasLineWidth(2)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tipis</button>
+                <button onclick="setCanvasLineWidth(5)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tebal</button>
+                <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200">🗑️ Hapus Gambar</button>
+              </div>
+            </div>
+
+            <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden shadow-inner">
+              <canvas id="steam-canvas" width="700" height="250" class="w-full h-[220px] cursor-crosshair"></canvas>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-800 mb-1">Penjelasan Rancangan STEAM Kamu:</label>
+              <textarea id="lkpd-steam-notes" rows="2" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Jelaskan bahan, cara kerja, atau perubahan energi pada rancanganmu..."></textarea>
+            </div>
+          </div>
+
+          <!-- Section 4: Kuis Evaluasi PG (Auto Scoring) -->
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h4 class="font-black text-brand-navy text-sm font-heading border-b pb-2">📊 H. KUIS EVALUASI PEMBELAJARAN (PG)</h4>
+            
+            ${soalList.length === 0 ? `
+              <p class="text-slate-400 italic">Belum ada soal evaluasi yang ditambahkan oleh guru.</p>
+            ` : `
+              <div class="space-y-4">
+                ${soalList.map((s, idx) => `
+                  <div class="p-3 bg-slate-50 rounded-2xl border space-y-2">
+                    <p class="font-bold text-slate-800"><b>${idx + 1}.</b> ${s.pertanyaan}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      ${['a', 'b', 'c', 'd'].map(opt => `
+                        <button type="button" onclick="selectPgAnswer('${s.id_soal}', '${opt.toUpperCase()}')" id="opt-btn-${s.id_soal}-${opt.toUpperCase()}" class="p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition">
+                          <b>${opt.toUpperCase()}.</b> ${s['opsi_' + opt]}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+
+          <!-- Section 5: Refleksi & Tombol Submit -->
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h4 class="font-black text-brand-navy text-sm font-heading">G. REFLEKSI PEMBELAJARAN</h4>
+            <div>
+              <label class="block font-bold text-slate-800 mb-1">Hal paling berkesan atau kesulitan yang kamu alami:</label>
+              <textarea id="lkpd-refleksi" rows="2" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Tuliskan refleksi belajarmu..."></textarea>
+            </div>
+
+            <button onclick="submitSiswaLkpdForm()" class="w-full py-4 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg transition text-xs uppercase tracking-wider font-heading">
+              🚀 KIRIM SELURUH JAWABAN E-LKPD SAYA
+            </button>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function selectPgAnswer(soalId, opt) {
+      state.siswaAnswers.pg[soalId] = opt;
+      ['A', 'B', 'C', 'D'].forEach(o => {
+        const btn = document.getElementById(`opt-btn-${soalId}-${o}`);
+        if (btn) {
+          if (o === opt) {
+            btn.className = 'p-2 bg-brand-blue text-white font-bold rounded-xl text-left border border-brand-blue shadow-xs';
+          } else {
+            btn.className = 'p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition text-slate-800';
+          }
+        }
+      });
+    }
+
+    async function submitSiswaLkpdForm() {
+      const nama = document.getElementById('lkpd-nama')?.value.trim();
+      const kelas = document.getElementById('lkpd-kelas')?.value.trim();
+      const username = document.getElementById('lkpd-username')?.value.trim();
+
+      if (!nama || !username) {
+        Swal.fire({ icon: 'warning', title: 'Identitas Belum Lengkap', text: 'Mohon isi Nama dan NIS/Username terlebih dahulu!' });
+        return;
+      }
+
+      // Hitung skor kuis PG
+      let correctCount = 0;
+      const soalList = state.cachedData.soal;
+      if (soalList.length > 0) {
+        soalList.forEach(s => {
+          if (state.siswaAnswers.pg[s.id_soal] === s.kunci_jawaban) {
+            correctCount++;
+          }
+        });
+      }
+      const scorePG = soalList.length > 0 ? Math.round((correctCount / soalList.length) * 100) : 100;
+
+      // Ambil Base64 Gambar Canvas
+      const canvas = document.getElementById('steam-canvas');
+      const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
+
+      const answersObj = {
+        fenomena1: document.getElementById('lkpd-fenomena-1')?.value || '',
+        usaha1: document.getElementById('lkpd-usaha-1')?.value || '',
+        steamNotes: document.getElementById('lkpd-steam-notes')?.value || '',
+        refleksi: document.getElementById('lkpd-refleksi')?.value || ''
+      };
+
+      Swal.fire({
+        title: 'Kirim E-LKPD?',
+        text: 'Jawaban dan hasil gambarmu akan dikirim ke server guru.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Kirim Sekarang!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Mengirim Jawaban...',
+            text: 'Mohon tunggu sejenak.',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+          });
+
+          const payload = {
+            action: 'submit_lkpd',
+            username_siswa: username,
+            nama_siswa: nama,
+            kelas: kelas || 'VIII-A',
+            jawaban_json: answersObj,
+            canvas_image_base64: canvasBase64,
+            skor_pg: scorePG
+          };
+
+          const res = await apiPost(payload);
+          if (res.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'E-LKPD Berhasil Terkirim!',
+              text: `Skor Kuis PG Kamu: ${scorePG}/100`,
+              confirmButtonText: 'Lihat Hasil Saya'
+            }).then(() => {
+              switchView('siswa-nilai');
+            });
+          } else {
+            Swal.fire({ icon: 'error', title: 'Gagal Kirim', text: res.message });
+          }
+        }
+      });
+    }
+
+    async function renderSiswaNilaiView(container) {
+      const subs = await apiGet('get_submissions');
+      const currentUserUn = state.currentUser ? state.currentUser.username : '';
+      
+      const mySub = subs.find(s => String(s.username_siswa).toLowerCase() === String(currentUserUn).toLowerCase()) || subs[subs.length - 1];
+
+      if (!mySub) {
+        container.innerHTML = `
+          <div class="bg-white p-6 rounded-3xl border text-center max-w-md mx-auto space-y-3">
+            <span class="text-3xl block">📄</span>
+            <h3 class="font-black text-brand-navy">Belum Ada Lembar Terkirim</h3>
+            <p class="text-xs text-slate-500">Kamu belum mengisi E-LKPD. Silakan isi lembar kerja terlebih dahulu!</p>
+            <button onclick="switchView('siswa-lkpd')" class="px-5 py-2.5 bg-brand-emerald text-white font-black text-xs rounded-xl shadow">Isi E-LKPD Sekarang</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-4 max-w-3xl mx-auto">
+          <div class="bg-white p-6 rounded-3xl border shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+              <div>
+                <span class="px-3 py-1 ${mySub.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} rounded-full text-[10px] font-black uppercase">
+                  Status: ${mySub.status}
+                </span>
+                <h3 class="text-lg font-black text-brand-navy font-heading mt-2">DASHBOARD HASIL E-LKPD</h3>
+                <p class="text-xs text-slate-500">Siswa: <b>${mySub.nama_siswa}</b> (${mySub.kelas}) | Tanggal: ${mySub.tanggal}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div class="p-3 bg-blue-50 rounded-2xl border">
+                <span class="text-[10px] font-bold text-slate-500 uppercase block">Skor Kuis PG</span>
+                <span class="text-2xl font-black text-brand-blue">${mySub.skor_pg}</span>
+              </div>
+
+              <div class="p-3 bg-purple-50 rounded-2xl border">
+                <span class="text-[10px] font-bold text-purple-900 uppercase block">Nilai Guru</span>
+                <span class="text-2xl font-black text-purple-700">${mySub.nilai_esai !== '' ? mySub.nilai_esai : '-'}</span>
+              </div>
+
+              <div class="p-3 bg-emerald-50 rounded-2xl border">
+                <span class="text-[10px] font-bold text-emerald-900 uppercase block">Nilai Akhir</span>
+                <span class="text-2xl font-black text-emerald-700">${mySub.nilai_akhir}</span>
+              </div>
+            </div>
+
+            ${mySub.catatan_guru ? `
+              <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-950">
+                <b class="block mb-0.5 font-bold">💬 Catatan Umpan Balik Guru:</b>
+                <p class="font-semibold">${mySub.catatan_guru}</p>
+              </div>
+            ` : ''}
+
+            ${mySub.canvas_image_base64 ? `
+              <div class="pt-2">
+                <span class="text-xs font-bold text-slate-700 block mb-2">🖼️ Rancangan STEAM Yang Kamu Kirim:</span>
+                <img src="${mySub.canvas_image_base64}" class="w-full max-w-md mx-auto rounded-2xl border bg-white shadow-xs" />
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================
+       12. MODAL UTILITIES
        ========================================================== */
     function openLoginModal() {
       document.getElementById('login-modal').classList.remove('hidden');

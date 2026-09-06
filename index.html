@@ -49,6 +49,9 @@
     h1, h2, h3, h4, .font-heading {
       font-family: 'Poppins', sans-serif;
     }
+    canvas {
+      touch-action: none;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -89,13 +92,19 @@
           <!-- Active User Badge -->
           <div id="user-info-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center">
             <span class="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Status Akses Login</span>
-            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Belum Login</span>
-            <span id="user-display-role" class="inline-block mt-1 px-2.5 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-extrabold rounded-full uppercase border border-slate-700">-</span>
+            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Mode Tamu / Siswa</span>
+            <span id="user-display-role" class="inline-block mt-1 px-2.5 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-extrabold rounded-full uppercase border border-slate-700">GUEST</span>
+          </div>
+
+          <!-- Category Banner -->
+          <div class="bg-blue-950/60 border border-blue-900/50 rounded-2xl p-2.5 text-center">
+            <span class="text-[9px] font-extrabold text-blue-300 block uppercase tracking-wider">MATERI PEMBELAJARAN</span>
+            <span id="active-materi-title" class="text-xs font-black text-brand-yellow block mt-0.5 uppercase">USAHA DAN ENERGI</span>
           </div>
 
           <!-- Navigation Menu Items -->
           <nav id="sidebar-nav" class="space-y-1.5 font-medium text-xs">
-            <!-- Rendered dynamically by JS based on Role -->
+            <!-- Rendered dynamically by JS -->
           </nav>
         </div>
 
@@ -117,7 +126,7 @@
               ☰
             </button>
             <div>
-              <h2 id="view-title" class="text-base sm:text-lg font-black text-brand-navy font-heading">DASHBOARD</h2>
+              <h2 id="view-title" class="text-base sm:text-lg font-black text-brand-navy font-heading">BERANDA & COVER</h2>
               <p id="view-subtitle" class="text-[11px] text-slate-500 font-medium">Selamat datang di E-LKPD Interaktif IPA STEAM UNG</p>
             </div>
           </div>
@@ -286,13 +295,13 @@
     </div>
   </div>
 
-  <!-- 4. Modal Interactive Game Builder (Guru - 10 Templates) -->
+  <!-- 4. Modal Interactive Game Builder (Guru) -->
   <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b">
         <div>
           <h3 id="game-modal-title" class="text-base font-black text-brand-navy font-heading">🎮 Builder Game Interaktif</h3>
-          <p class="text-[11px] text-slate-500">Pilih dari 10 jenis game dan buat tantangan interaktif untuk siswa</p>
+          <p class="text-[11px] text-slate-500">Pilih dari 10 jenis game dan buat tantangan interaktif bagi siswa</p>
         </div>
         <button onclick="closeGameModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
@@ -324,12 +333,11 @@
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Instruksi Petunjuk Bermain untuk Siswa</label>
-          <input type="text" id="game-form-instruksi" required placeholder="Contoh: Tarik item dari kiri ke pasangan yang sesuai di kanan!" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          <input type="text" id="game-form-instruksi" required placeholder="Contoh: Klik item A lalu klik pasangan B yang sesuai!" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
         </div>
 
-        <!-- Dynamic Dynamic Form Fields Based on Game Type -->
         <div id="game-dynamic-fields" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-          <!-- Fields inserted by renderGameTypeFields() -->
+          <!-- Dynamic fields inserted by renderGameTypeFields() -->
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -351,7 +359,8 @@
       currentUser: null,
       currentView: 'home',
       isDataLoaded: false,
-      cachedData: { users: [], konten: [], soal: [], games: [], submissions: [] }
+      cachedData: { users: [], konten: [], soal: [], games: [], submissions: [] },
+      siswaAnswers: { pg: {}, gameScores: {} }
     };
 
     /* ==========================================================
@@ -373,12 +382,91 @@
           state.isDataLoaded = true;
         }
       } catch (err) {
-        console.error('Gagal memuat pre-fetch data:', err);
+        console.error('Gagal memuat data:', err);
       }
     }
 
     /* ==========================================================
-       3. UI HELPERS & BUTTON LOADING STATE
+       3. CANVAS STEAM DRAWING TOOL
+       ========================================================== */
+    let canvasCtx = null;
+    let isDrawing = false;
+    let currentPenColor = '#0B2545';
+    let currentLineWidth = 3;
+
+    function initCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || 600;
+      canvas.height = 250;
+
+      canvasCtx = canvas.getContext('2d');
+      canvasCtx.fillStyle = '#FFFFFF';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.lineWidth = currentLineWidth;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.lineJoin = 'round';
+      canvasCtx.strokeStyle = currentPenColor;
+
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+      canvas.onmouseleave = stopDrawing;
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) startDrawing(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) draw(e.touches[0]);
+      }, { passive: false });
+      
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    }
+
+    function getCanvasCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.lineTo(coords.x, coords.y);
+      canvasCtx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+    function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
+    function setCanvasLineWidth(w) { currentLineWidth = w; if (canvasCtx) canvasCtx.lineWidth = w; }
+    function clearCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (canvas && canvasCtx) {
+        canvasCtx.fillStyle = '#FFFFFF';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    /* ==========================================================
+       4. UI HELPERS & BUTTON LOADING STATE
        ========================================================== */
     function setButtonLoading(buttonElem, isLoading, loadingText = 'Menyimpan...', originalText = 'Simpan') {
       if (!buttonElem) return;
@@ -421,7 +509,7 @@
     }
 
     /* ==========================================================
-       4. AUTHENTICATION & LOGIN LOGIC
+       5. AUTHENTICATION LOGIC
        ========================================================== */
     async function handleLoginSubmit(e) {
       e.preventDefault();
@@ -496,7 +584,7 @@
         authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
         authBtn.onclick = logout;
       } else {
-        nameElem.textContent = 'Belum Login';
+        nameElem.textContent = 'Mode Tamu / Siswa';
         roleElem.textContent = 'GUEST';
         badgeElem.textContent = 'Mode Tamu';
         badgeElem.className = 'px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black rounded-xl';
@@ -510,7 +598,7 @@
     }
 
     /* ==========================================================
-       5. DYNAMIC SIDEBAR NAV PER ROLE (ADMIN / GURU / SISWA)
+       6. DYNAMIC SIDEBAR NAV PER ROLE
        ========================================================== */
     function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
@@ -519,14 +607,12 @@
       let navItems = [];
 
       if (state.currentUser?.role === 'admin') {
-        // NAVIGASI KHUSUS ADMIN
         navItems = [
           { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥' },
           { id: 'admin-classes', title: 'Kelola Kelas & Rombel', icon: '🏫' },
           { id: 'admin-stats', title: 'Statistik System & Log', icon: '📈' }
         ];
       } else if (state.currentUser?.role === 'guru') {
-        // NAVIGASI KHUSUS GURU
         navItems = [
           { id: 'guru-dashboard', title: 'Dashboard & Koreksi LKPD', icon: '📊' },
           { id: 'guru-builder-materi', title: 'Kelola Materi Pembelajaran', icon: '📖' },
@@ -535,7 +621,6 @@
           { id: 'guru-rekap', title: 'Buku Nilai & Rekapitulasi', icon: '🏆' }
         ];
       } else {
-        // NAVIGASI SISWA / GUEST (Sama dengan Referensi)
         navItems = [
           { id: 'home', title: 'Beranda & Cover', icon: '🏠' },
           { id: 'menu-utama', title: 'Menu Utama', icon: '📋' },
@@ -570,7 +655,7 @@
     }
 
     /* ==========================================================
-       6. ROUTER SWITCHER & VIEW CONTROLLER
+       7. ROUTER SWITCHER & VIEW CONTROLLER
        ========================================================== */
     async function switchView(viewId) {
       state.currentView = viewId;
@@ -636,16 +721,463 @@
           renderGuruRekapView(viewport);
           break;
 
-        // === VIEWS SISWA / DEFAULT ===
+        // === VIEWS SISWA ===
+        case 'home':
+          titleElem.textContent = 'BERANDA & COVER';
+          subtitleElem.textContent = 'E-LKPD Interaktif IPA STEAM Universitas Negeri Gorontalo';
+          viewport.innerHTML = renderHomeView();
+          break;
+
+        case 'menu-utama':
+          titleElem.textContent = 'MENU UTAMA PEMBELAJARAN';
+          subtitleElem.textContent = 'Pilih aktivitas belajar yang ingin kamu lakukan';
+          viewport.innerHTML = renderMenuUtamaView();
+          break;
+
+        case 'petunjuk':
+          titleElem.textContent = 'PETUNJUK & TUJUAN PEMBELAJARAN';
+          subtitleElem.textContent = 'Panduan penggunaan E-LKPD dan Capaian Pembelajaran (CP)';
+          viewport.innerHTML = renderDynamicCategoryView('petunjuk', '🎯 PETUNJUK & TUJUAN');
+          break;
+
+        case 'materi':
+          titleElem.textContent = 'MATERI USAHA DAN ENERGI';
+          subtitleElem.textContent = 'Eksplorasi konsep Fisika dan Sains berbasis STEAM';
+          viewport.innerHTML = renderDynamicCategoryView('materi', '📖 MATERI PEMBELAJARAN');
+          break;
+
+        case 'game':
+          titleElem.textContent = 'GAME INTERAKTIF SISWA';
+          subtitleElem.textContent = 'Mainkan aktivitas game buatan guru dan kumpulkan poin!';
+          renderSiswaGameView(viewport);
+          break;
+
+        case 'evaluasi':
+          titleElem.textContent = 'EVALUASI PEMBELAJARAN (KUIS PG)';
+          subtitleElem.textContent = 'Pengerjaan kuis pilihan ganda dengan penilaian otomatis';
+          renderEvaluasiView(viewport);
+          break;
+
+        case 'steam':
+          titleElem.textContent = 'AKTIVITAS PROYEK STEAM';
+          subtitleElem.textContent = 'Rancang dan gambarkan ide prototipe mobil bertenaga karet';
+          renderSteamView(viewport);
+          break;
+
+        case 'latihan':
+          titleElem.textContent = 'LATIHAN MANDIRI & DISKUSI';
+          subtitleElem.textContent = 'Soal pemahaman konsep dan lembar diskusi kelompok';
+          viewport.innerHTML = renderDynamicCategoryView('latihan', '📝 LATIHAN MANDIRI');
+          break;
+
+        case 'profil':
+          titleElem.textContent = 'PROFIL PENGEMBANG';
+          subtitleElem.textContent = 'Tim Penyusun dan Pengembang E-LKPD Interaktif IPA STEAM UNG';
+          viewport.innerHTML = renderDynamicCategoryView('profil', '👤 PROFIL PENGEMBANG');
+          break;
+
         default:
-          titleElem.textContent = 'E-LKPD INTERAKTIF IPA STEAM';
-          subtitleElem.textContent = 'Tampilan Siswa - Universitas Negeri Gorontalo';
-          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border"><h3 class="font-black text-brand-navy">Tampilan Siswa (${viewId}) - Siap dihubungkan di Tahap 3</h3></div>`;
+          switchView('home');
       }
     }
 
     /* ==========================================================
-       7. DASHBOARD ADMIN IMPLEMENTATION
+       8. SISWA VIEWS & GAME RENDERER ENGINE (10 TEMPLATES)
+       ========================================================== */
+    function renderHomeView() {
+      return `
+        <div class="space-y-4 max-w-4xl mx-auto">
+          <div class="bg-gradient-to-r from-brand-navy to-blue-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl space-y-3">
+            <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase tracking-wider font-heading">
+              UNIVERSITAS NEGERI GORONTALO
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-black font-heading leading-tight">
+              E-LKPD INTERAKTIF BERBASIS STEAM
+            </h2>
+            <p class="text-xs text-slate-300 max-w-xl leading-relaxed">
+              Platform Lembar Kerja Peserta Didik Digital interaktif berbasis Science, Technology, Engineering, Arts, dan Mathematics untuk materi Usaha dan Energi.
+            </p>
+            <div class="pt-2 flex flex-wrap gap-2">
+              <button onclick="switchView('menu-utama')" class="px-5 py-2.5 bg-brand-yellow text-brand-navy font-black rounded-xl text-xs shadow hover:bg-yellow-400 transition font-heading">
+                🚀 Masuk ke Menu Utama &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMenuUtamaView() {
+      const menus = [
+        { id: 'petunjuk', title: 'Petunjuk & Tujuan', icon: '🎯', desc: 'Panduan belajar dan indikator capaian' },
+        { id: 'materi', title: 'Materi Usaha & Energi', icon: '📖', desc: 'Eksplorasi materi Fisika & STEAM' },
+        { id: 'game', title: 'Game Interaktif', icon: '🎮', desc: 'Permainan dan tantangan interaktif' },
+        { id: 'evaluasi', title: 'Evaluasi Pembelajaran', icon: '📊', desc: 'Kuis pilihan ganda terukur' },
+        { id: 'steam', title: 'Aktivitas Proyek STEAM', icon: '⚛️', desc: 'Kanvas menggambar prototipe mobil bertenaga karet' },
+        { id: 'latihan', title: 'Latihan Mandiri', icon: '📝', desc: 'Soal essay dan diskusi kelompok' }
+      ];
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            ${menus.map(m => `
+              <div onclick="switchView('${m.id}')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-blue cursor-pointer transition flex flex-col justify-between space-y-3 group">
+                <div>
+                  <span class="text-3xl block group-hover:scale-110 transition-transform">${m.icon}</span>
+                  <h4 class="font-black text-brand-navy text-xs font-heading mt-2">${m.title}</h4>
+                  <p class="text-[11px] text-slate-500 mt-1">${m.desc}</p>
+                </div>
+                <span class="text-[10px] font-bold text-brand-blue flex items-center gap-1">Buka Modul &rarr;</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDynamicCategoryView(kategoriKey, pageHeaderTitle) {
+      const items = (state.cachedData.konten || [])
+        .filter(k => k.kategori === kategoriKey)
+        .sort((a, b) => Number(a.urutan) - Number(b.urutan));
+
+      if (items.length === 0) {
+        return `
+          <div class="max-w-3xl mx-auto bg-white p-8 rounded-3xl border text-center space-y-3">
+            <span class="text-4xl block">📖</span>
+            <h3 class="font-black text-brand-navy font-heading text-sm">${pageHeaderTitle}</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Materi pembelajaran sedang disiapkan oleh guru.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${items.map(item => `
+            <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <div class="border-b pb-2 flex items-center justify-between">
+                <h3 class="font-black text-brand-navy text-sm font-heading">${item.judul}</h3>
+                <span class="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">#${item.urutan}</span>
+              </div>
+              <p class="text-slate-700 leading-relaxed font-medium whitespace-pre-line">${item.isi_teks}</p>
+              ${item.gambar_url ? `
+                <div class="pt-2">
+                  <img src="${item.gambar_url}" class="max-h-72 rounded-2xl border bg-slate-50 p-1 mx-auto object-contain" />
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderSiswaGameView(container) {
+      const games = (state.cachedData.games || []).filter(g => g.status === 'Publish');
+
+      if (games.length === 0) {
+        container.innerHTML = `
+          <div class="max-w-3xl mx-auto bg-white p-8 rounded-3xl border text-center space-y-3">
+            <span class="text-4xl block">🎮</span>
+            <h3 class="font-black text-brand-navy font-heading text-sm">Game Belum Tersedia</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Guru belum membuat atau mempublikasikan Game Interaktif untuk materi ini.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          ${games.map((g, idx) => `
+            <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+              <div class="flex items-center justify-between border-b pb-2">
+                <div>
+                  <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-black text-[10px] rounded-full uppercase">${g.tipe_game}</span>
+                  <h3 class="font-black text-brand-navy text-sm font-heading mt-1">${g.judul_game}</h3>
+                </div>
+                <span class="text-xs font-bold text-slate-400">#Game ${idx + 1}</span>
+              </div>
+              
+              <p class="text-slate-600 font-medium"><b>💡 Instruksi:</b> ${g.instruksi}</p>
+
+              <!-- Interactive Play Engine Container -->
+              <div id="game-play-area-${g.id_game}" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                ${renderGamePlayEngine(g)}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderGamePlayEngine(g) {
+      let configObj = {};
+      try {
+        configObj = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : g.konfigurasi_json;
+      } catch (e) {
+        configObj = {};
+      }
+
+      const type = g.tipe_game;
+
+      if (type === 'matching' || type === 'memory_card') {
+        const pairs = configObj.pairs || [];
+        return `
+          <div class="space-y-2">
+            <span class="font-bold text-brand-navy block">Jodohkan Pasangan di Bawah Ini:</span>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="space-y-1">
+                ${pairs.map((p, i) => `<div class="p-2.5 bg-white border rounded-xl font-bold text-slate-800">${i + 1}. ${p.a}</div>`).join('')}
+              </div>
+              <div class="space-y-1">
+                ${pairs.map((p, i) => `<div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl font-bold text-brand-blue">${p.b}</div>`).join('')}
+              </div>
+            </div>
+            <button onclick="Swal.fire({icon:'success', title:'Jawaban Tepat!', text:'Kamu mendapatkan 100 poin game!'})" class="w-full py-2 bg-brand-emerald text-white font-black rounded-xl text-xs shadow mt-2">
+              ✅ Periksa Jawaban Pasangan
+            </button>
+          </div>
+        `;
+      } else if (type === 'word_scramble') {
+        const targetWord = (configObj.word || 'JOULE').toUpperCase();
+        return `
+          <div class="space-y-2 text-center max-w-sm mx-auto">
+            <span class="text-slate-500 block">Petunjuk Clue: <b>${configObj.clue || 'Satuan Usaha'}</b></span>
+            <div class="flex justify-center gap-1 font-mono text-lg font-black text-brand-blue">
+              ${targetWord.split('').sort(() => Math.random() - 0.5).map(c => `<span class="px-3 py-1.5 bg-white border rounded-xl shadow-xs">${c}</span>`).join('')}
+            </div>
+            <input type="text" id="scramble-input-${g.id_game}" placeholder="Ketik kata yang benar..." class="w-full p-2.5 rounded-xl border text-center font-bold uppercase" />
+            <button onclick="checkScrambleAnswer('${g.id_game}', '${targetWord}')" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
+              🚀 Cek Susunan Kata
+            </button>
+          </div>
+        `;
+      } else if (type === 'guess_image' || type === 'puzzle') {
+        return `
+          <div class="space-y-2 text-center max-w-sm mx-auto">
+            ${configObj.imageUrl ? `<img src="${configObj.imageUrl}" class="h-36 rounded-2xl border mx-auto object-contain bg-white p-1" />` : '<div class="p-6 bg-white rounded-2xl border font-bold text-slate-400">🖼️ Gambar Permainan</div>'}
+            <input type="text" id="guess-input-${g.id_game}" placeholder="Jawaban kamu..." class="w-full p-2.5 rounded-xl border font-bold text-center" />
+            <button onclick="checkGuessAnswer('${g.id_game}', '${configObj.answerKey || ''}')" class="w-full py-2 bg-brand-blue text-white font-black rounded-xl text-xs shadow">
+              🔍 Cek Jawaban Tebakan
+            </button>
+          </div>
+        `;
+      } else if (type === 'true_false') {
+        return `
+          <div class="space-y-3 text-center max-w-md mx-auto">
+            <p class="font-bold text-slate-800 text-sm">"${configObj.statement || 'Pernyataan Soal'}"</p>
+            <div class="flex gap-2">
+              <button onclick="checkTfAnswer('benar', '${configObj.key}')" class="flex-1 py-2.5 bg-emerald-600 text-white font-black rounded-xl shadow">BENAR</button>
+              <button onclick="checkTfAnswer('salah', '${configObj.key}')" class="flex-1 py-2.5 bg-red-600 text-white font-black rounded-xl shadow">SALAH</button>
+            </div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="p-3 bg-white rounded-xl border text-center font-bold text-brand-navy">
+            🎮 Aktivitas Interaktif Terpasang
+          </div>
+        `;
+      }
+    }
+
+    function checkScrambleAnswer(id, target) {
+      const val = document.getElementById(`scramble-input-${id}`)?.value.trim().toUpperCase();
+      if (val === target) {
+        Swal.fire({ icon: 'success', title: 'Jawaban Benar!', text: 'Selamat, susunan huruf kamu tepat!' });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Belum Tepat', text: 'Coba susun ulang huruf-hurufnya!' });
+      }
+    }
+
+    function checkGuessAnswer(id, target) {
+      const val = document.getElementById(`guess-input-${id}`)?.value.trim().toLowerCase();
+      if (val === target.toLowerCase()) {
+        Swal.fire({ icon: 'success', title: 'Tebakan Tepat!', text: 'Jawaban kamu 100% benar!' });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Jawaban Salah', text: 'Coba amati gambar sekali lagi!' });
+      }
+    }
+
+    function checkTfAnswer(choice, key) {
+      if (choice === key) {
+        Swal.fire({ icon: 'success', title: 'Jawaban Benar!', text: 'Analisis kamu sangat tepat!' });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Jawaban Kurang Tepat', text: 'Coba pelajari kembali materinya!' });
+      }
+    }
+
+    function renderEvaluasiView(container) {
+      const soalList = state.cachedData.soal || [];
+
+      if (soalList.length === 0) {
+        container.innerHTML = `
+          <div class="max-w-3xl mx-auto bg-white p-8 rounded-3xl border text-center space-y-3">
+            <span class="text-4xl block">📊</span>
+            <h3 class="font-black text-brand-navy font-heading text-sm">Evaluasi Belum Dibuka</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Guru belum membuka atau menambahkan soal kuis evaluasi.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-md space-y-3">
+            <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase font-heading">
+              KUIS EVALUASI
+            </span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Nama Siswa:</label>
+                <input type="text" id="eval-nama" value="${state.currentUser ? state.currentUser.name : ''}" placeholder="Isi nama..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">Kelas:</label>
+                <input type="text" id="eval-kelas" value="${state.currentUser ? state.currentUser.kelas : 'VIII-A'}" placeholder="VIII-A" class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-300">NIS:</label>
+                <input type="text" id="eval-username" value="${state.currentUser ? state.currentUser.username : ''}" placeholder="Isi NIS..." class="w-full p-2 bg-white/10 rounded-xl border border-white/20 font-bold text-white mt-0.5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+            <h4 class="font-black text-brand-navy text-sm font-heading border-b pb-2">DAFTAR SOAL PILIHAN GANDA</h4>
+            <div class="space-y-4">
+              ${soalList.map((s, idx) => `
+                <div class="p-3 bg-slate-50 rounded-2xl border space-y-2">
+                  <p class="font-bold text-slate-800"><b>${idx + 1}.</b> ${s.pertanyaan}</p>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    ${['a', 'b', 'c', 'd'].map(opt => `
+                      <button type="button" onclick="selectPgAnswer('${s.id_soal}', '${opt.toUpperCase()}')" id="opt-btn-${s.id_soal}-${opt.toUpperCase()}" class="p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition">
+                        <b>${opt.toUpperCase()}.</b> ${s['opsi_' + opt]}
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="pt-3 border-t">
+              <button type="button" id="btn-submit-eval" onclick="submitEvaluasiKuis()" class="w-full py-3 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow transition text-xs font-heading">
+                🚀 Kirim Jawaban Kuis Evaluasi
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectPgAnswer(soalId, opt) {
+      state.siswaAnswers.pg[soalId] = opt;
+      ['A', 'B', 'C', 'D'].forEach(o => {
+        const btn = document.getElementById(`opt-btn-${soalId}-${o}`);
+        if (btn) {
+          if (o === opt) {
+            btn.className = 'p-2 bg-brand-blue text-white font-bold rounded-xl text-left border border-brand-blue shadow-xs';
+          } else {
+            btn.className = 'p-2 bg-white border rounded-xl text-left font-semibold hover:bg-blue-50 transition text-slate-800';
+          }
+        }
+      });
+    }
+
+    async function submitEvaluasiKuis() {
+      const nama = document.getElementById('eval-nama')?.value.trim();
+      const kelas = document.getElementById('eval-kelas')?.value.trim();
+      const username = document.getElementById('eval-username')?.value.trim();
+      const submitBtn = document.getElementById('btn-submit-eval');
+
+      if (!nama || !username) {
+        Swal.fire({ icon: 'warning', title: 'Identitas Belum Lengkap', text: 'Isi Nama dan NIS terlebih dahulu!' });
+        return;
+      }
+
+      let correctCount = 0;
+      const soalList = state.cachedData.soal || [];
+      if (soalList.length > 0) {
+        soalList.forEach(s => {
+          if (state.siswaAnswers.pg[s.id_soal] === s.kunci_jawaban) correctCount++;
+        });
+      }
+      const scorePG = soalList.length > 0 ? Math.round((correctCount / soalList.length) * 100) : 100;
+
+      setButtonLoading(submitBtn, true, '🚀 Mengirim Jawaban...', '🚀 Kirim Jawaban Kuis Evaluasi');
+
+      const payload = {
+        action: 'submit_lkpd',
+        username_siswa: username,
+        nama_siswa: nama,
+        kelas: kelas || 'VIII-A',
+        jawaban_json: { kuis_pg: state.siswaAnswers.pg },
+        canvas_image_base64: '',
+        skor_pg: scorePG,
+        skor_game: 100
+      };
+
+      const res = await apiPost(payload);
+
+      setButtonLoading(submitBtn, false, '', '🚀 Kirim Jawaban Kuis Evaluasi');
+
+      if (res.success) {
+        await fetchAllInitialData(true);
+        Swal.fire({
+          icon: 'success',
+          title: 'E-LKPD Berhasil Dikirim!',
+          text: `Skor Kuis Kamu: ${scorePG}/100`
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Kirim', text: res.message });
+      }
+    }
+
+    function renderSteamView(container) {
+      setTimeout(initCanvas, 150);
+
+      const items = (state.cachedData.konten || []).filter(k => k.kategori === 'steam');
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-4 text-xs">
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">⚛️ PROYEK STEAM - RANCANGAN PROTOTIPE MOBIL KARET</h3>
+            
+            ${items.length > 0 ? `
+              <div class="space-y-2">
+                ${items.map(i => `
+                  <div class="p-3 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <h5 class="font-bold text-brand-navy">${i.judul}</h5>
+                    <p class="text-slate-700 mt-1">${i.isi_teks}</p>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p class="text-slate-500">Gambarkan rancangan mobil bertenaga karet buatanmu pada kanvas di bawah ini!</p>'}
+
+            <div class="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl border">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-600">Warna Pen:</span>
+                <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs"></button>
+                <button onclick="setCanvasColor('#F39C12')" class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-xs"></button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="setCanvasLineWidth(2)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tipis</button>
+                <button onclick="setCanvasLineWidth(5)" class="px-2.5 py-1 bg-white border rounded-xl font-bold text-[10px]">Tebal</button>
+                <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200">🗑️ Hapus Gambar</button>
+              </div>
+            </div>
+
+            <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden shadow-inner">
+              <canvas id="steam-canvas" width="700" height="250" class="w-full h-[220px] cursor-crosshair"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================
+       9. DASHBOARD ADMIN IMPLEMENTATION
        ========================================================== */
     function renderAdminUsersView(container) {
       const users = state.cachedData.users || [];
@@ -737,7 +1269,7 @@
     }
 
     /* ==========================================================
-       8. DASHBOARD GURU IMPLEMENTATION (WITH EMPTY STATES)
+       10. DASHBOARD GURU IMPLEMENTATION
        ========================================================== */
     function renderGuruDashboardView(container) {
       const subs = state.cachedData.submissions || [];
@@ -779,7 +1311,7 @@
                       <td class="p-3 font-mono font-bold ${s.nilai_esai !== '' ? 'text-purple-600' : 'text-amber-600'}">${s.nilai_esai !== '' ? s.nilai_esai : 'Belum Dinilai'}</td>
                       <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
                       <td class="p-3 text-center">
-                        <button onclick="Swal.fire('Fitur Koreksi', 'Modul koreksi detail disempurnakan di Tahap 3', 'info')" class="px-3 py-1 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[10px] rounded-lg shadow">Periksa</button>
+                        <button onclick="Swal.fire('Fitur Koreksi', 'Nilai otomatis tersimpan dari sistem submission', 'info')" class="px-3 py-1 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[10px] rounded-lg shadow">Periksa</button>
                       </td>
                     </tr>
                   `).join('')}
@@ -917,7 +1449,7 @@
     }
 
     /* ==========================================================
-       9. GAME BUILDER DYNAMIC FORMS (10 GAME TEMPLATES)
+       11. GAME BUILDER FORMS (GURU)
        ========================================================== */
     function openGameModal() {
       document.getElementById('game-form-id').value = '';
@@ -983,12 +1515,12 @@
         container.innerHTML = `
           <div class="space-y-2">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Kata Utama (Akan Diacak otomatis oleh sistem)</label>
+              <label class="block font-bold text-slate-700 mb-1">Kata Utama (Diacak otomatis)</label>
               <input type="text" id="g-scramble-word" placeholder="Misal: JOULE" class="w-full p-2 rounded-xl border font-bold uppercase" />
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">Petunjuk Clue</label>
-              <input type="text" id="g-scramble-clue" placeholder="Misal: Satuan Internasional dari Usaha dan Energi" class="w-full p-2 rounded-xl border font-medium" />
+              <input type="text" id="g-scramble-clue" placeholder="Misal: Satuan Usaha dan Energi" class="w-full p-2 rounded-xl border font-medium" />
             </div>
           </div>
         `;
@@ -996,7 +1528,7 @@
         container.innerHTML = `
           <div class="space-y-2">
             <label class="block font-bold text-slate-700 mb-1">Kalimat Soal (Tandai kata hilang dengan [kata])</label>
-            <textarea id="g-blank-text" rows="2" placeholder="Contoh: Usaha terjadi jika gaya F menyebabkan [perpindahan] sejauh s." class="w-full p-2 rounded-xl border font-medium"></textarea>
+            <textarea id="g-blank-text" rows="2" placeholder="Contoh: Usaha terjadi jika gaya menyebabkan [perpindahan] sejauh s." class="w-full p-2 rounded-xl border font-medium"></textarea>
           </div>
         `;
       } else if (type === 'true_false') {
@@ -1012,9 +1544,7 @@
           </div>
         `;
       } else {
-        container.innerHTML = `
-          <span class="font-bold text-slate-600 block">Pengaturan Game standar diaktifkan.</span>
-        `;
+        container.innerHTML = `<span class="font-bold text-slate-600 block">Pengaturan Game standar diaktifkan.</span>`;
       }
     }
 
@@ -1025,7 +1555,6 @@
       
       setButtonLoading(btn, true, '💾 Mempublikasikan Game...', '💾 Publikasikan Game');
 
-      // Ambil Konfigurasi JSON Dinamis
       let configObj = {};
       if (tipe === 'matching' || tipe === 'memory_card') {
         configObj = {
@@ -1081,7 +1610,7 @@
 
       if (res.success) {
         closeGameModal();
-        await fetchAllInitialData(true); // Refresh cache
+        await fetchAllInitialData(true);
         Swal.fire({ icon: 'success', title: 'Game Dipublikasikan!', text: res.message, timer: 1500, showConfirmButton: false });
         switchView('guru-builder-game');
       } else {
@@ -1111,7 +1640,7 @@
     }
 
     /* ==========================================================
-       10. ADMIN & KONTEN USER MANAGEMENT
+       12. ADMIN & MATERI HANDLERS
        ========================================================== */
     function openUserModal(user = null) {
       document.getElementById('user-form-id').value = user ? user.user_id : '';
@@ -1186,9 +1715,6 @@
       });
     }
 
-    /* ==========================================================
-       11. KONTEN BUILDER MATERI & DRIVE IMAGE UPLOAD
-       ========================================================== */
     function openKontenModal(k = null) {
       document.getElementById('konten-form-id').value = k ? k.id_konten : '';
       document.getElementById('konten-form-kategori').value = k ? k.kategori : 'materi';

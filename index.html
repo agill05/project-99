@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>E-LKPD Interaktif Berbasis STEAM - Usaha dan Energi - Pendidikan IPA UNG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-LKPD Interaktif IPA - Usaha & Energi</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +11,7 @@
   <!-- Google Fonts: Poppins & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
@@ -24,31 +24,11 @@
           colors: {
             brand: {
               navy: '#0B2545',
-              darkNavy: '#081c34',
               blue: '#0D6EFD',
-              lightBlue: '#E7F1FF',
-              sky: '#17A2B8',
               yellow: '#FDC82F',
-              gold: '#F39C12',
               purple: '#6B38FB',
-              deepPurple: '#5227C7',
-              green: '#10B981',
-              darkGreen: '#059669',
-              red: '#EF4444',
-            },
-            steam: {
-              s: '#0084FF',
-              t: '#00B894',
-              e: '#F39C12',
-              a: '#E84393',
-              m: '#FF4757'
+              emerald: '#10B981',
             }
-          },
-          boxShadow: {
-            'custom': '0 8px 30px rgba(0, 0, 0, 0.08)',
-            'card': '0 4px 20px rgba(11, 37, 69, 0.06)',
-            'glow-yellow': '0 0 20px rgba(253, 200, 47, 0.5)',
-            'glow-purple': '0 0 20px rgba(107, 56, 251, 0.4)',
           }
         }
       }
@@ -58,467 +38,141 @@
   <style>
     body {
       font-family: 'Nunito', sans-serif;
-      background-color: #EEF4FC;
+      background-color: #F8FAFC;
       color: #1E293B;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-    
     h1, h2, h3, h4, .font-heading {
       font-family: 'Poppins', sans-serif;
     }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #F1F5F9;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
-    }
-
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    @keyframes spinBlades {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .animate-spin-slow {
-      animation: spinBlades 6s linear infinite;
-      transform-origin: 50% 50%;
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.9; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.03); }
-    }
-    .animate-glow {
-      animation: pulseGlow 2.5s infinite ease-in-out;
-    }
-
-    @keyframes floatLight {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-5px) rotate(1deg); }
-    }
-    .animate-float {
-      animation: floatLight 4s ease-in-out infinite;
-    }
-
-    @media print {
-      aside, header, footer, .no-print {
-        display: none !important;
-      }
-      body {
-        background: white !important;
-        color: black !important;
-      }
-      #content-viewport {
-        padding: 0 !important;
-        overflow: visible !important;
-      }
-    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+<body class="min-h-screen flex flex-col justify-between">
 
-  <div id="app" class="flex-1 flex flex-col max-w-[1600px] w-full mx-auto p-1.5 sm:p-4 lg:p-6 gap-2 sm:gap-4">
+  <!-- Application Wrapper -->
+  <div id="app" class="flex-1 flex flex-col max-w-[1600px] w-full mx-auto p-2 sm:p-4 lg:p-6 gap-3">
     
-    <!-- Main Application Wrapper -->
-    <div class="bg-white rounded-2xl sm:rounded-3xl shadow-custom border border-blue-100 flex-1 flex flex-col md:flex-row overflow-hidden min-h-[calc(100vh-1rem)] md:min-h-[780px] relative">
+    <div class="bg-white rounded-3xl shadow-lg border border-slate-200 flex-1 flex flex-col md:flex-row overflow-hidden min-h-[800px] relative">
       
-      <!-- Mobile Sidebar Backdrop -->
-      <div id="sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-brand-darkNavy/70 backdrop-blur-xs z-30 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
-
       <!-- Main Sidebar -->
-      <aside id="main-sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 md:w-64 lg:w-80 bg-brand-navy text-white flex flex-col justify-between shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none overflow-y-auto">
-        
-        <div class="p-4 sm:p-5 flex flex-col">
-          <div class="flex items-center justify-between md:hidden pb-3 border-b border-blue-900/60 mb-2">
-            <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">Navigasi E-LKPD</span>
-            <button onclick="toggleMobileSidebar(false)" class="w-8 h-8 rounded-xl bg-blue-950 text-gray-300 hover:text-white flex items-center justify-center font-bold text-lg">&times;</button>
+      <aside class="w-full md:w-72 bg-brand-navy text-white flex flex-col justify-between p-5 shrink-0">
+        <div class="space-y-4">
+          <!-- Institutional Header -->
+          <div class="text-center pb-4 border-b border-slate-700/60">
+            <span class="text-[10px] font-black text-brand-yellow uppercase tracking-wider block font-heading">UNIVERSITAS NEGERI GORONTALO</span>
+            <h1 class="text-base font-extrabold text-white uppercase font-heading mt-0.5">E-LKPD IPA STEAM</h1>
+            <span class="text-xs text-slate-300 font-semibold block mt-1">Materi Usaha & Energi</span>
           </div>
 
-          <div class="text-center pb-3 sm:pb-4 border-b border-blue-900/60 flex flex-col items-center">
-            <div class="flex items-center justify-center gap-2 mb-2 bg-white/10 px-3 py-1.5 rounded-2xl w-full border border-white/10">
-              <img src="logo-ung.png" alt="Logo UNG" class="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow" onerror="this.src='https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Negeri_Gorontalo.png'" />
-              <div class="text-left leading-tight">
-                <span class="text-[9px] sm:text-[10px] font-extrabold text-brand-yellow uppercase tracking-wider block font-heading">UNIVERSITAS NEGERI</span>
-                <span class="text-[10px] sm:text-[11px] font-black text-white uppercase tracking-wider block font-heading">GORONTALO</span>
-              </div>
-            </div>
-
-            <h1 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-wide text-white uppercase leading-tight font-heading">
-              E-LKPD INTERAKTIF
-            </h1>
-            <div class="text-lg sm:text-xl lg:text-2xl font-black tracking-wider mt-0.5 flex justify-center items-center gap-1 font-heading">
-              <span class="text-[10px] sm:text-xs font-bold text-gray-300 mr-1">BERBASIS</span>
-              <span class="text-steam-s">S</span>
-              <span class="text-steam-t">T</span>
-              <span class="text-steam-e">E</span>
-              <span class="text-steam-a">A</span>
-              <span class="text-steam-m">M</span>
-            </div>
+          <!-- Active User Badge -->
+          <div id="user-info-card" class="bg-slate-800/80 border border-slate-700 rounded-2xl p-3 text-center">
+            <span class="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">Status Login</span>
+            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Belum Login</span>
+            <span id="user-display-role" class="inline-block mt-1 px-2 py-0.5 bg-slate-700 text-slate-300 text-[9px] font-extrabold rounded-full uppercase">-</span>
           </div>
 
-          <div class="mt-3 sm:mt-4 bg-[#061930] border border-blue-500/30 rounded-xl p-2 sm:p-2.5 text-center shadow-inner">
-            <span class="text-[10px] sm:text-[11px] font-semibold text-blue-300 block uppercase tracking-wider">Materi</span>
-            <span class="text-xs sm:text-sm lg:text-base font-black text-brand-yellow font-heading tracking-wide">USAHA DAN ENERGI</span>
-          </div>
-
-          <!-- User Role Badge -->
-          <div id="sidebar-user-badge" class="mt-2 p-2 bg-white/10 rounded-xl text-center text-xs text-blue-200">
-            <!-- Rendered in JS -->
-          </div>
-
-          <nav class="mt-3 sm:mt-4 space-y-1 sm:space-y-1.5 font-medium" id="sidebar-nav">
-            <!-- Rendered dynamically in JS -->
+          <!-- Navigation Menu -->
+          <nav id="sidebar-nav" class="space-y-1.5 font-medium text-xs">
+            <!-- Navigasi dirender dinamis berdasarkan Role -->
           </nav>
         </div>
 
-        <div class="relative overflow-hidden pt-2 px-2 pb-0 mt-auto pointer-events-none select-none shrink-0">
-          <svg viewBox="0 0 320 170" class="w-full h-auto block" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#0F3562" />
-                <stop offset="100%" stop-color="#1B4D89" />
-              </linearGradient>
-              <linearGradient id="hillGreen1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#38A169" />
-                <stop offset="100%" stop-color="#22543D" />
-              </linearGradient>
-            </defs>
-            <rect width="320" height="170" fill="url(#skyGrad)" opacity="0.3"/>
-            <path d="M-20 170 Q 60 100 150 140 T 340 120 L 340 170 Z" fill="url(#hillGreen1)"/>
-          </svg>
+        <!-- System Action Button -->
+        <div class="pt-4 border-t border-slate-700/60">
+          <button id="auth-action-btn" onclick="openLoginModal()" class="w-full py-2.5 bg-brand-blue hover:bg-blue-600 text-white font-black rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+            <span>🔑 Login / Ganti Akun</span>
+          </button>
         </div>
       </aside>
 
-      <!-- Main Content Viewport -->
-      <main class="flex-1 flex flex-col bg-[#F8FAFC] min-w-0 relative overflow-y-auto">
+      <!-- Main Content Area -->
+      <main class="flex-1 flex flex-col bg-slate-50 relative overflow-y-auto">
         
-        <!-- Top Action Header Bar -->
-        <header id="top-bar" class="p-2.5 sm:p-4 lg:p-5 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-xs no-print">
-          
-          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <button onclick="toggleMobileSidebar(true)" id="btn-mobile-menu" class="md:hidden w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-brand-navy flex items-center justify-center transition shrink-0" title="Buka Menu">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-
-            <button onclick="navigateBack()" id="btn-back" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-full bg-brand-navy hover:bg-brand-blue text-white flex items-center justify-center transition-all shadow-md shrink-0" title="Kembali">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-
-            <div class="min-w-0">
-              <h2 id="page-title" class="text-sm sm:text-lg lg:text-2xl font-black text-brand-navy font-heading tracking-tight truncate leading-tight">
-                MENU UTAMA
-              </h2>
-              <p id="page-subtitle" class="text-[10px] sm:text-xs md:text-sm text-gray-500 font-medium truncate hidden xs:block">
-                Pilih menu di bawah ini untuk memulai belajar.
-              </p>
-            </div>
+        <!-- Header Bar -->
+        <header class="p-4 bg-white border-b border-slate-200 flex items-center justify-between sticky top-0 z-10 shadow-xs">
+          <div>
+            <h2 id="view-title" class="text-lg font-black text-brand-navy font-heading">BERANDA</h2>
+            <p id="view-subtitle" class="text-xs text-slate-500 font-medium">Selamat datang di E-LKPD Interaktif IPA STEAM</p>
           </div>
-
-          <!-- Top Right Action Controls -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button onclick="openModal('login-modal')" class="px-3 py-1.5 bg-blue-50 text-brand-blue border border-blue-200 font-bold text-xs rounded-xl hover:bg-blue-100 flex items-center gap-1">
-              🔑 <span id="login-btn-text">Masuk / Akun</span>
-            </button>
-
-            <button onclick="toggleAudioMute()" id="audio-toggle-btn" class="p-2 sm:px-3 sm:py-2 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition flex items-center gap-1">
-              <span id="audio-icon">🔊</span>
-            </button>
-
-            <button onclick="openModal('toc-modal')" class="px-2.5 py-2 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-bold text-brand-navy bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition flex items-center gap-1.5">
-              📚 <span class="hidden sm:inline">Daftar Isi</span>
-            </button>
-
-            <button onclick="goToPage(16)" class="px-2.5 py-2 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-black text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl transition flex items-center gap-1 shadow-xs">
-              👨‍🏫 <span class="hidden sm:inline">Guru</span>
-            </button>
+          
+          <div class="flex items-center gap-2">
+            <span id="role-badge" class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black rounded-xl">
+              Mode Tamu
+            </span>
           </div>
         </header>
 
         <!-- Dynamic Content Viewport -->
-        <div id="content-viewport" class="flex-1 p-2.5 sm:p-5 lg:p-7 flex flex-col justify-start">
-          <!-- Rendered dynamically in JS -->
+        <div id="content-viewport" class="flex-1 p-4 sm:p-6">
+          <!-- View dirender oleh JavaScript -->
         </div>
-
-        <!-- Bottom Navigation Footer -->
-        <footer id="bottom-bar" class="p-2 sm:p-3.5 bg-white border-t border-gray-100 flex items-center justify-between sticky bottom-0 z-10 no-print">
-          <button onclick="goToPrevPage()" id="btn-prev" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 border-brand-navy text-brand-navy font-bold text-xs sm:text-sm hover:bg-brand-navy hover:text-white transition-all flex items-center gap-1.5 shadow-xs">
-            &larr; <span class="hidden xs:inline">Sebelumnya</span>
-          </button>
-
-          <div class="flex items-center gap-1.5 sm:gap-2">
-            <button onclick="goToPage(2)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 text-brand-navy hover:bg-brand-blue hover:text-white transition flex items-center justify-center font-bold shadow-xs">
-              🏠
-            </button>
-            <div class="px-2.5 py-1.5 bg-gray-100 text-brand-navy rounded-xl font-black text-xs sm:text-sm tracking-wider border border-gray-200">
-              <span id="current-page-num">1</span> / <span id="total-page-num">16</span>
-            </div>
-          </div>
-
-          <button onclick="goToNextPage()" id="btn-next" class="px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-brand-blue text-white font-bold text-xs sm:text-sm hover:bg-blue-600 transition-all flex items-center gap-1.5 shadow-md shadow-blue-500/20">
-            <span>Selanjutnya</span> &rarr;
-          </button>
-        </footer>
 
       </main>
+
     </div>
   </div>
 
-  <!-- MODALS SECTION -->
-
-  <!-- Modal 0: Login System (GAS Integrated) -->
-  <div id="login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4 no-print">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-blue-100 space-y-4 text-center">
-      <div class="w-14 h-14 bg-blue-100 text-brand-blue rounded-full flex items-center justify-center text-2xl mx-auto shadow-inner">
-        🔑
-      </div>
-      <div>
-        <h3 class="text-lg font-black text-brand-navy font-heading">LOGIN SISTEM E-LKPD</h3>
-        <p class="text-xs text-gray-500">Masuk sebagai Siswa atau Guru</p>
+  <!-- MODAL AUTHENTICATION (LOGIN) -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-blue-100 text-brand-blue rounded-2xl flex items-center justify-center text-xl font-bold mx-auto">🔑</div>
+        <h3 class="text-lg font-black text-brand-navy font-heading">LOGIN E-LKPD</h3>
+        <p class="text-xs text-slate-500">Masukkan username dan password kamu</p>
       </div>
 
-      <div class="space-y-2 text-left">
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3 text-xs">
         <div>
-          <label class="block text-[11px] font-bold text-gray-700 mb-0.5">Username / NIS:</label>
-          <input type="text" id="login-username" placeholder="Contoh: 8001 atau guru.ipa" class="w-full p-2.5 rounded-xl border border-gray-300 text-xs font-bold" />
+          <label class="block font-bold text-slate-700 mb-1">Username / NIS / NIP</label>
+          <input type="text" id="login-username" required placeholder="Contoh: admin, guru.ipa, atau 8001" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
         </div>
+
         <div>
-          <label class="block text-[11px] font-bold text-gray-700 mb-0.5">Password:</label>
-          <input type="password" id="login-password" placeholder="Masukkan password" class="w-full p-2.5 rounded-xl border border-gray-300 text-xs font-bold" />
+          <label class="block font-bold text-slate-700 mb-1">Password</label>
+          <input type="password" id="login-password" required placeholder="Masukkan password" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
         </div>
-      </div>
 
-      <div class="flex gap-2 pt-2">
-        <button onclick="closeModal('login-modal')" class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs">
-          Batal
-        </button>
-        <button onclick="processLogin()" class="flex-1 py-2.5 bg-brand-blue text-white rounded-xl font-bold text-xs shadow-md">
-          Masuk
-        </button>
-      </div>
+        <div id="login-error-msg" class="hidden text-xs text-red-600 font-bold text-center bg-red-50 p-2 rounded-xl border border-red-200"></div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-submit-login" class="flex-1 py-2.5 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-600 transition">
+            Masuk
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Modal 1: Daftar Isi -->
-  <div id="toc-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4 no-print">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl border border-blue-100 max-h-[85vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <h3 class="text-lg font-black text-brand-navy font-heading">📚 Daftar Isi E-LKPD</h3>
-        <button onclick="closeModal('toc-modal')" class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
-      </div>
-      <div class="overflow-y-auto py-3 space-y-1.5 pr-1" id="toc-list"></div>
-    </div>
-  </div>
-
-  <!-- Modal 2: Summary -->
-  <div id="summary-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4 no-print">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-5 shadow-2xl border border-emerald-100 max-h-[85vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <h3 class="text-lg font-black text-emerald-950 font-heading">📖 Ringkasan Materi</h3>
-        <button onclick="closeModal('summary-modal')" class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
-      </div>
-      <div class="overflow-y-auto py-3 space-y-3 text-xs text-gray-700 pr-1">
-        <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100">
-          <b>1. Usaha (W = F × s):</b> Dihasilkan oleh gaya yang memindahkan benda.
-        </div>
-        <div class="p-3 bg-amber-50 rounded-2xl border border-amber-100">
-          <b>2. Energi Kinetik (Ek = ½mv²):</b> Energi benda yang bergerak.
-        </div>
-        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-          <b>3. Energi Potensial (Ep = m·g·h):</b> Energi ketinggian benda.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 3: Evaluation Score Result -->
-  <div id="eval-result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 no-print">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl border border-blue-100">
-      <div class="w-16 h-16 mx-auto rounded-full bg-yellow-100 flex items-center justify-center text-3xl mb-3 shadow-inner">🏆</div>
-      <h3 class="text-xl font-black text-brand-navy font-heading">Hasil Evaluasi Belajar</h3>
-      <p class="text-xs text-gray-500 mt-0.5" id="eval-student-name">Nama Siswa</p>
-      <div class="my-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-        <span class="text-[10px] font-bold text-gray-500 uppercase block">Skor Kuis PG</span>
-        <span class="text-4xl font-black text-brand-blue font-heading" id="eval-score-text">0</span>
-        <span class="text-xs text-gray-500 block mt-1" id="eval-correct-count">0 dari 6 Soal Benar</span>
-      </div>
-      <button onclick="closeModal('eval-result-modal'); goToPage(14);" class="w-full py-2.5 rounded-xl bg-brand-navy text-white font-bold text-xs shadow-md">
-        Isi Lembar E-LKPD
-      </button>
-    </div>
-  </div>
-
-  <!-- Modal 4: Teacher Review & Grading Modal -->
-  <div id="review-submission-modal" class="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4 no-print">
-    <div class="bg-white rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl border border-blue-100 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <div>
-          <h3 class="text-base sm:text-lg font-black text-brand-navy font-heading">🔍 PERIKSA E-LKPD SISWA</h3>
-          <p class="text-xs text-gray-500" id="review-student-info">Siswa: - | Kelas: -</p>
-        </div>
-        <button onclick="closeModal('review-submission-modal')" class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
-      </div>
-
-      <div class="overflow-y-auto py-3 space-y-4 text-xs sm:text-sm text-gray-700 pr-1 flex-1" id="review-modal-body">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <div class="pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
-        <button onclick="closeModal('review-submission-modal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs">Tutup</button>
-        <button onclick="saveTeacherGradeFromModal()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-black text-xs sm:text-sm hover:bg-emerald-700 shadow transition">
-          💾 Simpan Penilaian ke Spreadsheet
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <!-- JAVASCRIPT APP LOGIC -->
   <script>
     /* ==========================================================
-       GLOBAL CONFIG & STATE
+       1. KONFIGURASI API & STATE GLOBAL
        ========================================================== */
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwYLQ5csxQkdcy0otnv2buDhC4NrGLhdY4MbnWFKVXy9J-RbLR3qVZbY3f_EAMMoLw/exec';
+    // TEMPELKAN URL WEB APP GAS HASIL DEPLOY TAHAP 1 DI SINI:
+    const GAS_API_URL = 'PASTE_URL_WEB_APP_GAS_KAMU_DI_SINI';
 
     const state = {
-      currentPage: 1,
-      totalPages: 16,
-      soundEnabled: true,
-      teacherAuthenticated: false,
-      currentUser: null, // { id, name, username, role, kelas }
-      student: {
-        name: 'Siswa Contoh',
-        class: 'VIII-A',
-        absen: '01',
-        date: new Date().toISOString().split('T')[0]
-      },
-      game: {
-        score: 0,
-        placedItems: {},
-        selectedItem: null,
-      },
-      evalAnswers: {},
-      evalSubmitted: false,
-      reviewTargetId: null,
-      cachedSubmissions: [],
-      usahaSim: { force: 20, distance: 5 },
-      kineticSim: { mass: 800, speed: 20 },
-      potensialSim: { mass: 3, height: 5, gravity: 10 }
+      currentUser: null, // { id, username, name, role, kelas }
+      currentView: 'home'
     };
 
     /* ==========================================================
-       CANVAS Menggambar (STEAM Aktivitas 3)
+       2. AUTENTIKASI & KONTROL AKSES (ROLE-BASED)
        ========================================================== */
-    let canvasCtx = null;
-    let isDrawing = false;
-    let currentPenColor = '#0B2545';
-    let currentLineWidth = 3;
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const un = document.getElementById('login-username').value.trim();
+      const pw = document.getElementById('login-password').value.trim();
+      const errorMsg = document.getElementById('login-error-msg');
+      const submitBtn = document.getElementById('btn-submit-login');
 
-    function initCanvas() {
-      const canvas = document.getElementById('steam-canvas');
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width || 600;
-      canvas.height = 250;
-
-      canvasCtx = canvas.getContext('2d');
-      canvasCtx.fillStyle = '#FFFFFF';
-      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-      canvasCtx.lineWidth = currentLineWidth;
-      canvasCtx.lineCap = 'round';
-      canvasCtx.lineJoin = 'round';
-      canvasCtx.strokeStyle = currentPenColor;
-
-      canvas.onmousedown = startDrawing;
-      canvas.onmousemove = draw;
-      canvas.onmouseup = stopDrawing;
-      canvas.onmouseleave = stopDrawing;
-
-      canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (e.touches.length > 0) startDrawing(e.touches[0]);
-      }, { passive: false });
-      
-      canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (e.touches.length > 0) draw(e.touches[0]);
-      }, { passive: false });
-      
-      canvas.addEventListener('touchend', stopDrawing, { passive: false });
-    }
-
-    function getCanvasCoords(e, canvas) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: (e.clientX - rect.left) * (canvas.width / rect.width),
-        y: (e.clientY - rect.top) * (canvas.height / rect.height)
-      };
-    }
-
-    function startDrawing(e) {
-      isDrawing = true;
-      const canvas = document.getElementById('steam-canvas');
-      if (!canvas || !canvasCtx) return;
-      const coords = getCanvasCoords(e, canvas);
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(coords.x, coords.y);
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-      const canvas = document.getElementById('steam-canvas');
-      if (!canvas || !canvasCtx) return;
-      const coords = getCanvasCoords(e, canvas);
-      canvasCtx.lineTo(coords.x, coords.y);
-      canvasCtx.stroke();
-    }
-
-    function stopDrawing() { isDrawing = false; }
-    function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; playSound('click'); }
-    function setCanvasLineWidth(w) { currentLineWidth = w; if (canvasCtx) canvasCtx.lineWidth = w; playSound('click'); }
-    function clearCanvas() {
-      const canvas = document.getElementById('steam-canvas');
-      if (canvas && canvasCtx) {
-        canvasCtx.fillStyle = '#FFFFFF';
-        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        playSound('click');
-      }
-    }
-
-    /* ==========================================================
-       GAS API INTEGRATION FUNCTIONS
-       ========================================================== */
-    async function processLogin() {
-      const un = document.getElementById('login-username')?.value.trim();
-      const pw = document.getElementById('login-password')?.value.trim();
-
-      if (!un || !pw) {
-        alert('Mohon isi username dan password!');
-        return;
-      }
+      errorMsg.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Memproses...';
 
       try {
-        alert('Menghubungkan ke server...');
         const res = await fetch(GAS_API_URL, {
           method: 'POST',
           body: JSON.stringify({ action: 'login', username: un, password: pw })
@@ -527,777 +181,231 @@
 
         if (result.success) {
           state.currentUser = result.user;
-          state.student.name = result.user.name;
-          state.student.class = result.user.kelas || 'VIII-A';
+          closeLoginModal();
+          updateUIForAuthenticatedUser();
+          
+          // Redirect sesuai Role
+          if (result.user.role === 'admin') switchView('admin-users');
+          else if (result.user.role === 'guru') switchView('guru-dashboard');
+          else switchView('siswa-materi');
 
-          document.getElementById('login-btn-text').textContent = result.user.name;
-          closeModal('login-modal');
-          playSound('success');
-
-          if (result.user.role === 'guru') {
-            state.teacherAuthenticated = true;
-            goToPage(16);
-          } else {
-            goToPage(2);
-          }
         } else {
-          playSound('error');
-          alert(result.message);
+          errorMsg.textContent = result.message || 'Login gagal!';
+          errorMsg.classList.remove('hidden');
         }
       } catch (err) {
-        console.error(err);
-        alert('Gagal terhubung ke database cloud!');
+        errorMsg.textContent = 'Gagal terhubung ke server database!';
+        errorMsg.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Masuk';
       }
     }
 
-    async function submitFullElkpdForm() {
-      const canvas = document.getElementById('steam-canvas');
-      const canvasDataUrl = canvas ? canvas.toDataURL('image/png') : '';
-
-      let correctCount = 0;
-      evalQuestions.forEach(q => {
-        if (state.evalAnswers[q.id] === q.answer) correctCount++;
-      });
-      const scorePG = Math.round((correctCount / evalQuestions.length) * 100);
-
-      const payload = {
-        action: 'submit_lkpd',
-        username: state.currentUser ? state.currentUser.username : (state.student.absen || '8001'),
-        studentName: state.student.name || 'Siswa',
-        studentClass: state.student.class || 'VIII',
-        studentAbsen: state.student.absen || '-',
-        scorePG: scorePG,
-        canvasImage: canvasDataUrl,
-        answers: {
-          fenomena1: document.getElementById('elkpd-fenomena-1')?.value || '',
-          fenomena2: document.getElementById('elkpd-fenomena-2')?.value || '',
-          fenomena3: document.getElementById('elkpd-fenomena-3')?.value || '',
-          fenomena4: document.getElementById('elkpd-fenomena-4')?.value || '',
-          usaha1: document.getElementById('elkpd-usaha-1')?.value || '',
-          energi1: document.getElementById('elkpd-energi-1')?.value || '',
-          energi2: document.getElementById('elkpd-energi-2')?.value || '',
-          steam3Notes: document.getElementById('elkpd-steam-3-notes')?.value || '',
-          refleksi1: document.getElementById('elkpd-refleksi-1')?.value || '',
-          refleksi2: document.getElementById('elkpd-refleksi-2')?.value || '',
-        }
-      };
-
-      try {
-        alert('Mengirim lembar E-LKPD ke Spreadsheet Guru...');
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          playSound('fanfare');
-          alert(result.message);
-          goToPage(15);
-        } else {
-          alert('Gagal menyimpan: ' + result.message);
-        }
-      } catch (e) {
-        console.error(e);
-        alert('Terjadi kesalahan koneksi saat mengirim jawaban ke Cloud.');
-      }
+    function logout() {
+      state.currentUser = null;
+      updateUIForAuthenticatedUser();
+      switchView('home');
     }
 
-    async function fetchSubmissionsFromGAS() {
-      try {
-        const res = await fetch(`${GAS_API_URL}?action=get_submissions`);
-        const result = await res.json();
-        if (result.success) {
-          state.cachedSubmissions = result.submissions;
-          return result.submissions;
-        }
-        return [];
-      } catch (e) {
-        console.error('Failed to fetch:', e);
-        return [];
-      }
-    }
+    function updateUIForAuthenticatedUser() {
+      const nameElem = document.getElementById('user-display-name');
+      const roleElem = document.getElementById('user-display-role');
+      const badgeElem = document.getElementById('role-badge');
+      const authBtn = document.getElementById('auth-action-btn');
 
-    async function saveTeacherGradeFromModal() {
-      const grade = document.getElementById('modal-grade-input')?.value;
-      const notes = document.getElementById('modal-notes-input')?.value;
-
-      if (!state.reviewTargetId) return;
-
-      try {
-        alert('Menyimpan nilai ke Google Sheets...');
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'grade_submission',
-            submissionId: state.reviewTargetId,
-            essayGrade: grade,
-            teacherNotes: notes
-          })
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          playSound('success');
-          alert(result.message);
-          closeModal('review-submission-modal');
-          renderPage();
-        } else {
-          alert('Gagal menilai: ' + result.message);
-        }
-      } catch (e) {
-        console.error(e);
-        alert('Gagal memperbarui nilai di Cloud.');
-      }
-    }
-
-    /* ==========================================================
-       AUDIO & UI CONTROLS
-       ========================================================== */
-    let audioCtx = null;
-    function getAudioContext() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      return audioCtx;
-    }
-
-    function playSound(type) {
-      if (!state.soundEnabled) return;
-      try {
-        const ctx = getAudioContext();
-        if (ctx.state === 'suspended') ctx.resume();
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        const now = ctx.currentTime;
-
-        if (type === 'click') {
-          osc.frequency.setValueAtTime(600, now);
-          osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-          osc.start(now);
-          osc.stop(now + 0.08);
-        } else if (type === 'success') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.setValueAtTime(659.25, now + 0.08);
-          gain.gain.setValueAtTime(0.25, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
-        } else if (type === 'fanfare') {
-          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.frequency.value = freq;
-            o.connect(g);
-            g.connect(ctx.destination);
-            g.gain.setValueAtTime(0.15, now + idx * 0.1);
-            g.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
-            o.start(now + idx * 0.1);
-            o.stop(now + idx * 0.1 + 0.25);
-          });
-        }
-      } catch (e) {}
-    }
-
-    function toggleAudioMute() {
-      state.soundEnabled = !state.soundEnabled;
-      document.getElementById('audio-icon').textContent = state.soundEnabled ? '🔊' : '🔇';
-      playSound('click');
-    }
-
-    function toggleMobileSidebar(show) {
-      const sidebar = document.getElementById('main-sidebar');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      if (show) {
-        sidebar.classList.remove('-translate-x-full');
-        backdrop.classList.remove('hidden');
-        setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+      if (state.currentUser) {
+        nameElem.textContent = state.currentUser.name;
+        roleElem.textContent = state.currentUser.role.toUpperCase();
+        badgeElem.textContent = `${state.currentUser.role.toUpperCase()}: ${state.currentUser.name}`;
+        badgeElem.className = 'px-3 py-1 bg-blue-100 border border-blue-200 text-brand-blue text-xs font-black rounded-xl';
+        
+        authBtn.className = 'w-full py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-xl text-xs transition flex items-center justify-center gap-2';
+        authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
+        authBtn.onclick = logout;
       } else {
-        sidebar.classList.add('-translate-x-full');
-        backdrop.classList.add('opacity-0');
-        setTimeout(() => backdrop.classList.add('hidden'), 300);
+        nameElem.textContent = 'Belum Login';
+        roleElem.textContent = '-';
+        badgeElem.textContent = 'Mode Tamu';
+        badgeElem.className = 'px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black rounded-xl';
+
+        authBtn.className = 'w-full py-2.5 bg-brand-blue hover:bg-blue-600 text-white font-black rounded-xl text-xs transition shadow flex items-center justify-center gap-2';
+        authBtn.innerHTML = '<span>🔑 Login / Ganti Akun</span>';
+        authBtn.onclick = openLoginModal;
       }
+
+      renderSidebarNav();
     }
 
     /* ==========================================================
-       NAVIGATION & SIDEBAR
+       3. NAVIGATION & SIDEBAR MANAGER
        ========================================================== */
-    const navItems = [
-      { id: 'cover', title: 'Beranda & Cover', icon: '🏠', page: 1 },
-      { id: 'menu', title: 'Menu Utama', icon: '📋', page: 2 },
-      { id: 'petunjuk', title: 'Petunjuk & Tujuan', icon: '🎯', page: 3 },
-      { id: 'materi', title: 'Materi Usaha & Energi', icon: '📖', page: 4 },
-      { id: 'game', title: 'Game Interaktif', icon: '🎮', page: 9, isGame: true },
-      { id: 'evaluasi', title: 'Evaluasi Pembelajaran', icon: '📊', page: 10 },
-      { id: 'steam', title: 'Aktivitas Proyek STEAM', icon: '⚛️', page: 11 },
-      { id: 'latihan', title: 'Latihan Mandiri', icon: '📝', page: 12 },
-      { id: 'profil', title: 'Profil Pengembang', icon: '👤', page: 13 },
-      { id: 'lembar-elkpd', title: 'Isi Lembar E-LKPD', icon: '📄', page: 14, isHighlight: true },
-      { id: 'dashboard-siswa', title: 'Dashboard Siswa', icon: '🎓', page: 15 },
-      { id: 'dashboard-guru', title: 'Dashboard Guru', icon: '👨‍🏫', page: 16 }
-    ];
-
-    function renderSidebar() {
+    function renderSidebarNav() {
       const navContainer = document.getElementById('sidebar-nav');
       navContainer.innerHTML = '';
 
-      navItems.forEach(item => {
-        const isCurrentActive = (
-          (item.page === state.currentPage) ||
-          (item.id === 'materi' && [4, 5, 6, 7, 8].includes(state.currentPage))
+      let items = [
+        { id: 'home', title: 'Beranda E-LKPD', icon: '🏠', roles: ['guest', 'admin', 'guru', 'siswa'] }
+      ];
+
+      // Menu Khusus Admin
+      if (state.currentUser?.role === 'admin') {
+        items.push(
+          { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥', roles: ['admin'] }
         );
+      }
 
+      // Menu Khusus Guru
+      if (state.currentUser?.role === 'guru') {
+        items.push(
+          { id: 'guru-dashboard', title: 'Dashboard Guru', icon: '📊', roles: ['guru'] },
+          { id: 'guru-konten', title: 'Kelola Konten LKPD', icon: '📝', roles: ['guru'] },
+          { id: 'guru-soal', title: 'Kelola Bank Soal', icon: '❓', roles: ['guru'] }
+        );
+      }
+
+      // Menu Khusus Siswa / Tamu
+      if (!state.currentUser || state.currentUser?.role === 'siswa') {
+        items.push(
+          { id: 'siswa-materi', title: 'Materi IPA Interaktif', icon: '📖', roles: ['siswa', 'guest'] },
+          { id: 'siswa-lkpd', title: 'Isi Lembar E-LKPD', icon: '✏️', roles: ['siswa'] },
+          { id: 'siswa-nilai', title: 'Hasil & Nilai Saya', icon: '🏆', roles: ['siswa'] }
+        );
+      }
+
+      items.forEach(item => {
         const btn = document.createElement('button');
-        btn.onclick = () => { goToPage(item.page); toggleMobileSidebar(false); };
-        
-        let activeClasses = 'text-gray-300 hover:bg-blue-900/40 hover:text-white';
-        if (isCurrentActive) {
-          if (item.isGame) activeClasses = 'bg-brand-purple text-white font-bold shadow-lg';
-          else if (item.isHighlight) activeClasses = 'bg-emerald-500 text-white font-black shadow-md';
-          else activeClasses = 'bg-brand-yellow text-brand-navy font-bold shadow-md';
-        }
-
-        btn.className = `w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-sm transition-all text-left font-heading ${activeClasses}`;
-        btn.innerHTML = `<span class="text-base">${item.icon}</span><span class="truncate">${item.title}</span>`;
+        const isActive = state.currentView === item.id;
+        btn.onclick = () => switchView(item.id);
+        btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-heading transition-all text-left ${
+          isActive ? 'bg-brand-yellow text-brand-navy font-bold shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        }`;
+        btn.innerHTML = `<span class="text-sm">${item.icon}</span><span>${item.title}</span>`;
         navContainer.appendChild(btn);
       });
-
-      const userBadge = document.getElementById('sidebar-user-badge');
-      if (state.currentUser) {
-        userBadge.innerHTML = `👤 <b>${state.currentUser.name}</b> (${state.currentUser.role.toUpperCase()})`;
-      } else {
-        userBadge.innerHTML = `👤 Mode Tamu / Belum Login`;
-      }
-    }
-
-    function goToPage(pageNum) {
-      if (pageNum < 1) pageNum = 1;
-      if (pageNum > state.totalPages) pageNum = state.totalPages;
-      state.currentPage = pageNum;
-      playSound('click');
-      renderPage();
-      renderSidebar();
-      updateTopBottomBars();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function goToNextPage() { if (state.currentPage < state.totalPages) goToPage(state.currentPage + 1); }
-    function goToPrevPage() { if (state.currentPage > 1) goToPage(state.currentPage - 1); }
-    function navigateBack() { if (state.currentPage > 2) goToPage(2); else if (state.currentPage === 2) goToPage(1); }
-
-    function updateTopBottomBars() {
-      document.getElementById('current-page-num').textContent = state.currentPage;
-      document.getElementById('total-page-num').textContent = state.totalPages;
-      const btnPrev = document.getElementById('btn-prev');
-      if (state.currentPage === 1) btnPrev.classList.add('opacity-50', 'pointer-events-none');
-      else btnPrev.classList.remove('opacity-50', 'pointer-events-none');
     }
 
     /* ==========================================================
-       PAGE RENDERERS
+       4. ROUTER VIEW SWITCHER
        ========================================================== */
-    function renderPage1Cover() {
-      return `
-        <div class="flex-1 flex flex-col justify-between py-2 max-w-5xl mx-auto w-full space-y-4">
-          <div class="text-center">
-            <div class="inline-flex items-center gap-3 p-2 bg-white rounded-2xl border border-blue-200 shadow-xs mb-3">
-              <img src="logo-ung.png" class="w-12 h-12 object-contain" onerror="this.src='https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Negeri_Gorontalo.png'"/>
-              <div class="text-left leading-tight">
-                <span class="text-[10px] font-black text-brand-navy block uppercase font-heading">UNIVERSITAS NEGERI GORONTALO</span>
-                <span class="text-[9px] font-bold text-gray-600 block">FMIPA &bull; Pendidikan IPA</span>
-              </div>
-            </div>
-            <h1 class="text-2xl sm:text-4xl font-black text-brand-navy font-heading tracking-tight">E-LKPD INTERAKTIF BERBASIS STEAM</h1>
-            <p class="text-brand-blue font-black text-lg mt-1">USAHA DAN ENERGI</p>
-          </div>
+    function switchView(viewId) {
+      state.currentView = viewId;
+      renderSidebarNav();
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white p-5 rounded-3xl border-2 border-blue-200 shadow-card space-y-3">
-              <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">📝 Identitas Peserta Didik</h3>
-              <div>
-                <label class="block text-xs font-bold text-gray-700">Nama Lengkap Siswa:</label>
-                <input type="text" id="input-nama" value="${state.student.name}" class="w-full p-2.5 rounded-xl border text-xs font-bold mt-1" />
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-xs font-bold text-gray-700">Kelas:</label>
-                  <input type="text" id="input-kelas" value="${state.student.class}" class="w-full p-2.5 rounded-xl border text-xs font-bold mt-1" />
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-gray-700">No. Absen:</label>
-                  <input type="text" id="input-absen" value="${state.student.absen}" class="w-full p-2.5 rounded-xl border text-xs font-bold mt-1" />
-                </div>
-              </div>
-              <button onclick="startFromCover()" class="w-full py-3 bg-brand-yellow text-brand-navy font-black text-xs rounded-xl shadow uppercase tracking-wider font-heading mt-2">
-                MASUK & MULAI BELAJAR
-              </button>
-            </div>
-
-            <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-card space-y-3">
-              <span class="text-brand-yellow text-xs font-bold block uppercase font-heading">Disusun Oleh:</span>
-              <h4 class="text-base font-black">Samsiyah N. Arapa</h4>
-              <p class="text-xs text-blue-200 font-mono">NIM: 461423005</p>
-
-              <div class="pt-3 border-t border-blue-800 text-xs space-y-1">
-                <span class="text-brand-yellow font-bold block">Dosen Pembimbing:</span>
-                <p>1. Dr. Nova Elysia Ntobuo, S.Pd., M.Pd.</p>
-                <p>2. Dr. Muhammad Yusuf, S.Pd., M.Pd.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function startFromCover() {
-      state.student.name = document.getElementById('input-nama')?.value || 'Siswa';
-      state.student.class = document.getElementById('input-kelas')?.value || 'VIII';
-      state.student.absen = document.getElementById('input-absen')?.value || '-';
-      playSound('success');
-      goToPage(2);
-    }
-
-    function renderPage2MainMenu() {
-      const menuCards = [
-        { title: 'ISI LEMBAR E-LKPD', desc: 'Isi lembar kerja & kanvas STEAM.', icon: '📄', page: 14, color: 'bg-emerald-600' },
-        { title: 'PETUNJUK & TUJUAN', desc: 'Kompetensi STEAM & panduan.', icon: '🎯', page: 3, color: 'bg-teal-600' },
-        { title: 'MATERI INTERAKTIF', desc: 'Konsep Usaha & Energi.', icon: '📖', page: 4, color: 'bg-indigo-600' },
-        { title: 'GAME INTERAKTIF', desc: 'Pencocokan bentuk energi.', icon: '🎮', page: 9, color: 'bg-brand-purple' },
-        { title: 'EVALUASI BELAJAR', desc: 'Soal pilihan ganda.', icon: '📊', page: 10, color: 'bg-blue-600' },
-        { title: 'PROYEK STEAM', desc: 'Mobil bertenaga karet.', icon: '💡', page: 11, color: 'bg-amber-500' },
-        { title: 'DASHBOARD SISWA', desc: 'Status & nilai kamu.', icon: '🎓', page: 15, color: 'bg-rose-600' },
-        { title: 'DASHBOARD GURU', desc: 'Rekap & koreksi guru.', icon: '👨‍🏫', page: 16, color: 'bg-amber-700' },
-      ];
-
-      return `
-        <div class="flex-1 flex flex-col justify-start space-y-4">
-          <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-black text-brand-navy">Halo, ${state.student.name}! (${state.student.class})</h3>
-              <p class="text-xs text-gray-500">Selamat belajar E-LKPD STEAM Universitas Negeri Gorontalo.</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            ${menuCards.map(c => `
-              <div class="bg-white p-4 rounded-3xl border border-blue-100 shadow-card flex flex-col justify-between hover:shadow-xl transition">
-                <div class="text-center space-y-2">
-                  <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl mx-auto">${c.icon}</div>
-                  <h4 class="font-black text-xs text-brand-navy font-heading">${c.title}</h4>
-                  <p class="text-[10px] text-gray-500">${c.desc}</p>
-                </div>
-                <button onclick="goToPage(${c.page})" class="mt-3 w-full py-2 ${c.color} text-white font-bold text-xs rounded-xl shadow">Buka</button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderPage4Usaha() {
-      const W = state.usahaSim.force * state.usahaSim.distance;
-      return `
-        <div class="flex-1 flex flex-col justify-start bg-white p-5 rounded-3xl border border-blue-100 shadow-card space-y-4">
-          <h3 class="font-black text-brand-navy text-base font-heading">A. PENGERTIAN USAHA (W = F × s)</h3>
-          <p class="text-xs text-gray-700 leading-relaxed">
-            Usaha terjadi jika gaya F yang bekerja pada suatu benda menyebabkan benda tersebut mengalami perpindahan sejauh s.
-          </p>
-          <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center font-mono font-black text-emerald-800 text-sm">
-            Rumus: W = F &times; s &bull; Contoh: ${state.usahaSim.force} N &times; ${state.usahaSim.distance} m = <span class="text-emerald-600 text-lg">${W} Joule</span>
-          </div>
-          <div class="grid grid-cols-2 gap-3 max-w-md mx-auto">
-            <div>
-              <label class="text-[10px] font-bold block">Gaya F: ${state.usahaSim.force} N</label>
-              <input type="range" min="5" max="50" step="5" value="${state.usahaSim.force}" oninput="state.usahaSim.force=parseFloat(this.value); renderPage();" class="w-full accent-blue-600"/>
-            </div>
-            <div>
-              <label class="text-[10px] font-bold block">Jarak s: ${state.usahaSim.distance} m</label>
-              <input type="range" min="1" max="10" step="1" value="${state.usahaSim.distance}" oninput="state.usahaSim.distance=parseFloat(this.value); renderPage();" class="w-full accent-blue-600"/>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderPage9Game() {
-      const gameTargets = [
-        { id: 1, name: 'Ketapel', icon: '🏹' },
-        { id: 2, name: 'PLTA Air', icon: '🌊' },
-        { id: 3, name: 'Mobil Berjalan', icon: '🚗' },
-        { id: 4, name: 'Baterai', icon: '🔋' },
-        { id: 5, name: 'Setrika', icon: '👔' },
-      ];
-      const gameItems = [
-        { key: 'kinetik', label: 'Energi Kinetik', matchSlot: 3 },
-        { key: 'potensial', label: 'Energi Potensial', matchSlot: 1 },
-        { key: 'listrik', label: 'Energi Listrik', matchSlot: 2 },
-        { key: 'kimia', label: 'Energi Kimia', matchSlot: 4 },
-        { key: 'panas', label: 'Energi Panas', matchSlot: 5 },
-      ];
-
-      return `
-        <div class="flex-1 flex flex-col justify-start bg-white p-5 rounded-3xl border border-blue-100 shadow-card space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="font-black text-brand-purple text-sm uppercase">GAME: PASANGKAN JENIS ENERGI</h3>
-            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full font-black text-xs">Skor: ${state.game.score}</span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-2">
-              ${gameTargets.map(t => {
-                const matched = state.game.placedItems[t.id];
-                return `
-                  <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border">
-                    <span class="text-xl">${t.icon}</span>
-                    <span class="text-xs font-bold flex-1">${t.name}</span>
-                    <button onclick="handleGameDrop(${t.id})" class="px-3 py-1.5 rounded-lg text-xs font-bold ${matched ? 'bg-emerald-500 text-white' : 'bg-purple-100 text-purple-700'}">
-                      ${matched ? '✓ Terpasang' : 'Pasang di Sini'}
-                    </button>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-
-            <div class="space-y-2">
-              <span class="text-xs font-bold text-gray-500 block">Pilih Opsi Energi:</span>
-              ${gameItems.map(item => `
-                <button onclick="state.game.selectedItem='${item.key}'; renderPage();" class="w-full p-2.5 rounded-xl border text-xs font-black text-left ${state.game.selectedItem === item.key ? 'bg-brand-purple text-white' : 'bg-white text-gray-800'}">
-                  ${item.label}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function handleGameDrop(targetId) {
-      if (!state.game.selectedItem) {
-        alert('Pilih jenis energi di sebelah kanan terlebih dahulu!');
-        return;
-      }
-      state.game.placedItems[targetId] = state.game.selectedItem;
-      state.game.score += 20;
-      state.game.selectedItem = null;
-      playSound('success');
-      renderPage();
-    }
-
-    const evalQuestions = [
-      { id: 1, question: "Benda 2 kg bergerak dengan kecepatan 10 m/s. Energi kinetiknya?", options: [{ key: 'A', text: '50 J' }, { key: 'B', text: '100 J' }, { key: 'C', text: '150 J' }, { key: 'D', text: '200 J' }], answer: 'B' },
-      { id: 2, question: "Benda 3 kg berada pada ketinggian 5 m (g=10). Energi potensialnya?", options: [{ key: 'A', text: '50 J' }, { key: 'B', text: '100 J' }, { key: 'C', text: '150 J' }, { key: 'D', text: '200 J' }], answer: 'C' },
-      { id: 3, question: "Gaya 20 N memindahkan benda sejauh 4 m. Usaha yang dilakukan?", options: [{ key: 'A', text: '20 J' }, { key: 'B', text: '40 J' }, { key: 'C', text: '60 J' }, { key: 'D', text: '80 J' }], answer: 'D' },
-      { id: 4, question: "Ek = 120 J dan Ep = 80 J. Berapakah Energi Mekaniknya?", options: [{ key: 'A', text: '80 J' }, { key: 'B', text: '120 J' }, { key: 'C', text: '200 J' }, { key: 'D', text: '240 J' }], answer: 'C' },
-      { id: 5, question: "Perubahan energi pada lampu senter menyala adalah...", options: [{ key: 'A', text: 'Listrik -> Panas' }, { key: 'B', text: 'Kimia -> Cahaya' }, { key: 'C', text: 'Cahaya -> Kimia' }, { key: 'D', text: 'Kinetik -> Listrik' }], answer: 'B' },
-      { id: 6, question: "Perubahan energi listrik menjadi gerak terjadi pada...", options: [{ key: 'A', text: 'Setrika' }, { key: 'B', text: 'Kipas angin' }, { key: 'C', text: 'Kompor' }, { key: 'D', text: 'Lampu' }], answer: 'B' }
-    ];
-
-    function renderPage10Evaluasi() {
-      return `
-        <div class="flex-1 flex flex-col justify-start space-y-3">
-          <div class="flex items-center justify-between bg-white p-3 rounded-2xl border">
-            <span class="text-xs font-bold text-gray-700">Soal Pilihan Ganda Evaluasi:</span>
-            <button onclick="submitEvalQuiz()" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow">Hitung Skor</button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            ${evalQuestions.map(q => `
-              <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-card">
-                <p class="text-xs font-bold text-gray-800 mb-2">${q.id}. ${q.question}</p>
-                <div class="space-y-1">
-                  ${q.options.map(o => `
-                    <button onclick="state.evalAnswers[${q.id}]='${o.key}'; renderPage();" class="w-full p-2 rounded-xl border text-left text-xs ${state.evalAnswers[q.id] === o.key ? 'bg-brand-blue text-white font-bold' : 'bg-gray-50 text-gray-700'}">
-                      <b>${o.key}.</b> ${o.text}
-                    </button>
-                  `).join('')}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function submitEvalQuiz() {
-      let c = 0;
-      evalQuestions.forEach(q => { if (state.evalAnswers[q.id] === q.answer) c++; });
-      const score = Math.round((c / evalQuestions.length) * 100);
-      document.getElementById('eval-score-text').textContent = score;
-      document.getElementById('eval-correct-count').textContent = `${c} dari ${evalQuestions.length} Soal Benar`;
-      openModal('eval-result-modal');
-    }
-
-    function renderPage14ElkpdForm() {
-      setTimeout(initCanvas, 150);
-
-      return `
-        <div class="flex-1 flex flex-col justify-start max-w-5xl mx-auto w-full space-y-4">
-          <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-card flex items-center justify-between">
-            <div>
-              <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase">E-LKPD STEAM INTERAKTIF</span>
-              <h2 class="text-xl font-black font-heading mt-1">LEMBAR KERJA PESERTA DIDIK</h2>
-            </div>
-            <div class="text-right text-xs bg-white/10 p-3 rounded-2xl">
-              <div>Siswa: <b>${state.student.name}</b></div>
-              <div>Kelas: ${state.student.class} | Absen: ${state.student.absen}</div>
-            </div>
-          </div>
-
-          <div class="bg-white p-5 rounded-3xl border border-blue-100 shadow-card space-y-5 text-xs">
-            <div class="p-4 bg-blue-50/60 rounded-2xl space-y-2">
-              <h4 class="font-black text-brand-navy text-sm font-heading">A. FENOMENA (Mendorong Meja)</h4>
-              <div>
-                <label class="block font-bold mb-1">1. Apakah kamu memberikan gaya pada meja?</label>
-                <input type="text" id="elkpd-fenomena-1" class="w-full p-2.5 rounded-xl border" placeholder="Jawaban..." />
-              </div>
-              <div>
-                <label class="block font-bold mb-1">2. Apakah meja mengalami perpindahan?</label>
-                <input type="text" id="elkpd-fenomena-2" class="w-full p-2.5 rounded-xl border" placeholder="Jawaban..." />
-              </div>
-              <div>
-                <label class="block font-bold mb-1">3. Apakah termasuk usaha dalam fisika? Jelaskan!</label>
-                <textarea id="elkpd-fenomena-3" rows="2" class="w-full p-2.5 rounded-xl border" placeholder="Penjelasan..."></textarea>
-              </div>
-            </div>
-
-            <div class="p-4 bg-amber-50/70 rounded-2xl space-y-3">
-              <div class="flex items-center justify-between">
-                <h4 class="font-black text-amber-950 text-sm font-heading">⚛️ D. AKTIVITAS STEAM - RANCANGAN LINTASAN</h4>
-                <div class="flex gap-1">
-                  <button onclick="setCanvasColor('#0B2545')" class="w-5 h-5 rounded-full bg-brand-navy"></button>
-                  <button onclick="setCanvasColor('#EF4444')" class="w-5 h-5 rounded-full bg-red-500"></button>
-                  <button onclick="setCanvasColor('#10B981')" class="w-5 h-5 rounded-full bg-emerald-500"></button>
-                  <button onclick="clearCanvas()" class="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded">🗑️ Bersihkan</button>
-                </div>
-              </div>
-              <div class="border-2 border-dashed border-amber-300 bg-white rounded-2xl overflow-hidden shadow-inner">
-                <canvas id="steam-canvas" width="700" height="250" class="w-full h-[220px] touch-none cursor-crosshair"></canvas>
-              </div>
-              <div>
-                <label class="block font-bold mb-1">Penjelasan Rancangan STEAM Kamu:</label>
-                <textarea id="elkpd-steam-3-notes" rows="2" class="w-full p-2.5 rounded-xl border" placeholder="Jelaskan bahan dan prinsip kerjanya..."></textarea>
-              </div>
-            </div>
-
-            <button onclick="submitFullElkpdForm()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-2xl shadow-lg uppercase font-heading">
-              🚀 KIRIM E-LKPD SAYA KE SERVER GURU
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    async function renderPage15DashboardSiswa() {
       const viewport = document.getElementById('content-viewport');
-      viewport.innerHTML = `<div class="p-5 text-center text-xs text-gray-500">Memuat status pengerjaan dari Google Sheets...</div>`;
+      const titleElem = document.getElementById('view-title');
+      const subtitleElem = document.getElementById('view-subtitle');
 
-      const list = await fetchSubmissionsFromGAS();
-      const mySub = list.find(s => String(s.username).toLowerCase() === String(state.currentUser ? state.currentUser.username : state.student.absen).toLowerCase()) || list[list.length - 1];
+      switch (viewId) {
+        case 'home':
+          titleElem.textContent = 'BERANDA';
+          subtitleElem.textContent = 'E-LKPD Interaktif IPA STEAM UNG';
+          viewport.innerHTML = renderHomeView();
+          break;
 
-      if (!mySub) {
-        viewport.innerHTML = `
-          <div class="bg-white p-6 rounded-3xl border text-center max-w-md mx-auto space-y-3">
-            <h3 class="font-black text-brand-navy">Belum Ada Lembar Terkirim</h3>
-            <p class="text-xs text-gray-500">Kamu belum mengisi E-LKPD atau data belum masuk ke Spreadsheet.</p>
-            <button onclick="goToPage(14)" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow">Isi E-LKPD Sekarang</button>
-          </div>
-        `;
-        return;
+        case 'admin-users':
+          titleElem.textContent = 'MANAJEMEN PENGGUNA';
+          subtitleElem.textContent = 'Tambah dan atur akun Admin, Guru, dan Siswa';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Admin: Kelola User - Akan dibangun di Tahap 3]</h3></div>`;
+          break;
+
+        case 'guru-dashboard':
+          titleElem.textContent = 'DASHBOARD GURU';
+          subtitleElem.textContent = 'Rekapitulasi dan penilain lembar kerja siswa';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: Koreksi & Rekap - Akan dibangun di Tahap 3]</h3></div>`;
+          break;
+
+        case 'guru-konten':
+          titleElem.textContent = 'KELOLA KONTEN LKPD';
+          subtitleElem.textContent = 'Tambah dan ubah materi serta instruksi LKPD';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: CRUD Konten - Akan dibangun di Tahap 3]</h3></div>`;
+          break;
+
+        case 'guru-soal':
+          titleElem.textContent = 'KELOLA BANK SOAL';
+          subtitleElem.textContent = 'Tambah dan ubah soal kuis evaluasi';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Guru: CRUD Soal - Akan dibangun di Tahap 3]</h3></div>`;
+          break;
+
+        case 'siswa-materi':
+          titleElem.textContent = 'MATERI USAHA & ENERGI';
+          subtitleElem.textContent = 'Pelajari konsep IPA berbasis STEAM';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Materi & Simulasi - Akan dibangun di Tahap 4]</h3></div>`;
+          break;
+
+        case 'siswa-lkpd':
+          titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK';
+          subtitleElem.textContent = 'Isi jawaban dan gambar rancangan STEAM';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Kanvas STEAM & Isian - Akan dibangun di Tahap 4]</h3></div>`;
+          break;
+
+        case 'siswa-nilai':
+          titleElem.textContent = 'HASIL BELAJAR SAYA';
+          subtitleElem.textContent = 'Lihat skor evaluasi dan catatan dari guru';
+          viewport.innerHTML = `<div class="p-6 bg-white rounded-3xl border border-slate-200"><h3 class="font-black text-brand-navy">[Modul Siswa: Hasil & Nilai - Akan dibangun di Tahap 4]</h3></div>`;
+          break;
+
+        default:
+          switchView('home');
       }
+    }
 
-      viewport.innerHTML = `
-        <div class="flex-1 flex flex-col justify-start max-w-4xl mx-auto w-full space-y-4">
-          <div class="bg-white p-5 rounded-3xl border border-blue-100 shadow-card space-y-3">
-            <span class="px-3 py-1 ${mySub.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} rounded-full text-[10px] font-black uppercase">
-              Status: ${mySub.status}
+    function renderHomeView() {
+      return `
+        <div class="space-y-4 max-w-4xl mx-auto">
+          <div class="bg-brand-navy text-white p-6 sm:p-8 rounded-3xl shadow-lg space-y-3">
+            <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase tracking-wider font-heading">
+              E-LKPD IPA SMP KELAS VIII
             </span>
-            <h3 class="text-lg font-black text-brand-navy font-heading">HASIL & NILAI E-LKPD SISWA</h3>
-            <p class="text-xs text-gray-500">Siswa: <b>${mySub.studentName}</b> (${mySub.studentClass})</p>
+            <h2 class="text-2xl sm:text-3xl font-black font-heading leading-tight">
+              E-LKPD INTERAKTIF BERBASIS STEAM
+            </h2>
+            <p class="text-xs text-slate-300 max-w-xl">
+              Platform pembelajaran digital berbasis Science, Technology, Engineering, Arts, dan Mathematics untuk materi Usaha dan Energi.
+            </p>
+          </div>
 
-            <div class="grid grid-cols-3 gap-3 pt-2 text-center">
-              <div class="p-3 bg-blue-50 rounded-2xl border">
-                <span class="text-[10px] font-bold text-gray-500 uppercase block">Skor PG</span>
-                <span class="text-2xl font-black text-brand-blue">${mySub.scorePG}</span>
-              </div>
-              <div class="p-3 bg-purple-50 rounded-2xl border">
-                <span class="text-[10px] font-bold text-purple-900 uppercase block">Nilai Guru</span>
-                <span class="text-2xl font-black text-purple-700">${mySub.essayGrade !== null ? mySub.essayGrade : '-'}</span>
-              </div>
-              <div class="p-3 bg-emerald-50 rounded-2xl border">
-                <span class="text-[10px] font-bold text-emerald-900 uppercase block">Nilai Akhir</span>
-                <span class="text-2xl font-black text-emerald-700">${mySub.finalScore}</span>
-              </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
+              <span class="text-2xl block">👑</span>
+              <h4 class="font-black text-brand-navy text-xs font-heading">Role Admin</h4>
+              <p class="text-[11px] text-slate-500">Mendaftarkan akun Guru dan Siswa ke sistem.</p>
             </div>
 
-            ${mySub.teacherNotes ? `
-              <div class="p-3 bg-amber-50 rounded-2xl border text-xs text-amber-900">
-                <b>Catatan Guru:</b> ${mySub.teacherNotes}
-              </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    async function renderPage16DashboardGuru() {
-      const viewport = document.getElementById('content-viewport');
-
-      if (!state.teacherAuthenticated) {
-        viewport.innerHTML = `
-          <div class="bg-white p-6 rounded-3xl border max-w-sm mx-auto text-center space-y-3">
-            <h3 class="font-black text-brand-navy font-heading">DASHBOARD GURU</h3>
-            <p class="text-xs text-gray-500">Silakan login sebagai Guru untuk mengoreksi LKPD.</p>
-            <button onclick="openModal('login-modal')" class="w-full py-2.5 bg-amber-600 text-white font-bold text-xs rounded-xl shadow uppercase">
-              Buka Login Guru
-            </button>
-          </div>
-        `;
-        return;
-      }
-
-      viewport.innerHTML = `<div class="p-5 text-center text-xs text-gray-500">Mengambil daftar pengerjaan siswa dari Google Sheets...</div>`;
-      const submissions = await fetchSubmissionsFromGAS();
-
-      viewport.innerHTML = `
-        <div class="flex-1 flex flex-col justify-start max-w-5xl mx-auto w-full space-y-4">
-          <div class="bg-white p-4 rounded-2xl border flex items-center justify-between">
-            <div>
-              <h3 class="font-black text-brand-navy text-base font-heading">👨‍🏫 DASHBOARD REKAPITULASI GURU</h3>
-              <p class="text-xs text-gray-500">Total Terkumpul: <b>${submissions.length} Lembar Siswa</b></p>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
+              <span class="text-2xl block">👨‍🏫</span>
+              <h4 class="font-black text-brand-navy text-xs font-heading">Role Guru</h4>
+              <p class="text-[11px] text-slate-500">Mengelola materi/soal dan memberikan nilai LKPD.</p>
             </div>
-            <button onclick="renderPage()" class="px-3 py-1.5 bg-blue-50 text-brand-blue font-bold text-xs rounded-xl border">🔄 Refresh Data</button>
-          </div>
 
-          <div class="bg-white rounded-2xl border shadow-card overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-brand-navy text-white font-heading">
-                  <tr>
-                    <th class="p-3">Nama Siswa</th>
-                    <th class="p-3">Kelas / Absen</th>
-                    <th class="p-3">Skor PG</th>
-                    <th class="p-3">Nilai STEAM/Esai</th>
-                    <th class="p-3">Status</th>
-                    <th class="p-3 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                  ${submissions.length === 0 ? `
-                    <tr><td colspan="6" class="p-5 text-center text-gray-400">Belum ada siswa yang mengirim E-LKPD.</td></tr>
-                  ` : submissions.map(sub => `
-                    <tr class="hover:bg-blue-50/50">
-                      <td class="p-3 font-bold text-gray-800">${sub.studentName}</td>
-                      <td class="p-3 text-gray-600">${sub.studentClass} (${sub.studentAbsen})</td>
-                      <td class="p-3 font-mono font-bold text-brand-blue">${sub.scorePG}</td>
-                      <td class="p-3 font-mono font-bold ${sub.essayGrade !== null ? 'text-emerald-600' : 'text-amber-600'}">
-                        ${sub.essayGrade !== null ? sub.essayGrade : 'Belum Dinilai'}
-                      </td>
-                      <td class="p-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${sub.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                          ${sub.status}
-                        </span>
-                      </td>
-                      <td class="p-3 text-center">
-                        <button onclick="openReviewModal('${sub.id}')" class="px-3 py-1 bg-brand-blue text-white font-bold text-[10px] rounded-lg shadow">
-                          Periksa
-                        </button>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 text-center">
+              <span class="text-2xl block">🎓</span>
+              <h4 class="font-black text-brand-navy text-xs font-heading">Role Siswa</h4>
+              <p class="text-[11px] text-slate-500">Mempelajari materi, mengisi kanvas STEAM, dan kuis.</p>
             </div>
           </div>
         </div>
       `;
-    }
-
-    function openReviewModal(subId) {
-      const sub = state.cachedSubmissions.find(s => s.id === subId);
-      if (!sub) return;
-
-      state.reviewTargetId = subId;
-      document.getElementById('review-student-info').textContent = `Siswa: ${sub.studentName} (${sub.studentClass}) - Absen: ${sub.studentAbsen}`;
-
-      const modalBody = document.getElementById('review-modal-body');
-      modalBody.innerHTML = `
-        <div class="space-y-3 text-xs">
-          <div class="p-3 bg-blue-50 rounded-xl border">
-            <b>A. Jawaban Fenomena Siswa:</b>
-            <p class="mt-1">1. ${sub.answers.fenomena1 || '-'}</p>
-            <p>2. ${sub.answers.fenomena2 || '-'}</p>
-            <p>3. ${sub.answers.fenomena3 || '-'}</p>
-          </div>
-
-          <div class="p-3 bg-amber-50 rounded-xl border">
-            <b>🖼️ Hasil Gambar Rancangan STEAM Siswa:</b>
-            ${sub.canvasImage ? `<img src="${sub.canvasImage}" class="w-full max-w-md mx-auto h-auto rounded-xl border bg-white my-2"/>` : '<p class="text-gray-400">Tidak ada gambar kanvas.</p>'}
-            <p><b>Keterangan STEAM:</b> ${sub.answers.steam3Notes || '-'}</p>
-          </div>
-
-          <div class="p-3 bg-gray-50 rounded-xl border space-y-2">
-            <label class="block font-bold">Input Nilai Esai & STEAM (0 - 100):</label>
-            <input type="number" id="modal-grade-input" value="${sub.essayGrade !== null ? sub.essayGrade : 85}" min="0" max="100" class="w-full p-2.5 rounded-xl border font-bold" />
-
-            <label class="block font-bold mt-2">Catatan / Umpan Balik Guru:</label>
-            <textarea id="modal-notes-input" rows="2" class="w-full p-2.5 rounded-xl border" placeholder="Berikan saran atau pujian...">${sub.teacherNotes || ''}</textarea>
-          </div>
-        </div>
-      `;
-
-      openModal('review-submission-modal');
     }
 
     /* ==========================================================
-       PAGE ROUTER SWITCH
+       5. MODAL UTILITIES
        ========================================================== */
-    function renderPage() {
-      const viewport = document.getElementById('content-viewport');
-      const title = document.getElementById('page-title');
-      const subtitle = document.getElementById('page-subtitle');
-
-      switch (state.currentPage) {
-        case 1: title.textContent = "COVER"; subtitle.textContent = "E-LKPD STEAM UNG"; viewport.innerHTML = renderPage1Cover(); break;
-        case 2: title.textContent = "MENU UTAMA"; subtitle.textContent = "Pilih modul belajar."; viewport.innerHTML = renderPage2MainMenu(); break;
-        case 3: title.textContent = "PETUNJUK & TUJUAN"; subtitle.textContent = "Panduan STEAM."; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">🎯 Petunjuk & Tujuan Pembelajaran</h3><p class="text-xs text-gray-600 mt-2">Gunakan E-LKPD ini untuk memahami Usaha & Energi melalui pendekatan Science, Technology, Engineering, Arts, Mathematics.</p></div>`; break;
-        case 4: title.textContent = "MATERI : USAHA"; subtitle.textContent = "Simulasi Usaha."; viewport.innerHTML = renderPage4Usaha(); break;
-        case 5: title.textContent = "ENERGI KINETIK"; subtitle.textContent = "Ek = ½mv²"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">B. ENERGI KINETIK</h3><p class="text-xs text-gray-600 mt-2">Energi yang dimiliki benda karena gerakannya.</p></div>`; break;
-        case 6: title.textContent = "ENERGI POTENSIAL"; subtitle.textContent = "Ep = mgh"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">C. ENERGI POTENSIAL</h3><p class="text-xs text-gray-600 mt-2">Energi posisi ketinggian benda.</p></div>`; break;
-        case 7: title.textContent = "HUBUNGAN USAHA & ENERGI"; subtitle.textContent = "W = ΔEk"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">D. HUBUNGAN USAHA DAN ENERGI</h3><p class="text-xs text-gray-600 mt-2">Usaha total sama dengan perubahan energi kinetik.</p></div>`; break;
-        case 8: title.textContent = "PERUBAHAN ENERGI"; subtitle.textContent = "Hukum Kekekalan Energi"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">E. PERUBAHAN ENERGI</h3><p class="text-xs text-gray-600 mt-2">Energi berubah dari satu bentuk ke bentuk lain.</p></div>`; break;
-        case 9: title.textContent = "GAME INTERAKTIF"; subtitle.textContent = "Pasangkan energi"; viewport.innerHTML = renderPage9Game(); break;
-        case 10: title.textContent = "EVALUASI BELAJAR"; subtitle.textContent = "Kuis Pilihan Ganda"; viewport.innerHTML = renderPage10Evaluasi(); break;
-        case 11: title.textContent = "PROYEK STEAM"; subtitle.textContent = "Mobil Karet"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">⚛️ Proyek STEAM</h3><p class="text-xs text-gray-600 mt-2">Membuat prototipe mobil bertenaga karet gelang.</p></div>`; break;
-        case 12: title.textContent = "LATIHAN MANDIRI"; subtitle.textContent = "Soal Isian"; viewport.innerHTML = `<div class="bg-white p-5 rounded-3xl border"><h3 class="font-black text-brand-navy">📝 Latihan Mandiri</h3><p class="text-xs text-gray-600 mt-2">Kerjakan soal hitungan pada lembar E-LKPD (Halaman 14).</p></div>`; break;
-        case 13: title.textContent = "PROFIL PENGEMBANG"; subtitle.textContent = "Samsiyah N. Arapa"; viewport.innerHTML = `<div class="bg-white p-6 rounded-3xl border text-center max-w-sm mx-auto space-y-2"><img src="logo-ung.png" class="w-16 h-16 mx-auto" onerror="this.src='https://upload.wikimedia.org/wikipedia/id/5/52/Logo_Universitas_Negeri_Gorontalo.png'"/><h3 class="font-black text-brand-navy">Samsiyah N. Arapa</h3><p class="text-xs font-bold text-brand-blue">Pendidikan IPA FMIPA UNG</p></div>`; break;
-        case 14: title.textContent = "ISU LEMBAR E-LKPD"; subtitle.textContent = "Lembar Kerja & Canvas"; viewport.innerHTML = renderPage14ElkpdForm(); break;
-        case 15: title.textContent = "DASHBOARD SISWA"; subtitle.textContent = "Rekap Nilai Siswa"; renderPage15DashboardSiswa(); break;
-        case 16: title.textContent = "DASHBOARD GURU"; subtitle.textContent = "Pemeriksaan Lembar"; renderPage16DashboardGuru(); break;
-      }
+    function openLoginModal() {
+      document.getElementById('login-modal').classList.remove('hidden');
+      document.getElementById('login-modal').classList.add('flex');
     }
 
-    function openModal(id) { const m = document.getElementById(id); if (m) { m.classList.remove('hidden'); m.classList.add('flex'); playSound('click'); } }
-    function closeModal(id) { const m = document.getElementById(id); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); playSound('click'); } }
-
-    function renderTOCList() {
-      const list = document.getElementById('toc-list');
-      if (!list) return;
-      list.innerHTML = navItems.map(item => `
-        <button onclick="goToPage(${item.page}); closeModal('toc-modal');" class="w-full p-2.5 rounded-xl bg-gray-50 hover:bg-blue-50 border flex items-center justify-between text-xs font-bold">
-          <span class="flex items-center gap-2"><span>${item.icon}</span><span>${item.title}</span></span>
-          <span class="text-brand-blue">&rarr;</span>
-        </button>
-      `).join('');
+    function closeLoginModal() {
+      document.getElementById('login-modal').classList.add('hidden');
+      document.getElementById('login-modal').classList.remove('flex');
+      document.getElementById('login-error-msg').classList.add('hidden');
     }
 
+    // INIT
     window.addEventListener('DOMContentLoaded', () => {
-      renderSidebar();
-      renderTOCList();
-      renderPage();
-      updateTopBottomBars();
+      updateUIForAuthenticatedUser();
+      switchView('home');
     });
   </script>
 </body>

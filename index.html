@@ -42,7 +42,7 @@
     }
   </script>
 
-  <!-- MathJax CDN untuk Rendering Rumus Fisika/Matematika -->
+  <!-- MathJax CDN untuk Rendering Rumus Fisika -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -287,75 +287,37 @@
     </div>
   </div>
 
-  <!-- Modal Builder Konten Materi & LKPD (Guru) -->
-  <div id="konten-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+  <!-- Modal Koreksi LKPD (Guru) -->
+  <div id="koreksi-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
-        <h3 id="konten-modal-title" class="text-base font-black text-brand-navy font-heading">Buat / Edit Materi & LKPD</h3>
-        <button onclick="closeKontenModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+        <div>
+          <h3 class="text-base font-black text-brand-navy font-heading">📝 Koreksi & Penilaian LKPD Siswa</h3>
+          <p id="koreksi-siswa-info" class="text-[11px] text-slate-500 font-bold mt-0.5"></p>
+        </div>
+        <button onclick="closeKoreksiModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
 
-      <form onsubmit="handleKontenSubmit(event)" class="space-y-3 text-xs">
-        <input type="hidden" id="konten-form-id" />
-        <input type="hidden" id="konten-form-pdf-id" />
+      <div id="koreksi-detail-body" class="space-y-4">
+        <!-- Rendered dynamically by JS -->
+      </div>
 
-        <div class="grid grid-cols-2 gap-2">
+      <form onsubmit="handleGradeSubmit(event)" class="space-y-3 pt-3 border-t">
+        <input type="hidden" id="koreksi-sub-id" />
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Kategori Bagian</label>
-            <select id="konten-form-kategori" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-              <option value="petunjuk">Petunjuk & Tujuan</option>
-              <option value="materi">Materi Usaha & Energi</option>
-              <option value="lkpd1">LKPD Pertemuan 1</option>
-              <option value="lkpd2">LKPD Pertemuan 2</option>
-              <option value="lkpd3">LKPD Pertemuan 3</option>
-              <option value="steam">Aktivitas Proyek STEAM</option>
-              <option value="latihan">Latihan Mandiri</option>
-              <option value="profil">Profil Pengembang</option>
-            </select>
+            <label class="block font-bold text-slate-700 mb-1">Nilai Esai / Proyek STEAM (0–100)</label>
+            <input type="number" id="koreksi-nilai-esai" required min="0" max="100" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue" />
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Urutan Tampil</label>
-            <input type="number" id="konten-form-urutan" value="1" min="1" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+            <label class="block font-bold text-slate-700 mb-1">Catatan Evaluasi Guru</label>
+            <input type="text" id="koreksi-catatan" placeholder="Apresiasi atau catatan perbaikan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Tipe Media Tampilan</label>
-          <select id="konten-form-tipe-media" onchange="toggleTipeMediaForm()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
-            <option value="web_text">📝 Ringkasan Teks Web & Gambar</option>
-            <option value="pdf_document">📄 Dokumen PDF (Bahan Ajar / LKPD)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Judul Modul / LKPD</label>
-          <input type="text" id="konten-form-judul" required placeholder="Contoh: Bahan Ajar PDF Usaha & Energi" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Isi Teks / Petunjuk Pengantar</label>
-          <textarea id="konten-form-teks" rows="3" placeholder="Tuliskan uraian atau instruksi untuk siswa..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
-        </div>
-
-        <!-- Upload PDF Section -->
-        <div id="container-media-pdf" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
-          <label class="block font-bold text-brand-navy">📄 Unggah File PDF (Google Drive)</label>
-          <input type="file" id="konten-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
-          <button type="button" id="btn-upload-pdf" onclick="uploadPdfFileToDrive()" class="w-full py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl text-[11px] shadow">
-            📤 Unggah PDF ke Google Drive
-          </button>
-          <input type="text" id="konten-form-pdf-url" readonly placeholder="URL Preview PDF akan muncul di sini..." class="w-full p-2 rounded-xl border bg-slate-100 font-mono text-[10px] text-slate-600" />
-        </div>
-
-        <!-- Section Gambar -->
-        <div id="container-media-gambar" class="p-3 bg-slate-50 border rounded-2xl space-y-2">
-          <label class="block font-bold text-slate-800">Media Gambar (Opsional)</label>
-          <input type="text" id="konten-form-gambar-url" placeholder="https://..." class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
-          <button type="button" onclick="closeKontenModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
-          <button type="submit" id="btn-save-konten" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Data</button>
+          <button type="button" onclick="closeKoreksiModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-grade" class="px-5 py-2 bg-brand-emerald text-white font-black rounded-xl shadow hover:bg-emerald-600 transition">💾 Simpan Penilaian</button>
         </div>
       </form>
     </div>
@@ -366,7 +328,7 @@
     /* ==========================================================
        1. CONFIG & GLOBAL STATE
        ========================================================== */
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwaQxEVtKgqkndLuRFvUmnjqJxvgm2-s4csdKK10PgUYbPR3GhNM26Rkuag_Zc0ljuQrA/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyWYwQvMx3v-0R5dypTxXVz2kWXppAhMVm2vRVKijhx0F4UQdqXWT6IkOeKCUjDqDE-Fg/exec';
 
     const state = {
       currentUser: null,
@@ -434,120 +396,84 @@
     }
 
     /* ==========================================================
-       4. MEDIA FORM HANDLERS & UPLOAD
+       4. CANVAS STEAM DRAWING ENGINE
        ========================================================== */
-    function toggleTipeMediaForm() {
-      const tipe = document.getElementById('konten-form-tipe-media').value;
-      const pdfContainer = document.getElementById('container-media-pdf');
-      const imgContainer = document.getElementById('container-media-gambar');
+    let canvasCtx = null;
+    let isDrawing = false;
+    let currentPenColor = '#0B2545';
+    let currentLineWidth = 3;
 
-      if (tipe === 'pdf_document') {
-        pdfContainer.classList.remove('hidden');
-        imgContainer.classList.add('hidden');
-      } else {
-        pdfContainer.classList.add('hidden');
-        imgContainer.classList.remove('hidden');
-      }
+    function initCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || 600;
+      canvas.height = 250;
+
+      canvasCtx = canvas.getContext('2d');
+      canvasCtx.fillStyle = '#FFFFFF';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      canvasCtx.lineWidth = currentLineWidth;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.lineJoin = 'round';
+      canvasCtx.strokeStyle = currentPenColor;
+
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+      canvas.onmouseleave = stopDrawing;
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) startDrawing(e.touches[0]);
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length > 0) draw(e.touches[0]);
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
     }
 
-    async function uploadPdfFileToDrive() {
-      const fileInput = document.getElementById('konten-form-file-pdf');
-      const uploadBtn = document.getElementById('btn-upload-pdf');
+    function getCanvasCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
 
-      if (!fileInput.files || fileInput.files.length === 0) {
-        Swal.fire({ icon: 'warning', title: 'File Belum Dipilih', text: 'Pilih file dokumen PDF terlebih dahulu!' });
+    function startDrawing(e) {
+      if (!state.currentUser) {
+        requireStudentAuth();
         return;
       }
-
-      const file = fileInput.files[0];
-      if (file.type !== 'application/pdf') {
-        Swal.fire({ icon: 'error', title: 'Format Salah', text: 'File harus berformat .pdf!' });
-        return;
-      }
-
-      setButtonLoading(uploadBtn, true, '📤 Memproses & Mengunggah PDF...', '📤 Unggah PDF ke Google Drive');
-
-      const reader = new FileReader();
-      reader.onload = async function (e) {
-        const base64Data = e.target.result;
-        const res = await apiPost({
-          action: 'upload_pdf',
-          base64Data: base64Data,
-          fileName: file.name
-        });
-
-        setButtonLoading(uploadBtn, false, '', '📤 Unggah PDF ke Google Drive');
-
-        if (res.success && res.url) {
-          document.getElementById('konten-form-pdf-url').value = res.url;
-          document.getElementById('konten-form-pdf-id').value = res.fileId;
-
-          Swal.fire({
-            icon: 'success',
-            title: 'PDF Berhasil Diunggah!',
-            text: 'File siap ditampilkan untuk siswa.',
-            timer: 1500,
-            showConfirmButton: false
-          });
-        } else {
-          Swal.fire({ icon: 'error', title: 'Gagal Unggah', text: res.message });
-        }
-      };
-
-      reader.readAsDataURL(file);
+      isDrawing = true;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(coords.x, coords.y);
     }
 
-    function openKontenModal(k = null) {
-      document.getElementById('konten-form-id').value = k ? k.id_konten : '';
-      document.getElementById('konten-form-kategori').value = k ? k.kategori : 'materi';
-      document.getElementById('konten-form-urutan').value = k ? k.urutan : '1';
-      document.getElementById('konten-form-judul').value = k ? k.judul : '';
-      document.getElementById('konten-form-teks').value = k ? k.isi_teks : '';
-      document.getElementById('konten-form-gambar-url').value = k ? (k.gambar_url || '') : '';
-      document.getElementById('konten-form-pdf-url').value = k ? (k.file_pdf_url || '') : '';
-      document.getElementById('konten-form-pdf-id').value = k ? (k.file_drive_id || '') : '';
-      document.getElementById('konten-form-tipe-media').value = k ? (k.tipe_media || 'web_text') : 'web_text';
-
-      toggleTipeMediaForm();
-      document.getElementById('konten-modal').classList.remove('hidden');
-      document.getElementById('konten-modal').classList.add('flex');
+    function draw(e) {
+      if (!isDrawing) return;
+      const canvas = document.getElementById('steam-canvas');
+      if (!canvas || !canvasCtx) return;
+      const coords = getCanvasCoords(e, canvas);
+      canvasCtx.lineTo(coords.x, coords.y);
+      canvasCtx.stroke();
     }
 
-    function closeKontenModal() {
-      document.getElementById('konten-modal').classList.add('hidden');
-      document.getElementById('konten-modal').classList.remove('flex');
-    }
-
-    async function handleKontenSubmit(e) {
-      e.preventDefault();
-      const saveBtn = document.getElementById('btn-save-konten');
-      setButtonLoading(saveBtn, true, '💾 Menyimpan Data...', '💾 Simpan Data');
-
-      const payload = {
-        action: 'save_konten',
-        id_konten: document.getElementById('konten-form-id').value,
-        kategori: document.getElementById('konten-form-kategori').value,
-        urutan: document.getElementById('konten-form-urutan').value,
-        judul: document.getElementById('konten-form-judul').value,
-        isi_teks: document.getElementById('konten-form-teks').value,
-        gambar_url: document.getElementById('konten-form-gambar-url').value,
-        file_pdf_url: document.getElementById('konten-form-pdf-url').value,
-        file_drive_id: document.getElementById('konten-form-pdf-id').value,
-        tipe_media: document.getElementById('konten-form-tipe-media').value,
-        status: 'Publish',
-        created_by: state.currentUser ? state.currentUser.name : 'Guru'
-      };
-
-      const res = await apiPost(payload);
-      setButtonLoading(saveBtn, false, '', '💾 Simpan Data');
-
-      if (res.success) {
-        closeKontenModal();
-        await fetchAllInitialData(true);
-        Swal.fire({ icon: 'success', title: 'Tersimpan!', text: res.message, timer: 1500, showConfirmButton: false });
-        switchView('guru-builder-materi');
-      } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+    function stopDrawing() { isDrawing = false; }
+    function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
+    function clearCanvas() {
+      const canvas = document.getElementById('steam-canvas');
+      if (canvas && canvasCtx) {
+        canvasCtx.fillStyle = '#FFFFFF';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
 
@@ -612,7 +538,7 @@
     }
 
     /* ==========================================================
-       6. REVIEW & RATING LOGIC (SISWA)
+       6. REVIEW & RATING LOGIC
        ========================================================== */
     function setRatingStar(num) {
       selectedStarRating = num;
@@ -764,7 +690,7 @@
         ];
       } else if (state.currentUser?.role === 'guru') {
         navItems = [
-          { id: 'guru-dashboard', title: 'Dashboard & Rekap Review', icon: '📊' },
+          { id: 'guru-dashboard', title: 'Dashboard & Koreksi LKPD', icon: '📊' },
           { id: 'guru-builder-materi', title: 'Kelola Materi Pembelajaran', icon: '📖' },
           { id: 'guru-builder-game', title: 'Kelola Game Interaktif', icon: '🎮' },
           { id: 'guru-builder-soal', title: 'Kelola Bank Soal Evaluasi', icon: '❓' },
@@ -780,7 +706,6 @@
           { id: 'lkpd-p1', title: 'LKPD 1: Konsep Usaha', icon: '📝' },
           { id: 'lkpd-p2', title: 'LKPD 2: Energi Kinetik & Ep', icon: '⚡' },
           { id: 'lkpd-p3', title: 'LKPD 3: Perubahan Energi', icon: '🔄' },
-          { id: 'game', title: 'Game Interaktif', icon: '🎮' },
           { id: 'evaluasi', title: 'Evaluasi Pembelajaran', icon: '📊' },
           { id: 'profil', title: 'Profil Pengembang', icon: '👤' }
         ];
@@ -841,8 +766,8 @@
           break;
 
         case 'guru-dashboard':
-          titleElem.textContent = 'DASHBOARD GURU & REKAP REVIEW';
-          subtitleElem.textContent = 'Daftar pengumpulan LKPD dan tanggapan ulasan bahan ajar siswa';
+          titleElem.textContent = 'DASHBOARD KOREKSI & PENILAIAN GURU';
+          subtitleElem.textContent = 'Daftar pengumpulan LKPD dan rekap ulasan bahan ajar siswa';
           renderGuruDashboardView(viewport);
           break;
 
@@ -916,6 +841,7 @@
           titleElem.textContent = 'LKPD PERTEMUAN 3: PERUBAHAN ENERGI & STEAM';
           subtitleElem.textContent = 'Energi Mekanik, Game Pasangkan Jenis Energi, & Refleksi';
           viewport.innerHTML = renderLkpdPertemuan3();
+          setTimeout(initCanvas, 200);
           break;
 
         default:
@@ -1037,7 +963,6 @@
 
       return `
         <div class="max-w-5xl mx-auto space-y-5">
-          <!-- Header Viewer Controls -->
           <div class="bg-white p-4 rounded-3xl border shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
               <span class="px-2.5 py-0.5 bg-blue-100 text-brand-blue font-black text-[10px] rounded-full uppercase font-heading">
@@ -1054,7 +979,6 @@
             </div>
           </div>
 
-          <!-- PDF Display Frame -->
           <div id="pdf-iframe-container" class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 h-[650px] relative transition-all duration-300">
             <iframe id="pdf-iframe-element" src="${activePdfUrl}" class="w-full h-full border-0" allow="autoplay"></iframe>
           </div>
@@ -1066,11 +990,9 @@
               <span class="text-xs text-slate-400 font-normal">Siswa dapat memberikan feedback pembelajaran</span>
             </h4>
 
-            <!-- Form Input Review -->
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
               <span class="font-bold text-xs text-slate-800 block">Berikan Penilaian Kamu untuk Modul Ini:</span>
               
-              <!-- Star Selector -->
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-500">Rating:</span>
                 <div class="flex gap-1">
@@ -1080,7 +1002,6 @@
                 </div>
               </div>
 
-              <!-- Komentar Textarea -->
               <div>
                 <textarea id="review-komentar" rows="2" placeholder="Tuliskan ulasan, pertanyaan, atau kesan kamu tentang modul bahan ajar ini..." class="w-full p-3 rounded-xl border border-slate-300 font-medium text-xs focus:ring-2 focus:ring-brand-blue focus:outline-none"></textarea>
               </div>
@@ -1092,7 +1013,6 @@
               </div>
             </div>
 
-            <!-- Daftar Review Komunitas -->
             <div class="space-y-3 pt-2">
               <h5 class="font-black text-xs text-slate-700">Daftar Ulasan Siswa (${reviews.length}):</h5>
               ${reviews.length === 0 ? `
@@ -1117,6 +1037,9 @@
       `;
     }
 
+    /* ==========================================================
+       FORM KERJA LKPD PERTEMUAN 1, 2, 3
+       ========================================================== */
     function renderLkpdPertemuan1() {
       return `
         <div class="max-w-7xl mx-auto space-y-4 text-xs">
@@ -1154,6 +1077,40 @@
                     <label class="block font-bold text-slate-800 mb-1">2. Mengapa mendorong tembok yang tidak berpindah menghasilkan Usaha sama dengan Nol ($W = 0$)?</label>
                     <textarea id="lkpd1-q2" rows="2" class="w-full p-2.5 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none" placeholder="Jelaskan hubungan matematisnya..."></textarea>
                   </div>
+                </div>
+              </div>
+
+              <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+                <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📊 Tabel Identifikasi Gaya & Perpindahan</h4>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr class="bg-slate-100 text-slate-800">
+                        <th class="p-2 border">Kejadian</th>
+                        <th class="p-2 border text-center">Ada Gaya ($F$)?</th>
+                        <th class="p-2 border text-center">Ada Perpindahan ($s$)?</th>
+                        <th class="p-2 border text-center">Ada Usaha ($W$)?</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                      ${['Mendorong kotak hingga bergeser', 'Mendorong tembok diam', 'Mengangkat buku ke meja'].map((f, i) => `
+                        <tr>
+                          <td class="p-2 border font-medium">${f}</td>
+                          <td class="p-2 border text-center"><input type="checkbox" id="lkpd1-tabel-gaya-${i}" class="w-4 h-4"></td>
+                          <td class="p-2 border text-center"><input type="checkbox" id="lkpd1-tabel-p-${i}" class="w-4 h-4"></td>
+                          <td class="p-2 border text-center"><input type="checkbox" id="lkpd1-tabel-u-${i}" class="w-4 h-4"></td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+                <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">🧮 Perhitungan ($W = F \\times s$)</h4>
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-2xl space-y-2">
+                  <p class="font-bold text-slate-800">Soal: Benda didorong gaya $F = 50\\text{ N}$ dan berpindah $s = 4\\text{ m}$. Hitung usahanya!</p>
+                  <input type="text" id="lkpd1-calc1" class="w-full p-2.5 rounded-xl border font-bold" placeholder="Tuliskan langkah perhitungan dan hasil..." />
                 </div>
               </div>
 
@@ -1198,6 +1155,14 @@
                   <div>
                     <label class="block font-bold text-slate-800 mb-1">1. Mengapa kelapa yang jatuh dari pohon tinggi memiliki energi potensial lebih besar daripada kelapa di pohon rendah?</label>
                     <textarea id="lkpd2-q1" rows="2" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Jelaskan pengaruh variabel h (ketinggian)..."></textarea>
+                  </div>
+                  <div class="p-3 bg-purple-50 rounded-2xl space-y-2">
+                    <p class="font-bold text-slate-800">2. Hitung $E_p$ kelapa $m = 2\\text{ kg}$ pada $h = 10\\text{ m}$ ($g = 10\\text{ m/s}^2$):</p>
+                    <input type="text" id="lkpd2-calc1" class="w-full p-2.5 rounded-xl border font-bold" placeholder="Hasil perhitungan Ep..." />
+                  </div>
+                  <div class="p-3 bg-blue-50 rounded-2xl space-y-2">
+                    <p class="font-bold text-slate-800">3. Hitung $E_k$ mobil $m = 1000\\text{ kg}$ dengan kecepatan $v = 10\\text{ m/s}$:</p>
+                    <input type="text" id="lkpd2-calc2" class="w-full p-2.5 rounded-xl border font-bold" placeholder="Hasil perhitungan Ek..." />
                   </div>
                 </div>
               </div>
@@ -1247,6 +1212,20 @@
                 </div>
               </div>
 
+              <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+                <h4 class="font-black text-brand-navy text-xs font-heading border-b pb-2">📝 Refleksi Pembelajaran Proyek</h4>
+                <div class="space-y-2">
+                  <div>
+                    <label class="block font-bold text-slate-800 mb-1">1. Konsep perubahan energi yang paling saya pahami:</label>
+                    <input type="text" id="lkpd3-ref1" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Tuliskan tanggapanmu..." />
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-800 mb-1">2. Kendala utama saat merancang prototipe:</label>
+                    <input type="text" id="lkpd3-ref2" class="w-full p-2.5 rounded-xl border font-medium" placeholder="Tuliskan kendala..." />
+                  </div>
+                </div>
+              </div>
+
               <button onclick="requireStudentAuth(() => submitLkpdPertemuan(3))" id="btn-submit-lkpd3" class="w-full py-3.5 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg transition text-xs font-heading">
                 🚀 Kirim Jawaban LKPD Pertemuan 3
               </button>
@@ -1256,6 +1235,9 @@
       `;
     }
 
+    /* ==========================================================
+       SUBMIT LKPD PERTEMUAN 1, 2, 3
+       ========================================================== */
     async function submitLkpdPertemuan(pertemuanNum) {
       const user = state.currentUser;
       if (!user) return;
@@ -1264,15 +1246,32 @@
       let canvasBase64 = "";
 
       if (pertemuanNum === 1) {
-        jawabanObj.orientasi = {
+        jawabanObj.analisis = {
           q1: document.getElementById('lkpd1-q1')?.value || '',
           q2: document.getElementById('lkpd1-q2')?.value || ''
         };
+        jawabanObj.tabel_observasi = [
+          { gaya: document.getElementById('lkpd1-tabel-gaya-0')?.checked, perpindahan: document.getElementById('lkpd1-tabel-p-0')?.checked, usaha: document.getElementById('lkpd1-tabel-u-0')?.checked },
+          { gaya: document.getElementById('lkpd1-tabel-gaya-1')?.checked, perpindahan: document.getElementById('lkpd1-tabel-p-1')?.checked, usaha: document.getElementById('lkpd1-tabel-u-1')?.checked },
+          { gaya: document.getElementById('lkpd1-tabel-gaya-2')?.checked, perpindahan: document.getElementById('lkpd1-tabel-p-2')?.checked, usaha: document.getElementById('lkpd1-tabel-u-2')?.checked }
+        ];
+        jawabanObj.perhitungan = {
+          calc1: document.getElementById('lkpd1-calc1')?.value || ''
+        };
       } else if (pertemuanNum === 2) {
-        jawabanObj.orientasi = {
+        jawabanObj.analisis = {
           q1: document.getElementById('lkpd2-q1')?.value || ''
         };
+        jawabanObj.perhitungan_energi = {
+          calc_ep: document.getElementById('lkpd2-calc1')?.value || '',
+          calc_ek: document.getElementById('lkpd2-calc2')?.value || ''
+        };
       } else if (pertemuanNum === 3) {
+        jawabanObj.refleksi = {
+          pahami: document.getElementById('lkpd3-ref1')?.value || '',
+          kendala: document.getElementById('lkpd3-ref2')?.value || ''
+        };
+
         const canvas = document.getElementById('steam-canvas');
         if (canvas) canvasBase64 = canvas.toDataURL('image/png');
       }
@@ -1299,7 +1298,7 @@
         Swal.fire({
           icon: 'success',
           title: `LKPD Pertemuan ${pertemuanNum} Terkirim!`,
-          text: 'Jawaban kamu berhasil dikirimkan ke guru.'
+          text: 'Jawaban dan sketsa proyek kamu berhasil dikirimkan ke guru.'
         });
       } else {
         Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
@@ -1440,7 +1439,7 @@
     }
 
     /* ==========================================================
-       12. GURU VIEWS & DASHBOARD REKAP
+       12. GURU DASHBOARD & MODAL KOREKSI
        ========================================================== */
     function renderGuruDashboardView(container) {
       const subs = state.cachedData.submissions || [];
@@ -1448,11 +1447,46 @@
 
       container.innerHTML = `
         <div class="space-y-6">
-          <!-- RINGKASAN REKAP REVIEW BAHAN AJAR -->
+          <!-- PENGUMPULAN LKPD SISWA -->
           <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
             <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2 flex items-center justify-between">
-              <span>⭐ Rekapitulasi Ulasan Bahan Ajar Siswa (${reviews.length} Masukan)</span>
+              <span>📥 Pengumpulan Jawaban LKPD Siswa (${subs.length})</span>
             </h3>
+            ${subs.length === 0 ? `
+              <p class="text-xs text-slate-400 py-2">Siswa belum mengirimkan jawaban lembar kerja.</p>
+            ` : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-brand-navy text-white font-heading">
+                    <tr>
+                      <th class="p-3">Nama Siswa</th>
+                      <th class="p-3">Kelas</th>
+                      <th class="p-3">Nilai Esai/Proyek</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${subs.map(s => `
+                      <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-slate-800">${s.nama_siswa}</td>
+                        <td class="p-3 text-slate-600">${s.kelas}</td>
+                        <td class="p-3 font-mono font-bold ${s.nilai_esai !== '' ? 'text-purple-600' : 'text-amber-600'}">${s.nilai_esai !== '' ? s.nilai_esai : 'Belum Dinilai'}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
+                        <td class="p-3 text-center">
+                          <button onclick="openKoreksiModal('${s.id_sub}')" class="px-3 py-1 bg-brand-blue hover:bg-blue-600 text-white font-bold text-[10px] rounded-lg shadow">🔍 Periksa & Nilai</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+
+          <!-- REKAP REVIEW BAHAN AJAR -->
+          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+            <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">⭐ Rekapitulasi Ulasan Bahan Ajar Siswa (${reviews.length})</h3>
             ${reviews.length === 0 ? `
               <p class="text-xs text-slate-400 py-2">Belum ada ulasan yang masuk dari siswa.</p>
             ` : `
@@ -1480,41 +1514,75 @@
               </div>
             `}
           </div>
-
-          <!-- PENGUMPULAN LKPD SISWA -->
-          <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
-            <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">📥 Pengumpulan Jawaban LKPD Siswa (${subs.length})</h3>
-            ${subs.length === 0 ? `
-              <p class="text-xs text-slate-400 py-2">Siswa belum mengirimkan jawaban lembar kerja.</p>
-            ` : `
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="bg-brand-navy text-white font-heading">
-                    <tr>
-                      <th class="p-3">Nama Siswa</th>
-                      <th class="p-3">Kelas</th>
-                      <th class="p-3">Skor PG</th>
-                      <th class="p-3">Skor Game</th>
-                      <th class="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100">
-                    ${subs.map(s => `
-                      <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-slate-800">${s.nama_siswa}</td>
-                        <td class="p-3 text-slate-600">${s.kelas}</td>
-                        <td class="p-3 font-mono font-bold text-brand-blue">${s.skor_pg}</td>
-                        <td class="p-3 font-mono font-bold text-emerald-600">${s.skor_game}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `}
-          </div>
         </div>
       `;
+    }
+
+    function openKoreksiModal(idSub) {
+      const sub = (state.cachedData.submissions || []).find(s => String(s.id_sub) === String(idSub));
+      if (!sub) return;
+
+      document.getElementById('koreksi-sub-id').value = sub.id_sub;
+      document.getElementById('koreksi-siswa-info').textContent = `Siswa: ${sub.nama_siswa} (${sub.kelas}) | Diterima: ${new Date(sub.timestamp).toLocaleString('id-ID')}`;
+      document.getElementById('koreksi-nilai-esai').value = sub.nilai_esai || 80;
+      document.getElementById('koreksi-catatan').value = sub.catatan_guru || '';
+
+      let jawabanObj = {};
+      try {
+        jawabanObj = typeof sub.jawaban_json === 'string' ? JSON.parse(sub.jawaban_json) : sub.jawaban_json;
+      } catch (e) {
+        jawabanObj = {};
+      }
+
+      const bodyElem = document.getElementById('koreksi-detail-body');
+      bodyElem.innerHTML = `
+        <div class="p-4 bg-slate-50 border rounded-2xl space-y-3">
+          <h5 class="font-black text-brand-navy border-b pb-1">📌 Lembar Jawaban (${jawabanObj.pertemuan || 'LKPD'})</h5>
+          <pre class="bg-white p-3 rounded-xl border text-[11px] font-mono text-slate-700 whitespace-pre-wrap">${JSON.stringify(jawabanObj, null, 2)}</pre>
+        </div>
+
+        ${sub.canvas_image_base64 ? `
+          <div class="p-4 bg-slate-50 border rounded-2xl space-y-2">
+            <h5 class="font-black text-brand-navy">🎨 Sketsa Prototip Mobil Bertenaga Karet (Kanvas STEAM)</h5>
+            <div class="p-2 bg-white border rounded-2xl">
+              <img src="${sub.canvas_image_base64}" class="max-h-60 rounded-xl mx-auto border" />
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      document.getElementById('koreksi-modal').classList.remove('hidden');
+      document.getElementById('koreksi-modal').classList.add('flex');
+    }
+
+    function closeKoreksiModal() {
+      document.getElementById('koreksi-modal').classList.add('hidden');
+      document.getElementById('koreksi-modal').classList.remove('flex');
+    }
+
+    async function handleGradeSubmit(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('btn-save-grade');
+      setButtonLoading(saveBtn, true, '💾 Menyimpan Nilai...', '💾 Simpan Penilaian');
+
+      const payload = {
+        action: 'grade_lkpd',
+        id_sub: document.getElementById('koreksi-sub-id').value,
+        nilai_esai: document.getElementById('koreksi-nilai-esai').value,
+        catatan_guru: document.getElementById('koreksi-catatan').value
+      };
+
+      const res = await apiPost(payload);
+      setButtonLoading(saveBtn, false, '', '💾 Simpan Penilaian');
+
+      if (res.success) {
+        closeKoreksiModal();
+        await fetchAllInitialData(true);
+        Swal.fire({ icon: 'success', title: 'Penilaian Disimpan!', text: res.message, timer: 1500, showConfirmButton: false });
+        switchView('guru-dashboard');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+      }
     }
 
     function renderGuruMateriView(container) {

@@ -1494,24 +1494,53 @@
     /* ==========================================================
    VIEW RENDERER: BAHAN AJAR PDF VIEWER
    ========================================================== */
+    /* ==========================================================
+   VIEW RENDERER: BAHAN AJAR PDF VIEWER (DINAMIS & FULLSCREEN)
+   ========================================================== */
     function renderBahanAjarPdfView() {
-      // Ganti URL Drive Viewer dengan link PDF Drive publik milik Anda
-      const pdfDriveUrl = "https://drive.google.com/file/d/1VVcHYvHC8wacpDzWRCEl0JyTCV7xbIQP/preview";
+      // 1. Cari file PDF terbaru hasil unggahan guru dari state
+      const pdfKontenList = (state.cachedData.konten || []).filter(
+        k => k.tipe_media === 'pdf_document' && k.file_pdf_url !== ''
+      );
+
+      // Ambil PDF paling baru (urutan teratas/terakhir diunggah), atau gunakan fallback default
+      let activePdfUrl = "https://drive.google.com/file/d/1Xexample_BahanAjar_PDF/preview";
+      let pdfTitle = "Bahan Ajar IPA: Usaha dan Energi";
+
+      if (pdfKontenList.length > 0) {
+        const latestPdf = pdfKontenList[pdfKontenList.length - 1];
+        activePdfUrl = latestPdf.file_pdf_url;
+        pdfTitle = latestPdf.judul;
+      }
 
       return `
     <div class="max-w-5xl mx-auto space-y-4">
-      <div class="bg-white p-4 rounded-3xl border shadow-xs flex items-center justify-between">
+      <!-- Header Controls -->
+      <div class="bg-white p-4 rounded-3xl border shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 class="font-black text-brand-navy text-sm font-heading">📖 BAHAN AJAR IPA: USAHA DAN ENERGI</h3>
-          <p class="text-xs text-slate-500">Gunakan fitur zoom/fullscreen untuk membaca materi dengan nyaman.</p>
+          <span class="px-2.5 py-0.5 bg-blue-100 text-brand-blue font-black text-[10px] rounded-full uppercase font-heading">
+            DOKUMEN MODUL DIGITAL
+          </span>
+          <h3 class="font-black text-brand-navy text-sm font-heading mt-1">${pdfTitle}</h3>
+          <p class="text-[11px] text-slate-500">Gunakan tombol Layar Penuh untuk membaca dengan lebih nyaman.</p>
         </div>
-        <button onclick="switchView('materi')" class="px-3.5 py-2 bg-blue-100 text-brand-blue font-bold rounded-xl text-xs">
-          Lihat Versi Ringkasan Web &rarr;
-        </button>
+
+        <div class="flex items-center gap-2">
+          <!-- Tombol Fullscreen -->
+          <button onclick="togglePdfFullscreen()" class="px-3.5 py-2 bg-brand-navy hover:bg-brand-darkNavy text-white font-bold rounded-xl text-xs transition shadow flex items-center gap-1.5">
+            <span>🖥️ Layar Penuh</span>
+          </button>
+          
+          <!-- Switch to Ringkasan Teks Web -->
+          <button onclick="switchView('materi')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+            📖 Versi Teks Web &rarr;
+          </button>
+        </div>
       </div>
 
-      <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 h-[700px]">
-        <iframe src="${pdfDriveUrl}" class="w-full h-full border-0" allow="autoplay"></iframe>
+      <!-- PDF Container Wrapper (Target Fullscreen) -->
+      <div id="pdf-iframe-container" class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 h-[700px] relative transition-all duration-300">
+        <iframe id="pdf-iframe-element" src="${activePdfUrl}" class="w-full h-full border-0" allow="autoplay"></iframe>
       </div>
     </div>
   `;
@@ -2286,6 +2315,37 @@
           }
         }
       });
+    }
+
+    /* ==========================================================
+   HELPER: HTML5 FULLSCREEN API FOR PDF VIEWER
+   ========================================================== */
+    function togglePdfFullscreen() {
+      const container = document.getElementById('pdf-iframe-container');
+      if (!container) return;
+
+      // Cek apakah browser sedang dalam mode Fullscreen
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+
+      if (!isFullscreen) {
+        // Masuk Mode Layar Penuh
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) { /* Safari */
+          container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE11 */
+          container.msRequestFullscreen();
+        }
+      } else {
+        // Keluar dari Mode Layar Penuh
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
     }
 
     /* ==========================================================

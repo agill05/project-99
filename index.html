@@ -157,6 +157,20 @@
 
   <!-- MODALS SECTION -->
 
+  <!-- Modal PDF Fullscreen -->
+  <div id="pdf-fullscreen-modal" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex-col p-2 sm:p-4">
+    <div class="flex items-center justify-between pb-2 text-white border-b border-slate-800">
+      <span id="pdf-fullscreen-title" class="font-bold text-xs font-heading">Dokumen PDF</span>
+      <div class="flex items-center gap-2">
+        <a id="pdf-fullscreen-external-link" href="#" target="_blank" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-xl text-[11px]">🔗 Buka Tab Baru</a>
+        <button onclick="closePdfFullscreenModal()" class="px-3 py-1 bg-red-600 text-white font-bold rounded-xl text-[11px]">&times; Tutup Fullscreen</button>
+      </div>
+    </div>
+    <div class="flex-1 mt-2 rounded-2xl overflow-hidden bg-black">
+      <iframe id="pdf-fullscreen-iframe" src="" class="w-full h-full border-0" allow="fullscreen"></iframe>
+    </div>
+  </div>
+
   <!-- Modal Login -->
   <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
@@ -362,7 +376,7 @@
     </div>
   </div>
 
-  <!-- Modal Game Interaktif CMS Guru (TANPA INPUT JSON MANUAL) -->
+  <!-- Modal Game Interaktif CMS Guru -->
   <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -399,7 +413,6 @@
           <textarea id="game-form-instruksi" rows="2" placeholder="Aturan permainan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
         </div>
 
-        <!-- DYNAMIC GAME INPUT BUILDER (NO JSON TYPEWRITING NEEDED) -->
         <div class="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
           <div class="flex items-center justify-between border-b border-purple-200 pb-2">
             <span class="font-black text-purple-900 uppercase tracking-wider text-[11px]">🎮 Item Soal Permainan</span>
@@ -563,8 +576,24 @@
     }
 
     /* ==========================================================
-       3. HELPER UTILITIES & AUTH GUARD
+       3. HELPER UTILITIES & FULLSCREEN PDF MODAL
        ========================================================== */
+    function openPdfFullscreen(url, title = 'Dokumen PDF') {
+      document.getElementById('pdf-fullscreen-title').textContent = title;
+      document.getElementById('pdf-fullscreen-iframe').src = url;
+      document.getElementById('pdf-fullscreen-external-link').href = url.replace('/preview', '/view');
+      const modal = document.getElementById('pdf-fullscreen-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePdfFullscreenModal() {
+      const modal = document.getElementById('pdf-fullscreen-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('pdf-fullscreen-iframe').src = '';
+    }
+
     function requireStudentAuth(actionCallback) {
       if (!state.currentUser) {
         Swal.fire({
@@ -818,7 +847,7 @@
     }
 
     /* ==========================================================
-       6. SISWA VIEW RENDERERS
+       6. SISWA VIEW RENDERERS (MATERI, LKPD WITH FULLSCREEN)
        ========================================================== */
     function renderHomeView() {
       return `
@@ -849,8 +878,21 @@
               <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">${m.judul_materi}</h3>
               ${m.isi_teks ? `<p class="text-slate-700 leading-relaxed font-medium whitespace-pre-line">${m.isi_teks}</p>` : ''}
               ${m.tipe_media === 'pdf_document' && m.file_pdf_url ? `
-                <div class="bg-slate-900 rounded-2xl overflow-hidden h-[550px] relative border mt-2">
-                  <iframe src="${m.file_pdf_url}" class="w-full h-full border-0"></iframe>
+                <div class="space-y-2 mt-2">
+                  <div class="flex items-center justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-2xl">
+                    <span class="font-bold text-brand-navy text-[11px]">📄 Dokumen Bahan Ajar PDF</span>
+                    <div class="flex items-center gap-1.5">
+                      <button onclick="openPdfFullscreen('${m.file_pdf_url}', '${m.judul_materi}')" class="px-3 py-1.5 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl text-[11px] transition shadow">
+                        🖥️ Layar Penuh (Fullscreen)
+                      </button>
+                      <a href="${m.file_pdf_url.replace('/preview', '/view')}" target="_blank" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-[11px] transition">
+                        🔗 Tab Baru
+                      </a>
+                    </div>
+                  </div>
+                  <div class="bg-slate-900 rounded-2xl overflow-hidden h-[550px] relative border">
+                    <iframe src="${m.file_pdf_url}" class="w-full h-full border-0" allow="fullscreen"></iframe>
+                  </div>
                 </div>
               ` : ''}
             </div>
@@ -876,9 +918,19 @@
           <!-- Tampilan jika LKPD PDF -->
           ${lkpdObj.tipe_lkpd === 'pdf' && lkpdObj.file_pdf_url ? `
             <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
-              <h4 class="font-black text-brand-navy border-b pb-2">📄 Lembar Kerja PDF</h4>
+              <div class="flex items-center justify-between border-b pb-2">
+                <h4 class="font-black text-brand-navy">📄 Lembar Kerja PDF</h4>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openPdfFullscreen('${lkpdObj.file_pdf_url}', '${lkpdObj.judul_lkpd}')" class="px-3 py-1.5 bg-brand-navy hover:bg-slate-800 text-white font-bold rounded-xl text-[11px] transition shadow">
+                    🖥️ Layar Penuh (Fullscreen)
+                  </button>
+                  <a href="${lkpdObj.file_pdf_url.replace('/preview', '/view')}" target="_blank" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-[11px] transition">
+                    🔗 Tab Baru
+                  </a>
+                </div>
+              </div>
               <div class="bg-slate-900 rounded-2xl overflow-hidden h-[550px] relative border">
-                <iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0"></iframe>
+                <iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0" allow="fullscreen"></iframe>
               </div>
             </div>
           ` : ''}
@@ -1422,7 +1474,7 @@
     }
 
     /* ==========================================================
-       10. CMS GURU FORM MODALS & GAME BUILDER (NO JSON TYPEWRITING)
+       10. CMS GURU FORM MODALS & GAME BUILDER
        ========================================================== */
     function populatePertemuanSelects() {
       const ptmList = state.cachedData.pertemuan || [];
@@ -1551,7 +1603,6 @@
       if (res.success) { closeLkpdModal(); await fetchAllInitialData(true); switchView('guru-lkpd'); }
     }
 
-    /* GAME DYNAMIC FORM BUILDER LOGIC (NO JSON INPUTS NEEDED FOR TEACHERS) */
     function openGameModal() {
       populatePertemuanSelects();
       renderGameConfigInputs();
@@ -1594,7 +1645,6 @@
     function addGameItemRow() {
       const tipe = document.getElementById('game-form-tipe').value;
       const container = document.getElementById('game-dynamic-builder-container');
-      const idx = container.querySelectorAll('.gm-item-row').length;
 
       const row = document.createElement('div');
       row.className = 'gm-item-row p-2.5 bg-white border rounded-2xl space-y-1.5 shadow-2xs relative';

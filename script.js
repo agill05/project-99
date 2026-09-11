@@ -1895,11 +1895,6 @@ function openGameModal() {
 }
 function closeGameModal() { document.getElementById('game-modal').classList.add('hidden'); document.getElementById('game-modal').classList.remove('flex'); }
 
-/* ==========================================================
-   GAME INTERAKTIF ENHANCEMENT (TAHAP 1: SEQUENCER & HOTSPOT)
-   ========================================================== */
-
-// 1. UPDATE BUILDER CMS GURU (renderGameConfigInputs)
 function renderGameConfigInputs() {
     const tipe = document.getElementById('game-form-tipe').value;
     const container = document.getElementById('game-dynamic-builder-container');
@@ -1909,29 +1904,17 @@ function renderGameConfigInputs() {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan / Teks dan Pasangan Kunci Jawaban:</div>`;
     } else if (tipe === 'drag_drop') {
         container.innerHTML = `
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <div>
-              <label class="block font-bold text-slate-700">Nama Kategori A</label>
-              <input type="text" id="gm-cat-name-a" value="Energi Potensial" class="w-full p-2 border rounded-xl font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700">Nama Kategori B</label>
-              <input type="text" id="gm-cat-name-b" value="Energi Kinetik" class="w-full p-2 border rounded-xl font-bold" />
-            </div>
-          </div>
-        `;
-    } else if (tipe === 'sequencer') {
-        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan langkah-langkah proses secara berurutan DARI AWAL HINGGA AKHIR (Sistem akan mengacaknya secara otomatis untuk siswa):</div>`;
-    } else if (tipe === 'hotspot') {
-        container.innerHTML = `
-          <div class="space-y-2 mb-3">
-            <div>
-              <label class="block font-bold text-slate-700">URL Gambar Diagram IPA / STEAM</label>
-              <input type="url" id="gm-hotspot-img-url" placeholder="https://example.com/diagram-sel.png" class="w-full p-2 border rounded-xl font-mono text-[11px]" />
-            </div>
-            <div class="text-[10px] text-purple-700 font-bold">Tambahkan Nama Bagian / Pin Label:</div>
-          </div>
-        `;
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div>
+          <label class="block font-bold text-slate-700">Nama Kategori A</label>
+          <input type="text" id="gm-cat-name-a" value="Energi Potensial" class="w-full p-2 border rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700">Nama Kategori B</label>
+          <input type="text" id="gm-cat-name-b" value="Energi Kinetik" class="w-full p-2 border rounded-xl font-bold" />
+        </div>
+      </div>
+    `;
     } else {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan Singkat beserta Kunci Jawabannya:</div>`;
     }
@@ -1939,7 +1922,6 @@ function renderGameConfigInputs() {
     addGameItemRow();
 }
 
-// 2. UPDATE TAMBAH BARIS ITEM CMS (addGameItemRow)
 function addGameItemRow() {
     const tipe = document.getElementById('game-form-tipe').value;
     const container = document.getElementById('game-dynamic-builder-container');
@@ -1949,151 +1931,36 @@ function addGameItemRow() {
 
     if (tipe === 'matching') {
         row.innerHTML = `
-          <div class="grid grid-cols-2 gap-2">
-            <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Soal / Teks (misal: Air Terjun)" />
-            <input type="text" class="gm-input-kunci w-full p-2 rounded-xl border text-[11px]" placeholder="Pasangan Kunci" />
-          </div>
-        `;
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Soal / Teks (misal: Air Terjun)" />
+        <input type="text" class="gm-input-kunci w-full p-2 rounded-xl border text-[11px]" placeholder="Pasangan Kunci" />
+      </div>
+    `;
     } else if (tipe === 'drag_drop') {
         row.innerHTML = `
-          <div class="grid grid-cols-3 gap-2">
-            <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" placeholder="Objek / Teks" />
-            <select class="gm-input-cat-kunci w-full p-2 rounded-xl border font-bold text-[11px] text-purple-700">
-              <option value="A">Kategori A</option>
-              <option value="B">Kategori B</option>
-            </select>
-          </div>
-        `;
-    } else if (tipe === 'sequencer') {
-        const currentCount = container.querySelectorAll('.gm-item-row').length + 1;
-        row.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 font-black text-[10px] flex items-center justify-center shrink-0">${currentCount}</span>
-            <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Langkah urutan ke-${currentCount}..." />
-          </div>
-        `;
-    } else if (tipe === 'hotspot') {
-        const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
-        row.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-[10px] flex items-center justify-center shrink-0">Pin ${pinNum}</span>
-            <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Nama bagian / label pin ${pinNum}..." />
-          </div>
-        `;
+      <div class="grid grid-cols-3 gap-2">
+        <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" placeholder="Objek / Teks (misal: Kelapa Jatuh)" />
+        <select class="gm-input-cat-kunci w-full p-2 rounded-xl border font-bold text-[11px] text-purple-700">
+          <option value="A">Kategori A</option>
+          <option value="B">Kategori B</option>
+        </select>
+      </div>
+    `;
     } else {
         row.innerHTML = `
-          <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Pertanyaan..." />
-          <div class="grid grid-cols-3 gap-1">
-            <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
-            <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
-            <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
-              <option value="A">Kunci A</option>
-              <option value="B">Kunci B</option>
-            </select>
-          </div>
-        `;
+      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Pertanyaan Kuis Kilat..." />
+      <div class="grid grid-cols-3 gap-1">
+        <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
+        <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
+        <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
+          <option value="A">Kunci A</option>
+          <option value="B">Kunci B</option>
+        </select>
+      </div>
+    `;
     }
 
     container.appendChild(row);
-}
-
-// 3. RENDER INTERAKTIF SISWA UNTUK GAME 4 & 5 (renderGameInteractiveBody)
-// Tambahkan cabang kondisi berikut ke dalam fungsi renderGameInteractiveBody:
-
-/* --- GAME 4: SEQUENCER --- */
-if (tipe === 'sequencer') {
-    // Acak urutan item untuk pertama kali
-    if (!state.sequencerItems) {
-        state.sequencerItems = [...items].map((it, origIdx) => ({ text: it.soal, correctOrder: origIdx }));
-        state.sequencerItems.sort(() => Math.random() - 0.5);
-    }
-
-    return `
-      <div class="space-y-3">
-        <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl text-[11px] text-purple-900 font-medium">
-          💡 Gunakan tombol panah <b>▲ Naik</b> dan <b>▼ Turun</b> untuk menyusun tahapan di bawah ini agar berurutan secara benar dari atas ke bawah!
-        </div>
-        <div id="sequencer-list-container" class="space-y-2">
-          ${state.sequencerItems.map((item, idx) => `
-            <div class="p-3 bg-white rounded-2xl border flex items-center justify-between gap-3 shadow-xs">
-              <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center">${idx + 1}</span>
-                <span class="font-bold text-slate-800 text-xs">${item.text}</span>
-              </div>
-              <div class="flex items-center gap-1 shrink-0">
-                <button onclick="moveSequencerItem(${idx}, -1, '${ptmId}')" ${idx === 0 ? 'disabled class="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▲</button>
-                <button onclick="moveSequencerItem(${idx}, 1, '${ptmId}')" ${idx === state.sequencerItems.length - 1 ? 'disabled class="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▼</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'sequencer'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
-          🎮 Periksa & Simpan Urutan
-        </button>
-      </div>
-    `;
-}
-
-/* --- GAME 5: HOTSPOT PINNING --- */
-if (tipe === 'hotspot') {
-    const imgUrl = items[0]?.img_url || '';
-    const allLabels = items.map(it => it.soal).sort(() => Math.random() - 0.5);
-
-    return `
-      <div class="space-y-4">
-        ${imgUrl ? `
-          <div class="bg-white p-3 rounded-3xl border text-center">
-            <img src="${imgUrl}" alt="Diagram STEAM" class="max-h-80 mx-auto rounded-2xl object-contain border" />
-          </div>
-        ` : ''}
-
-        <div class="space-y-2">
-          ${items.map((item, idx) => `
-            <div class="bg-white p-3 rounded-2xl border flex items-center justify-between gap-3">
-              <span class="font-bold text-slate-800 text-xs flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${idx + 1}</span>
-                <span>Tentukan Label Pin #${idx + 1}:</span>
-              </span>
-              <select id="hotspot-sel-${idx}" onchange="state.gameAnswers[${idx}] = this.value" class="p-2 rounded-xl border font-bold text-xs text-brand-blue bg-slate-50">
-                <option value="">-- Pilih Label --</option>
-                ${allLabels.map(lbl => `<option value="${lbl}">${lbl}</option>`).join('')}
-              </select>
-            </div>
-          `).join('')}
-        </div>
-
-        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'hotspot'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
-          🎮 Periksa & Simpan Label Pin
-        </button>
-      </div>
-    `;
-}
-
-// 4. FUNGSI PENUKAR URUTAN GAME SEQUENCER
-function moveSequencerItem(index, direction, ptmId) {
-    if (!state.sequencerItems) return;
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= state.sequencerItems.length) return;
-
-    const temp = state.sequencerItems[index];
-    state.sequencerItems[index] = state.sequencerItems[targetIndex];
-    state.sequencerItems[targetIndex] = temp;
-
-    // Re-render tampilan viewport game
-    const viewport = document.getElementById('content-viewport');
-    viewport.innerHTML = renderGameView(ptmId);
-}
-
-// 5. PENYESUAIAN PENILAIAN OTOMATIS (submitGameSiswa)
-// Tambahkan cabang penilaian berikut pada loop submitGameSiswa:
-if (tipe === 'sequencer') {
-    state.sequencerItems.forEach((it, currentIdx) => {
-        if (it.correctOrder === currentIdx) correctCount++;
-    });
-} else if (tipe === 'hotspot') {
-    items.forEach((item, idx) => {
-        if (state.gameAnswers[idx] === item.soal) correctCount++;
-    });
 }
 
 async function handleGameSubmit(e) {

@@ -2,7 +2,7 @@
    E-LKPD INTERAKTIF STEAM (V2.2 OPTIMIZED LOGIC ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzByUlEwo9CGXnDTKOB2S7jHVupTzz1t6dpD5fwqhA_ooRNh80l0dZs4tNZdSs0Qxv4OA/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzVXxoAKyRXlgu98nHbriFucYkmzlU801QvB-XMiNR6_WZAwbKJ0UZYEZbIgebLMM2rfg/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V2';
 
 const state = {
@@ -17,7 +17,7 @@ const state = {
     },
     evaluasiAnswers: {},
     gameAnswers: {},
-    activeGameItems: [] // Memori aman untuk items game
+    activeGameItems: []
 };
 
 /* ==========================================================
@@ -563,7 +563,7 @@ function renderGameView(ptmId) {
     try { config = typeof gameObj.konfigurasi_json === 'string' ? JSON.parse(gameObj.konfigurasi_json) : gameObj.konfigurasi_json; } catch (e) { }
 
     const items = config.items || [];
-    state.activeGameItems = items; // Simpan ke state aman
+    state.activeGameItems = items;
     const tipe = gameObj.tipe_game || 'matching';
 
     return `
@@ -1551,11 +1551,77 @@ function openKoreksiModal(idSub) {
     document.getElementById('koreksi-nilai-esai').value = (sub.nilai_esai !== "" && sub.nilai_esai !== null && sub.nilai_esai !== undefined) ? sub.nilai_esai : (sub.skor_otomatis || 80);
     document.getElementById('koreksi-catatan').value = sub.catatan_guru || '';
 
+    let parsedJawaban = sub.jawaban_json;
+    try {
+        if (typeof sub.jawaban_json === 'string') {
+            parsedJawaban = JSON.parse(sub.jawaban_json);
+        }
+    } catch (e) {
+        parsedJawaban = sub.jawaban_json;
+    }
+
+    let jawabanHtml = '';
+
+    if (sub.tipe_sub === 'lkpd') {
+        if (Array.isArray(parsedJawaban)) {
+            jawabanHtml = parsedJawaban.map((ans, idx) => `
+                <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                    <span class="font-bold text-slate-700 text-[11px]">Pertanyaan #${idx + 1}</span>
+                    <p class="text-slate-800 font-medium whitespace-pre-wrap bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs">${ans ? ans.trim() : '<i class="text-slate-400">(Tidak diisi)</i>'}</p>
+                </div>
+            `).join('');
+        } else {
+            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium whitespace-pre-wrap text-xs">${String(parsedJawaban)}</p>`;
+        }
+    } else if (sub.tipe_sub === 'evaluasi') {
+        if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
+            const soalList = state.cachedData.soal_evaluasi || [];
+            jawabanHtml = `<div class="space-y-2">` + Object.keys(parsedJawaban).map((soalId, idx) => {
+                const soalObj = soalList.find(s => String(s.id_soal) === String(soalId));
+                const userAns = parsedJawaban[soalId];
+                const kunci = soalObj ? String(soalObj.kunci_jawaban).toUpperCase() : '';
+                const isCorrect = userAns === kunci;
+                const qText = soalObj ? soalObj.pertanyaan : `Soal (${soalId})`;
+
+                return `
+                    <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                        <div class="flex items-start justify-between gap-2 border-b pb-1">
+                            <span class="font-bold text-slate-800 text-xs">#${idx + 1}. ${qText}</span>
+                            ${kunci ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                                ${isCorrect ? '✅ Benar' : '❌ Salah'} (Kunci: ${kunci})
+                            </span>` : ''}
+                        </div>
+                        <p class="text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">
+                            Pilihan Jawaban Siswa: <span class="uppercase border px-2 py-0.5 rounded bg-slate-50">${userAns || '-'}</span>
+                        </p>
+                    </div>
+                `;
+            }).join('') + `</div>`;
+        } else {
+            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(parsedJawaban)}</p>`;
+        }
+    } else if (sub.tipe_sub === 'game') {
+        if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
+            jawabanHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">` + Object.keys(parsedJawaban).map((key, idx) => `
+                <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center">
+                    <span class="font-bold text-slate-500">Item #${idx + 1}</span>
+                    <span class="font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">${parsedJawaban[key]}</span>
+                </div>
+            `).join('') + `</div>`;
+        } else {
+            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(parsedJawaban)}</p>`;
+        }
+    } else {
+        jawabanHtml = `<pre class="bg-white p-2.5 rounded-xl border text-[11px] font-mono text-slate-700 whitespace-pre-wrap">${sub.jawaban_json}</pre>`;
+    }
+
     const body = document.getElementById('koreksi-detail-body');
     body.innerHTML = `
     <div class="p-3 bg-slate-50 border rounded-2xl space-y-2">
       <span class="font-black text-brand-navy block">📌 Isi Lembar Jawaban Siswa</span>
-      <pre class="bg-white p-2.5 rounded-xl border text-[11px] font-mono text-slate-700 whitespace-pre-wrap">${sub.jawaban_json}</pre>
+      <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        ${jawabanHtml}
+      </div>
     </div>
     ${sub.canvas_image_base64 ? `<div class="p-3 bg-slate-50 border rounded-2xl"><span class="font-black text-brand-navy block mb-2">🎨 Sketsa Proyek STEAM</span><img src="${sub.canvas_image_base64}" class="max-h-56 rounded-xl border mx-auto bg-white" /></div>` : ''}
   `;

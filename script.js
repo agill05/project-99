@@ -1113,6 +1113,9 @@ function selectEvalOption(soalId, option) {
 /* ==========================================================
    7. ADMIN CMS VIEWS & FULL CRUD HANDLERS
    ========================================================== */
+/* ==========================================================
+   UPDATE: RENDER ADMIN USERS VIEW (TOMBOL HORIZONTAL)
+   ========================================================== */
 function renderAdminUsersView(container) {
     const usersList = state.cachedData.users || [];
     container.innerHTML = `
@@ -1135,13 +1138,15 @@ function renderAdminUsersView(container) {
           <tbody class="divide-y divide-slate-100">
             ${usersList.map(u => `
               <tr>
-                <td class="p-3 font-bold">${u.nama_lengkap}</td>
+                <td class="p-3 font-bold whitespace-nowrap">${u.nama_lengkap}</td>
                 <td class="p-3 font-mono">${u.username}</td>
                 <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin' ? 'bg-red-100 text-red-700' : u.role === 'guru' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${String(u.role).toUpperCase()}</span></td>
                 <td class="p-3 font-bold">${u.kelas || '-'}</td>
-                <td class="p-3 text-center">
-                  <button onclick="openUserModal('${u.user_id}')" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-lg hover:bg-amber-200 transition mr-1">Edit</button>
-                  <button onclick="deleteUser('${u.user_id}')" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition">Hapus</button>
+                <td class="p-3 text-center whitespace-nowrap">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="openUserModal('${u.user_id}')" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-lg hover:bg-amber-200 transition">Edit</button>
+                    <button onclick="deleteUser('${u.user_id}')" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition">Hapus</button>
+                  </div>
                 </td>
               </tr>
             `).join('')}
@@ -1152,6 +1157,9 @@ function renderAdminUsersView(container) {
   `;
 }
 
+/* ==========================================================
+   UPDATE: RENDER ADMIN CLASSES VIEW (TOMBOL HORIZONTAL)
+   ========================================================== */
 function renderAdminClassesView(container) {
     const kelasList = state.cachedData.kelas || [];
     container.innerHTML = `
@@ -1162,13 +1170,13 @@ function renderAdminClassesView(container) {
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         ${kelasList.map(k => `
-          <div class="bg-white p-4 rounded-3xl border flex items-center justify-between shadow-xs">
+          <div class="bg-white p-4 rounded-3xl border flex items-center justify-between gap-2 shadow-xs">
             <div>
               <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${k.tingkat || '-'}</span>
               <h4 class="font-black text-brand-navy text-sm mt-1">${k.nama_kelas}</h4>
               <p class="text-slate-500 text-[11px]">${k.keterangan || ''}</p>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
               <button onclick="openKelasModal('${k.id_kelas}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
               <button onclick="deleteKelas('${k.id_kelas}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>

@@ -152,7 +152,24 @@ async function apiPost(payload) {
 /* ==========================================================
    3. UI HELPER UTILITIES
    ========================================================== */
-function openPdfFullscreen(url, title = 'Dokumen PDF') {
+/* ==========================================================
+   HELPER: TOGGLE VISIBILITY PASSWORD (ICON MATA)
+   ========================================================== */
+function togglePasswordVisibility(inputId, btnElem) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+
+    // Mengubah icon mata (👁️ = tampil, 🙈 = sembunyi)
+    if (btnElem) {
+        btnElem.innerHTML = isPassword ? '🙈' : '👁️';
+        btnElem.setAttribute('title', isPassword ? 'Sembunyikan Password' : 'Lihat Password');
+    }
+}
+
+   function openPdfFullscreen(url, title = 'Dokumen PDF') {
     document.getElementById('pdf-fullscreen-title').textContent = title;
     document.getElementById('pdf-fullscreen-iframe').src = url;
     document.getElementById('pdf-fullscreen-external-link').href = url.replace('/preview', '/view');
@@ -1773,6 +1790,11 @@ function openUserModal(userId = null) {
     const passElem = document.getElementById('user-form-password');
     const roleElem = document.getElementById('user-form-role');
     const kelasElem = document.getElementById('user-form-kelas');
+    const btnEye = document.getElementById('btn-toggle-user-password');
+
+    // Reset tipe password & icon setiap kali modal dibuka
+    if (passElem) passElem.type = 'password';
+    if (btnEye) btnEye.innerHTML = '👁️';
 
     if (userId) {
         const u = (state.cachedData.users || []).find(x => String(x.user_id) === String(userId));
@@ -1781,7 +1803,7 @@ function openUserModal(userId = null) {
             if (idElem) idElem.value = u.user_id;
             if (namaElem) namaElem.value = u.nama_lengkap || '';
             if (usernameElem) usernameElem.value = u.username || '';
-            if (passElem) passElem.value = u.password || '';
+            if (passElem) passElem.value = u.password || ''; // Memuat password saat ini untuk di-update
             if (roleElem) roleElem.value = u.role || 'siswa';
             if (kelasElem) kelasElem.value = u.kelas || '-';
         }
@@ -2755,8 +2777,14 @@ async function handleLoginSubmit(e) {
 function openLoginModal() {
     const unElem = document.getElementById('login-username');
     const pwElem = document.getElementById('login-password');
+    const btnEye = document.getElementById('btn-toggle-login-password');
+
     if (unElem) unElem.value = '';
-    if (pwElem) pwElem.value = '';
+    if (pwElem) {
+        pwElem.value = '';
+        pwElem.type = 'password'; // Reset tipe ke password
+    }
+    if (btnEye) btnEye.innerHTML = '👁️'; // Reset icon ke mata terbuka
 
     document.getElementById('login-modal').classList.remove('hidden');
     document.getElementById('login-modal').classList.add('flex');

@@ -1,6 +1,6 @@
 /* ==========================================================
    E-LKPD INTERAKTIF STEAM (V2.3 OPTIMIZED LOGIC ENGINE)
-   Tahap 2: Auto-Save Draft, Canvas Steam + Undo, & Ekspor CSV
+   Tahap 2.1: Auto-Save Draft, Form Reset Engine, Canvas Steam, & Ekspor CSV
    ========================================================== */
 
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz-ZUlxuqR0lMQguX64qWJoXP5VwgNucrkPIuYqEOaHGw6OgCA34Nppvhoaq6DlwCd91w/exec';
@@ -988,7 +988,9 @@ function renderGuruRekapView(container) {
             <tbody class="divide-y divide-slate-100">
               ${subs.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>` : 
                 subs.map(s => {
-                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
+                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) 
+                    ? s.nilai_esai 
+                    : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
                 return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
@@ -1285,13 +1287,30 @@ async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
 }
 
 /* ==========================================================
-   11. CMS ADMIN MODALS & HANDLERS
+   11. CMS ADMIN MODALS & HANDLERS (DENGAN AUTO-RESET FORM)
    ========================================================== */
 function openUserModal() {
     populateKelasSelects();
+
+    // Reset formulir input pengguna sebelum ditampilkan
+    const idElem = document.getElementById('user-form-id');
+    const namaElem = document.getElementById('user-form-nama');
+    const usernameElem = document.getElementById('user-form-username');
+    const passElem = document.getElementById('user-form-password');
+    const roleElem = document.getElementById('user-form-role');
+    const kelasElem = document.getElementById('user-form-kelas');
+
+    if (idElem) idElem.value = '';
+    if (namaElem) namaElem.value = '';
+    if (usernameElem) usernameElem.value = '';
+    if (passElem) passElem.value = '';
+    if (roleElem) roleElem.value = 'siswa';
+    if (kelasElem) kelasElem.value = '-';
+
     document.getElementById('user-modal').classList.remove('hidden');
     document.getElementById('user-modal').classList.add('flex');
 }
+
 function closeUserModal() {
     document.getElementById('user-modal').classList.add('hidden');
     document.getElementById('user-modal').classList.remove('flex');
@@ -1324,9 +1343,20 @@ async function handleUserSubmit(e) {
 }
 
 function openKelasModal() {
+    const idElem = document.getElementById('kelas-form-id');
+    const namaElem = document.getElementById('kelas-form-nama');
+    const tingkatElem = document.getElementById('kelas-form-tingkat');
+    const ketElem = document.getElementById('kelas-form-keterangan');
+
+    if (idElem) idElem.value = '';
+    if (namaElem) namaElem.value = '';
+    if (tingkatElem) tingkatElem.value = '';
+    if (ketElem) ketElem.value = '';
+
     document.getElementById('kelas-modal').classList.remove('hidden');
     document.getElementById('kelas-modal').classList.add('flex');
 }
+
 function closeKelasModal() {
     document.getElementById('kelas-modal').classList.add('hidden');
     document.getElementById('kelas-modal').classList.remove('flex');
@@ -1379,7 +1409,7 @@ function deleteKelas(id) {
 }
 
 /* ==========================================================
-   12. CMS GURU HANDLERS & MODALS
+   12. CMS GURU HANDLERS & MODALS (DENGAN AUTO-RESET FORM)
    ========================================================== */
 function populatePertemuanSelects() {
     const ptmList = state.cachedData.pertemuan || [];
@@ -1393,6 +1423,13 @@ function populatePertemuanSelects() {
 
 function openPertemuanModal() {
     populateKelasSelects();
+
+    document.getElementById('pertemuan-form-id').value = '';
+    document.getElementById('pertemuan-form-nomor').value = '1';
+    document.getElementById('pertemuan-form-judul').value = '';
+    document.getElementById('pertemuan-form-deskripsi').value = '';
+    document.getElementById('pertemuan-form-status').value = 'Publish';
+
     document.getElementById('pertemuan-modal').classList.remove('hidden');
     document.getElementById('pertemuan-modal').classList.add('flex');
 }
@@ -1424,7 +1461,20 @@ async function handlePertemuanSubmit(e) {
     }
 }
 
-function openMateriModal() { populatePertemuanSelects(); document.getElementById('materi-modal').classList.remove('hidden'); document.getElementById('materi-modal').classList.add('flex'); }
+function openMateriModal() { 
+    populatePertemuanSelects(); 
+
+    document.getElementById('materi-form-id').value = '';
+    document.getElementById('materi-form-pdf-id').value = '';
+    document.getElementById('materi-form-judul').value = '';
+    document.getElementById('materi-form-teks').value = '';
+    document.getElementById('materi-form-pdf-url').value = '';
+    const filePdf = document.getElementById('materi-form-file-pdf');
+    if (filePdf) filePdf.value = '';
+
+    document.getElementById('materi-modal').classList.remove('hidden'); 
+    document.getElementById('materi-modal').classList.add('flex'); 
+}
 function closeMateriModal() { document.getElementById('materi-modal').classList.add('hidden'); document.getElementById('materi-modal').classList.remove('flex'); }
 
 function toggleMateriFormTipe() {
@@ -1491,7 +1541,23 @@ async function handleMateriSubmit(e) {
     }
 }
 
-function openLkpdModal() { populatePertemuanSelects(); document.getElementById('lkpd-modal').classList.remove('hidden'); document.getElementById('lkpd-modal').classList.add('flex'); }
+function openLkpdModal() { 
+    populatePertemuanSelects(); 
+
+    document.getElementById('lkpd-form-id').value = '';
+    document.getElementById('lkpd-form-pdf-id').value = '';
+    document.getElementById('lkpd-form-judul').value = '';
+    document.getElementById('lkpd-form-instruksi').value = '';
+    document.getElementById('lkpd-form-pdf-url').value = '';
+    document.getElementById('lkpd-form-gambar-url').value = '';
+    document.getElementById('lkpd-form-soal-text').value = '';
+    document.getElementById('lkpd-form-kanvas').checked = false;
+    const filePdf = document.getElementById('lkpd-form-file-pdf');
+    if (filePdf) filePdf.value = '';
+
+    document.getElementById('lkpd-modal').classList.remove('hidden'); 
+    document.getElementById('lkpd-modal').classList.add('flex'); 
+}
 function closeLkpdModal() { document.getElementById('lkpd-modal').classList.add('hidden'); document.getElementById('lkpd-modal').classList.remove('flex'); }
 
 function toggleLkpdFormTipe() {
@@ -1541,6 +1607,11 @@ async function handleLkpdSubmit(e) {
 
 function openGameModal() {
     populatePertemuanSelects();
+
+    document.getElementById('game-form-id').value = '';
+    document.getElementById('game-form-judul').value = '';
+    document.getElementById('game-form-instruksi').value = '';
+
     renderGameConfigInputs();
     document.getElementById('game-modal').classList.remove('hidden');
     document.getElementById('game-modal').classList.add('flex');
@@ -1665,7 +1736,20 @@ async function handleGameSubmit(e) {
     }
 }
 
-function openSoalModal() { populatePertemuanSelects(); document.getElementById('soal-modal').classList.remove('hidden'); document.getElementById('soal-modal').classList.add('flex'); }
+function openSoalModal() { 
+    populatePertemuanSelects(); 
+
+    document.getElementById('soal-form-id').value = '';
+    document.getElementById('soal-form-pertanyaan').value = '';
+    document.getElementById('soal-form-opsi-a').value = '';
+    document.getElementById('soal-form-opsi-b').value = '';
+    document.getElementById('soal-form-opsi-c').value = '';
+    document.getElementById('soal-form-opsi-d').value = '';
+    document.getElementById('soal-form-kunci').value = 'A';
+
+    document.getElementById('soal-modal').classList.remove('hidden'); 
+    document.getElementById('soal-modal').classList.add('flex'); 
+}
 function closeSoalModal() { document.getElementById('soal-modal').classList.add('hidden'); document.getElementById('soal-modal').classList.remove('flex'); }
 
 async function handleSoalSubmit(e) {
@@ -1875,12 +1959,14 @@ function deleteSoal(id) {
 }
 
 /* ==========================================================
-   13. AUTHENTICATION HANDLERS
+   13. AUTHENTICATION HANDLERS (DENGAN AUTO-RESET LOGIN)
    ========================================================== */
 async function handleLoginSubmit(e) {
     e.preventDefault();
-    const un = document.getElementById('login-username').value.trim();
-    const pw = document.getElementById('login-password').value.trim();
+    const unElem = document.getElementById('login-username');
+    const pwElem = document.getElementById('login-password');
+    const un = unElem ? unElem.value.trim() : '';
+    const pw = pwElem ? pwElem.value.trim() : '';
     const btn = document.getElementById('btn-submit-login');
 
     setButtonLoading(btn, true, 'Memproses Login...', 'Masuk');
@@ -1890,6 +1976,11 @@ async function handleLoginSubmit(e) {
     if (res.success) {
         state.currentUser = res.user;
         closeLoginModal();
+        
+        // Kosongkan kredensial setelah login berhasil
+        if (unElem) unElem.value = '';
+        if (pwElem) pwElem.value = '';
+
         updateUIForAuthenticatedUser();
         showToast('success', `Selamat Datang, ${res.user.name}!`);
 
@@ -1901,12 +1992,32 @@ async function handleLoginSubmit(e) {
     }
 }
 
-function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-modal').classList.add('flex'); }
-function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); document.getElementById('login-modal').classList.remove('flex'); }
+function openLoginModal() { 
+    // Mengosongkan input username & password sebelum modal login dibuka
+    const unElem = document.getElementById('login-username');
+    const pwElem = document.getElementById('login-password');
+    if (unElem) unElem.value = '';
+    if (pwElem) pwElem.value = '';
+
+    document.getElementById('login-modal').classList.remove('hidden'); 
+    document.getElementById('login-modal').classList.add('flex'); 
+}
+
+function closeLoginModal() { 
+    document.getElementById('login-modal').classList.add('hidden'); 
+    document.getElementById('login-modal').classList.remove('flex'); 
+}
 
 function logout() {
     showConfirm('Keluar Sistem?', 'Kamu akan keluar dari akun saat ini.', () => {
         state.currentUser = null;
+
+        // Kosongkan kredensial login saat logout
+        const unElem = document.getElementById('login-username');
+        const pwElem = document.getElementById('login-password');
+        if (unElem) unElem.value = '';
+        if (pwElem) pwElem.value = '';
+
         updateUIForAuthenticatedUser();
         switchView('home');
         showToast('success', 'Berhasil Keluar Akun');

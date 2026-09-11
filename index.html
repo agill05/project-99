@@ -166,15 +166,15 @@
         <p class="text-xs text-slate-500">Masukkan username dan password kamu</p>
       </div>
 
-      <form onsubmit="handleLoginSubmit(event)" class="space-y-3 text-xs">
+      <form onsubmit="handleLoginSubmit(event)" autocomplete="off" class="space-y-3 text-xs">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Username / NIS</label>
-          <input type="text" id="login-username" autocomplete="username" required placeholder="Contoh: guru atau siswa8a" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
+          <input type="text" id="login-username" autocomplete="off" required placeholder="Contoh: guru atau siswa8a" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
         </div>
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Password</label>
-          <input type="password" id="login-password" autocomplete="current-password" required placeholder="Masukkan password" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
+          <input type="password" id="login-password" autocomplete="new-password" required placeholder="Masukkan password" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
         </div>
 
         <div class="flex gap-2 pt-2">
@@ -192,16 +192,16 @@
         <h3 class="text-base font-black text-brand-navy font-heading">Tambah / Edit Pengguna</h3>
         <button onclick="closeUserModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
-      <form onsubmit="handleUserSubmit(event)" class="space-y-3">
+      <form onsubmit="handleUserSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="user-form-id" />
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
-          <input type="text" id="user-form-nama" required placeholder="Contoh: Ahmad Subagja" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="user-form-nama" autocomplete="off" required placeholder="Contoh: Ahmad Subagja" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Username / NIS</label>
-            <input type="text" id="user-form-username" autocomplete="username" required placeholder="username" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+            <input type="text" id="user-form-username" autocomplete="off" required placeholder="username" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Password</label>
@@ -239,19 +239,19 @@
         <h3 class="text-base font-black text-brand-navy font-heading">Tambah Data Kelas</h3>
         <button onclick="closeKelasModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
-      <form onsubmit="handleKelasSubmit(event)" class="space-y-3">
+      <form onsubmit="handleKelasSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="kelas-form-id" />
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Kelas</label>
-          <input type="text" id="kelas-form-nama" required placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="kelas-form-nama" autocomplete="off" required placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Tingkat Kelas</label>
-          <input type="text" id="kelas-form-tingkat" placeholder="Contoh: 8" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="kelas-form-tingkat" autocomplete="off" placeholder="Contoh: 8" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Keterangan</label>
-          <input type="text" id="kelas-form-keterangan" placeholder="Contoh: Kelas Unggulan" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          <input type="text" id="kelas-form-keterangan" autocomplete="off" placeholder="Contoh: Kelas Unggulan" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
           <button type="button" onclick="closeKelasModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
@@ -268,7 +268,7 @@
         <h3 id="pertemuan-modal-title" class="text-base font-black text-brand-navy font-heading">Buat Pertemuan Pembelajaran</h3>
         <button onclick="closePertemuanModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
-      <form onsubmit="handlePertemuanSubmit(event)" class="space-y-3">
+      <form onsubmit="handlePertemuanSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="pertemuan-form-id" />
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -284,7 +284,7 @@
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Judul Pertemuan</label>
-          <input type="text" id="pertemuan-form-judul" required placeholder="Contoh: Konsep Usaha dan Gaya" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="pertemuan-form-judul" autocomplete="off" required placeholder="Contoh: Konsep Usaha dan Gaya" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Deskripsi / Capaian Pembelajaran</label>
@@ -313,7 +313,7 @@
         <button onclick="closeMateriModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
 
-      <form onsubmit="handleMateriSubmit(event)" class="space-y-3">
+      <form onsubmit="handleMateriSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="materi-form-id" />
         <input type="hidden" id="materi-form-pdf-id" />
 
@@ -335,7 +335,7 @@
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Judul Materi / Modul</label>
-          <input type="text" id="materi-form-judul" required placeholder="Contoh: Modul Fisika Usaha Mekanik" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="materi-form-judul" autocomplete="off" required placeholder="Contoh: Modul Fisika Usaha Mekanik" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
 
         <div>
@@ -369,7 +369,7 @@
         <button onclick="closeLkpdModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
 
-      <form onsubmit="handleLkpdSubmit(event)" class="space-y-3">
+      <form onsubmit="handleLkpdSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="lkpd-form-id" />
         <input type="hidden" id="lkpd-form-pdf-id" />
 
@@ -391,7 +391,7 @@
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Judul LKPD</label>
-          <input type="text" id="lkpd-form-judul" required placeholder="Contoh: LKPD 1: Identifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="lkpd-form-judul" autocomplete="off" required placeholder="Contoh: LKPD 1: Identifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
 
         <div>
@@ -413,7 +413,7 @@
         <div id="container-lkpd-manual" class="space-y-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">URL Gambar Ilustrasi / Visual LKPD (Opsional)</label>
-            <input type="url" id="lkpd-form-gambar-url" placeholder="https://example.com/gambar-soal.png" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-[11px]" />
+            <input type="url" id="lkpd-form-gambar-url" autocomplete="off" placeholder="https://example.com/gambar-soal.png" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-[11px]" />
           </div>
 
           <div>
@@ -446,7 +446,7 @@
         <button onclick="closeGameModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
 
-      <form onsubmit="handleGameSubmit(event)" class="space-y-3">
+      <form onsubmit="handleGameSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="game-form-id" />
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -467,7 +467,7 @@
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Judul Permainan</label>
-          <input type="text" id="game-form-judul" required placeholder="Contoh: Game Klasifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="game-form-judul" autocomplete="off" required placeholder="Contoh: Game Klasifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
 
         <div>
@@ -502,7 +502,7 @@
         <button onclick="closeSoalModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
       </div>
 
-      <form onsubmit="handleSoalSubmit(event)" class="space-y-3">
+      <form onsubmit="handleSoalSubmit(event)" autocomplete="off" class="space-y-3">
         <input type="hidden" id="soal-form-id" />
         <div>
           <label class="block font-bold text-slate-700 mb-1">Pilih Pertemuan Evaluasi</label>
@@ -519,19 +519,19 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Opsi A</label>
-            <input type="text" id="soal-form-opsi-a" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+            <input type="text" id="soal-form-opsi-a" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Opsi B</label>
-            <input type="text" id="soal-form-opsi-b" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+            <input type="text" id="soal-form-opsi-b" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Opsi C</label>
-            <input type="text" id="soal-form-opsi-c" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+            <input type="text" id="soal-form-opsi-c" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Opsi D</label>
-            <input type="text" id="soal-form-opsi-d" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+            <input type="text" id="soal-form-opsi-d" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
         </div>
 
@@ -566,7 +566,7 @@
 
       <div id="koreksi-detail-body" class="space-y-4"></div>
 
-      <form onsubmit="handleGradeSubmit(event)" class="space-y-3 pt-3 border-t">
+      <form onsubmit="handleGradeSubmit(event)" autocomplete="off" class="space-y-3 pt-3 border-t">
         <input type="hidden" id="koreksi-sub-id" />
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -575,7 +575,7 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Catatan Evaluasi Guru</label>
-            <input type="text" id="koreksi-catatan" placeholder="Apresiasi atau catatan perbaikan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+            <input type="text" id="koreksi-catatan" autocomplete="off" placeholder="Apresiasi atau catatan perbaikan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
           </div>
         </div>
 

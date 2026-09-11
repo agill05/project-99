@@ -1,6 +1,6 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V2.3 OPTIMIZED LOGIC ENGINE)
-   Tahap 2.1: Auto-Save Draft, Form Reset Engine, Canvas Steam, & Ekspor CSV
+   E-LKPD INTERAKTIF STEAM (V2.4 OPTIMIZED LOGIC ENGINE)
+   Fitur Baru: Standalone Ruang STEAM Lab & Eksperimen Mandiri Siswa
    ========================================================== */
 
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz-ZUlxuqR0lMQguX64qWJoXP5VwgNucrkPIuYqEOaHGw6OgCA34Nppvhoaq6DlwCd91w/exec';
@@ -237,11 +237,19 @@ function renderSidebarNav() {
 }
 
 function renderSiswaNav(container) {
+    // Menu Beranda
     const homeBtn = document.createElement('button');
-    homeBtn.onclick = () => switchView('home');
+    homeBtn.onclick = () => { switchView('home'); toggleDrawer(false); };
     homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'home' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
     homeBtn.innerHTML = `<span>🏠</span><span>Beranda</span>`;
     container.appendChild(homeBtn);
+
+    // Menu Standalone Ruang STEAM
+    const steamBtn = document.createElement('button');
+    steamBtn.onclick = () => { switchView('ruang-steam'); toggleDrawer(false); };
+    steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'ruang-steam' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
+    steamBtn.innerHTML = `<span>🎨</span><span>Ruang STEAM Lab</span>`;
+    container.appendChild(steamBtn);
 
     const userKelas = state.currentUser?.kelas || 'ALL';
     const pertemuanList = (state.cachedData.pertemuan || [])
@@ -347,6 +355,12 @@ async function switchView(viewId, paramId = null) {
             viewport.innerHTML = renderHomeView();
             break;
 
+        case 'ruang-steam':
+            titleElem.textContent = 'RUANG EKSPERIMEN & LAB STEAM';
+            viewport.innerHTML = renderRuangSteamView();
+            setTimeout(() => initStandaloneSteamCanvas(), 100);
+            break;
+
         case 'materi-ptm':
             titleElem.textContent = 'BAHAN AJAR MATERI';
             viewport.innerHTML = renderMateriView(paramId);
@@ -427,7 +441,7 @@ async function switchView(viewId, paramId = null) {
 }
 
 /* ==========================================================
-   6. SISWA VIEWS
+   6. SISWA VIEWS & STANDALONE STEAM LAB
    ========================================================== */
 function renderHomeView() {
     return `
@@ -442,6 +456,105 @@ function renderHomeView() {
         <p class="text-xs text-slate-300 max-w-xl leading-relaxed">
           Platform Digital interaktif berbasis Science, Technology, Engineering, Arts, dan Mathematics. Pilih modul pada menu sidebar untuk memulai aktivitas pembelajaran.
         </p>
+      </div>
+    </div>
+  `;
+}
+
+function renderRuangSteamView() {
+    return `
+    <div class="max-w-5xl mx-auto space-y-5 text-xs">
+      <!-- Header Banner Ruang STEAM -->
+      <div class="bg-gradient-to-r from-purple-900 via-brand-navy to-blue-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <span class="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-400/30 rounded-full text-[10px] uppercase font-mono font-bold">
+            🎨 Laboratorium Kreatif & Eksperimen Mandiri
+          </span>
+          <h2 class="text-xl sm:text-2xl font-black font-heading mt-2">RUANG EKSPERIMEN STEAM</h2>
+          <p class="text-slate-300 text-xs mt-1 max-w-lg">
+            Wadah kreatif mandiri untuk merancang sketsa, menuangkan gagasan teknologi, serta mendokumentasikan konsep Science, Technology, Engineering, Arts, dan Mathematics.
+          </p>
+        </div>
+        <button onclick="downloadSteamCanvasImage()" class="px-4 py-2.5 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg flex items-center gap-2 transition shrink-0">
+          <span>💾 Unduh Sketsa (PNG)</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Area Kanvas Gambar Utama -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="font-black text-brand-navy text-sm font-heading flex items-center gap-2">
+              <span>🎨 Kanvas Lukis & Prototyping</span>
+            </h3>
+            <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">Layar Bebas</span>
+          </div>
+
+          <!-- Toolbar Pengatur Alat Gambar -->
+          <div class="p-3 bg-slate-50 border rounded-2xl flex flex-wrap items-center justify-between gap-3">
+            <!-- Warna -->
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-slate-500 mr-1">Warna:</span>
+              <button onclick="setStandaloneCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs hover:scale-110 transition" title="Biru Tua"></button>
+              <button onclick="setStandaloneCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs hover:scale-110 transition" title="Merah"></button>
+              <button onclick="setStandaloneCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs hover:scale-110 transition" title="Hijau"></button>
+              <button onclick="setStandaloneCanvasColor('#6B38FB')" class="w-6 h-6 rounded-full bg-purple-600 border-2 border-white shadow-xs hover:scale-110 transition" title="Ungu"></button>
+              <button onclick="setStandaloneCanvasColor('#F59E0B')" class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-xs hover:scale-110 transition" title="Kuning"></button>
+              <button onclick="setStandaloneCanvasColor('#000000')" class="w-6 h-6 rounded-full bg-black border-2 border-white shadow-xs hover:scale-110 transition" title="Hitam"></button>
+              <button onclick="setStandaloneCanvasColor('#FFFFFF')" class="w-6 h-6 rounded-full bg-white border-2 border-slate-300 shadow-xs hover:scale-110 transition flex items-center justify-center text-[9px]" title="Penghapus">🧹</button>
+            </div>
+
+            <!-- Ukuran Kuas -->
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold text-slate-500">Ukuran:</span>
+              <button onclick="setStandaloneCanvasSize(2)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Halus</button>
+              <button onclick="setStandaloneCanvasSize(5)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Sedang</button>
+              <button onclick="setStandaloneCanvasSize(10)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Tebal</button>
+            </div>
+
+            <!-- Aksi Gambar -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="undoStandaloneCanvas()" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-xl text-[10px] hover:bg-amber-200 transition">↩️ Undo</button>
+              <button onclick="clearStandaloneCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200 transition">🗑️ Clear</button>
+            </div>
+          </div>
+
+          <!-- Area Canvas -->
+          <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden shadow-inner">
+            <canvas id="ruang-steam-canvas" class="w-full h-[380px] cursor-crosshair touch-none bg-white"></canvas>
+          </div>
+        </div>
+
+        <!-- Kolom Catatan Ide & Konsep STEAM -->
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+          <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2 flex items-center gap-2">
+            <span>💡 Catatan Ide Proyek STEAM</span>
+          </h3>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Judul / Topik Eksperimen</label>
+              <input type="text" id="steam-note-title" placeholder="Contoh: Model Miniatur Jembatan Hydraulik" class="w-full p-2.5 rounded-xl border font-bold text-brand-navy focus:ring-2 focus:ring-purple-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">🔬 Konsep Science & Technology</label>
+              <textarea id="steam-note-science" rows="2" placeholder="Jelaskan fenomena sains/teknologi yang melandasi gambar kamu..." class="w-full p-2.5 rounded-xl border text-[11px] font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">⚙️ Konsep Engineering & Math</label>
+              <textarea id="steam-note-engineering" rows="2" placeholder="Jelaskan rancangan struktur, ukuran, atau perhitungan matematika..." class="w-full p-2.5 rounded-xl border text-[11px] font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+            </div>
+
+            <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl space-y-1">
+              <span class="font-bold text-purple-900 block text-[11px]">✨ Tip Eksperimen</span>
+              <p class="text-[10px] text-purple-700 leading-relaxed">
+                Kamu dapat membuat sketsa ide rancangan kapan saja, lalu klik tombol **"Unduh Sketsa (PNG)"** di atas untuk menyimpannya sebagai portofolio belajar!
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -1015,7 +1128,7 @@ function exportRekapToCsv() {
         return;
     }
 
-    let csvContent = "\uFEFF"; // UTF-8 BOM agar Excel membaca karakter khusus dengan rapi
+    let csvContent = "\uFEFF";
     csvContent += "ID Submisi,Username,Nama Siswa,Kelas,Tipe Modul,Skor Otomatis,Nilai Esai,Nilai Akhir,Status,Waktu Submisi,Catatan Guru\n";
 
     subs.forEach(s => {
@@ -1051,8 +1164,9 @@ function exportRekapToCsv() {
 }
 
 /* ==========================================================
-   9. CANVAS DRAWING ENGINE LOGIC + UNDO & TOUCH
+   9. CANVAS DRAWING LOGIC (LKPD + STANDALONE STEAM LAB)
    ========================================================== */
+// Canvas Khas LKPD
 let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
@@ -1075,38 +1189,37 @@ function initCanvas() {
     canvasCtx.strokeStyle = currentPenColor;
 
     canvasUndoStack = [];
-    saveCanvasState(); // Simpan kondisi putih awal
+    saveCanvasState();
 
-    // Mouse Listeners
-    canvas.onmousedown = (e) => { startDrawing(e, canvas); };
-    canvas.onmousemove = (e) => { draw(e, canvas); };
-    canvas.onmouseup = () => { stopDrawing(); };
-    canvas.onmouseleave = () => { stopDrawing(); };
+    canvas.onmousedown = (e) => startDrawing(e, canvas, canvasCtx);
+    canvas.onmousemove = (e) => draw(e, canvas, canvasCtx);
+    canvas.onmouseup = () => stopDrawing();
+    canvas.onmouseleave = () => stopDrawing();
 
-    // Touch Screen Listeners (HP / Tablet)
-    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas); };
-    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas); };
+    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas, canvasCtx); };
+    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas, canvasCtx); };
     canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
 }
 
-function startDrawing(e, canvas) {
+function startDrawing(e, canvas, ctx) {
     isDrawing = true;
-    canvasCtx.beginPath();
+    ctx.beginPath();
     const c = getCoords(e, canvas);
-    canvasCtx.moveTo(c.x, c.y);
+    ctx.moveTo(c.x, c.y);
 }
 
-function draw(e, canvas) {
+function draw(e, canvas, ctx) {
     if (!isDrawing) return;
     const c = getCoords(e, canvas);
-    canvasCtx.lineTo(c.x, c.y);
-    canvasCtx.stroke();
+    ctx.lineTo(c.x, c.y);
+    ctx.stroke();
 }
 
 function stopDrawing() {
     if (isDrawing) {
         isDrawing = false;
         saveCanvasState();
+        saveStandaloneCanvasState();
     }
 }
 
@@ -1120,20 +1233,10 @@ function saveCanvasState() {
 function undoCanvas() {
     const canvas = document.getElementById('steam-canvas');
     if (canvas && canvasCtx && canvasUndoStack.length > 1) {
-        canvasUndoStack.pop(); // Buang state terakhir
+        canvasUndoStack.pop();
         const prevState = canvasUndoStack[canvasUndoStack.length - 1];
         canvasCtx.putImageData(prevState, 0, 0);
     }
-}
-
-function getCoords(e, canvas) {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
-    };
 }
 
 function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
@@ -1144,6 +1247,97 @@ function clearCanvas() {
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         saveCanvasState();
     }
+}
+
+// Standalone STEAM Lab Canvas Engine
+let stCanvasCtx = null;
+let stPenColor = '#0B2545';
+let stLineWidth = 3;
+let stUndoStack = [];
+
+function initStandaloneSteamCanvas() {
+    const canvas = document.getElementById('ruang-steam-canvas');
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || 700;
+    canvas.height = 380;
+
+    stCanvasCtx = canvas.getContext('2d');
+    stCanvasCtx.fillStyle = '#FFFFFF';
+    stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+    stCanvasCtx.lineWidth = stLineWidth;
+    stCanvasCtx.lineCap = 'round';
+    stCanvasCtx.lineJoin = 'round';
+    stCanvasCtx.strokeStyle = stPenColor;
+
+    stUndoStack = [];
+    saveStandaloneCanvasState();
+
+    canvas.onmousedown = (e) => startDrawing(e, canvas, stCanvasCtx);
+    canvas.onmousemove = (e) => draw(e, canvas, stCanvasCtx);
+    canvas.onmouseup = () => stopDrawing();
+    canvas.onmouseleave = () => stopDrawing();
+
+    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas, stCanvasCtx); };
+    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas, stCanvasCtx); };
+    canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
+}
+
+function saveStandaloneCanvasState() {
+    const canvas = document.getElementById('ruang-steam-canvas');
+    if (canvas && stCanvasCtx && stUndoStack.length < 20) {
+        stUndoStack.push(stCanvasCtx.getImageData(0, 0, canvas.width, canvas.height));
+    }
+}
+
+function undoStandaloneCanvas() {
+    const canvas = document.getElementById('ruang-steam-canvas');
+    if (canvas && stCanvasCtx && stUndoStack.length > 1) {
+        stUndoStack.pop();
+        const prevState = stUndoStack[stUndoStack.length - 1];
+        stCanvasCtx.putImageData(prevState, 0, 0);
+    }
+}
+
+function setStandaloneCanvasColor(color) {
+    stPenColor = color;
+    if (stCanvasCtx) stCanvasCtx.strokeStyle = color;
+}
+
+function setStandaloneCanvasSize(size) {
+    stLineWidth = size;
+    if (stCanvasCtx) stCanvasCtx.lineWidth = size;
+}
+
+function clearStandaloneCanvas() {
+    const canvas = document.getElementById('ruang-steam-canvas');
+    if (canvas && stCanvasCtx) {
+        stCanvasCtx.fillStyle = '#FFFFFF';
+        stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        saveStandaloneCanvasState();
+    }
+}
+
+function downloadSteamCanvasImage() {
+    const canvas = document.getElementById('ruang-steam-canvas');
+    if (!canvas) return;
+
+    const link = document.createElement('a');
+    link.download = `Sketsa_Eksperimen_STEAM_${new Date().getTime()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('success', 'Sketsa berhasil diunduh ke perangkat!');
+}
+
+function getCoords(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
 }
 
 /* ==========================================================
@@ -1287,12 +1481,11 @@ async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
 }
 
 /* ==========================================================
-   11. CMS ADMIN MODALS & HANDLERS (DENGAN AUTO-RESET FORM)
+   11. CMS ADMIN MODALS & HANDLERS
    ========================================================== */
 function openUserModal() {
     populateKelasSelects();
 
-    // Reset formulir input pengguna sebelum ditampilkan
     const idElem = document.getElementById('user-form-id');
     const namaElem = document.getElementById('user-form-nama');
     const usernameElem = document.getElementById('user-form-username');
@@ -1409,7 +1602,7 @@ function deleteKelas(id) {
 }
 
 /* ==========================================================
-   12. CMS GURU HANDLERS & MODALS (DENGAN AUTO-RESET FORM)
+   12. CMS GURU HANDLERS & MODALS
    ========================================================== */
 function populatePertemuanSelects() {
     const ptmList = state.cachedData.pertemuan || [];
@@ -1902,7 +2095,7 @@ async function handleGradeSubmit(e) {
     }
 }
 
-// DELETE HANDLERS DENGAN SWEETALERT2 CONFIRMATION
+// DELETE HANDLERS
 function deletePertemuan(id) {
     showConfirm('Hapus Pertemuan?', 'Data yang dihapus tidak dapat dikembalikan!', async () => {
         showLoading('Menghapus pertemuan...');
@@ -1959,7 +2152,7 @@ function deleteSoal(id) {
 }
 
 /* ==========================================================
-   13. AUTHENTICATION HANDLERS (DENGAN AUTO-RESET LOGIN)
+   13. AUTHENTICATION HANDLERS
    ========================================================== */
 async function handleLoginSubmit(e) {
     e.preventDefault();
@@ -1977,7 +2170,6 @@ async function handleLoginSubmit(e) {
         state.currentUser = res.user;
         closeLoginModal();
         
-        // Kosongkan kredensial setelah login berhasil
         if (unElem) unElem.value = '';
         if (pwElem) pwElem.value = '';
 
@@ -1993,7 +2185,6 @@ async function handleLoginSubmit(e) {
 }
 
 function openLoginModal() { 
-    // Mengosongkan input username & password sebelum modal login dibuka
     const unElem = document.getElementById('login-username');
     const pwElem = document.getElementById('login-password');
     if (unElem) unElem.value = '';
@@ -2012,7 +2203,6 @@ function logout() {
     showConfirm('Keluar Sistem?', 'Kamu akan keluar dari akun saat ini.', () => {
         state.currentUser = null;
 
-        // Kosongkan kredensial login saat logout
         const unElem = document.getElementById('login-username');
         const pwElem = document.getElementById('login-password');
         if (unElem) unElem.value = '';

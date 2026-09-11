@@ -1,6 +1,8 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V2.4 OPTIMIZED LOGIC ENGINE)
-   Fitur Baru: Standalone Ruang STEAM Lab & Eksperimen Mandiri Siswa
+   E-LKPD INTERAKTIF STEAM (V2.5 OPTIMIZED LOGIC & GAME ENGINE)
+   Fitur:
+   1. Standalone Ruang STEAM Lab terintegrasi Modul Pertemuan
+   2. 7 Variasi Game Interaktif STEAM
    ========================================================== */
 
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz-ZUlxuqR0lMQguX64qWJoXP5VwgNucrkPIuYqEOaHGw6OgCA34Nppvhoaq6DlwCd91w/exec';
@@ -18,7 +20,9 @@ const state = {
     },
     evaluasiAnswers: {},
     gameAnswers: {},
-    activeGameItems: []
+    activeGameItems: [],
+    sequencerItems: null,
+    wordSearchState: null
 };
 
 /* ==========================================================
@@ -237,14 +241,12 @@ function renderSidebarNav() {
 }
 
 function renderSiswaNav(container) {
-    // Menu Beranda
     const homeBtn = document.createElement('button');
     homeBtn.onclick = () => { switchView('home'); toggleDrawer(false); };
     homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'home' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
     homeBtn.innerHTML = `<span>🏠</span><span>Beranda</span>`;
     container.appendChild(homeBtn);
 
-    // Menu Standalone Ruang STEAM
     const steamBtn = document.createElement('button');
     steamBtn.onclick = () => { switchView('ruang-steam'); toggleDrawer(false); };
     steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'ruang-steam' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
@@ -378,6 +380,8 @@ async function switchView(viewId, paramId = null) {
 
         case 'game-ptm':
             titleElem.textContent = 'GAME INTERAKTIF PEMBELAJARAN';
+            state.sequencerItems = null; // Reset temp game states
+            state.wordSearchState = null;
             viewport.innerHTML = renderGameView(paramId);
             break;
 
@@ -461,12 +465,7 @@ function renderHomeView() {
   `;
 }
 
-/* ==========================================================
-   RUANG STEAM LAB (DENGAN INTEGRASI PERTEMUAN MODUL)
-   ========================================================== */
-
 function renderRuangSteamView() {
-    // Mengambil daftar pertemuan yang dipublikasikan
     const userKelas = state.currentUser?.kelas || 'ALL';
     const pertemuanList = (state.cachedData.pertemuan || [])
         .filter(p => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
@@ -480,7 +479,6 @@ function renderRuangSteamView() {
 
     return `
     <div class="max-w-5xl mx-auto space-y-5 text-xs">
-      <!-- Header Banner Ruang STEAM -->
       <div class="bg-gradient-to-r from-purple-900 via-brand-navy to-blue-900 text-white p-6 rounded-3xl shadow-xl space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-800/60 pb-3">
           <div>
@@ -499,7 +497,6 @@ function renderRuangSteamView() {
           </div>
         </div>
 
-        <!-- Pemilih Pertemuan Target -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center bg-slate-900/80 p-3.5 rounded-2xl border border-purple-500/30">
           <div>
             <label class="block font-black text-brand-yellow uppercase text-[10px] tracking-wider mb-1">
@@ -519,7 +516,6 @@ function renderRuangSteamView() {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <!-- Area Kanvas Gambar -->
         <div class="lg:col-span-2 bg-white p-5 rounded-3xl border shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <h3 class="font-black text-brand-navy text-sm font-heading">Kanvas Lukis & Prototyping</h3>
@@ -528,7 +524,6 @@ function renderRuangSteamView() {
             </span>
           </div>
 
-          <!-- Toolbar Pengatur Alat Gambar -->
           <div class="p-3 bg-slate-50 border rounded-2xl flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-1.5">
               <span class="text-[10px] font-bold text-slate-500 mr-1">Warna:</span>
@@ -559,7 +554,6 @@ function renderRuangSteamView() {
           </div>
         </div>
 
-        <!-- Kolom Catatan Ide & Konsep STEAM -->
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
           <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">Catatan Ide Proyek</h3>
 
@@ -585,7 +579,6 @@ function renderRuangSteamView() {
   `;
 }
 
-// Fungsi pembantu memperbarui informasi saat dropdown pertemuan diganti
 function updateSteamPertemuanInfo(ptmId) {
     const ptmList = state.cachedData.pertemuan || [];
     const ptm = ptmList.find(p => p.id_pertemuan === ptmId);
@@ -602,7 +595,6 @@ function updateSteamPertemuanInfo(ptmId) {
     }
 }
 
-// Fungsi mengirim karya Ruang STEAM ke database guru
 async function submitSteamLabToTeacher() {
     const ptmId = document.getElementById('steam-select-pertemuan')?.value;
     if (!ptmId) {
@@ -839,6 +831,124 @@ function renderGameInteractiveBody(tipe, items, ptmId) {
         </button>
       </div>
     `;
+    } else if (tipe === 'sequencer') {
+        if (!state.sequencerItems) {
+            state.sequencerItems = [...items].map((it, origIdx) => ({ text: it.soal, correctOrder: origIdx }));
+            state.sequencerItems.sort(() => Math.random() - 0.5);
+        }
+
+        return `
+      <div class="space-y-3">
+        <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl text-[11px] text-purple-900 font-medium">
+          💡 Gunakan tombol panah <b>▲ Naik</b> dan <b>▼ Turun</b> untuk menyusun tahapan di bawah ini agar berurutan secara benar dari atas ke bawah!
+        </div>
+        <div id="sequencer-list-container" class="space-y-2">
+          ${state.sequencerItems.map((item, idx) => `
+            <div class="p-3 bg-white rounded-2xl border flex items-center justify-between gap-3 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                <span class="font-bold text-slate-800 text-xs">${item.text}</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button onclick="moveSequencerItem(${idx}, -1, '${ptmId}')" ${idx === 0 ? 'disabled class="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▲</button>
+                <button onclick="moveSequencerItem(${idx}, 1, '${ptmId}')" ${idx === state.sequencerItems.length - 1 ? 'disabled class="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▼</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'sequencer'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+          🎮 Periksa & Simpan Urutan
+        </button>
+      </div>
+    `;
+    } else if (tipe === 'hotspot') {
+        const imgUrl = items[0]?.img_url || '';
+        const allLabels = items.map(it => it.soal).sort(() => Math.random() - 0.5);
+
+        return `
+      <div class="space-y-4">
+        ${imgUrl ? `
+          <div class="bg-white p-3 rounded-3xl border text-center">
+            <img src="${imgUrl}" alt="Diagram STEAM" class="max-h-80 mx-auto rounded-2xl object-contain border" />
+          </div>
+        ` : ''}
+
+        <div class="space-y-2">
+          ${items.map((item, idx) => `
+            <div class="bg-white p-3 rounded-2xl border flex items-center justify-between gap-3">
+              <span class="font-bold text-slate-800 text-xs flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${idx + 1}</span>
+                <span>Tentukan Label Pin #${idx + 1}:</span>
+              </span>
+              <select id="hotspot-sel-${idx}" onchange="state.gameAnswers[${idx}] = this.value" class="p-2 rounded-xl border font-bold text-xs text-brand-blue bg-slate-50">
+                <option value="">-- Pilih Label --</option>
+                ${allLabels.map(lbl => `<option value="${lbl}">${lbl}</option>`).join('')}
+              </select>
+            </div>
+          `).join('')}
+        </div>
+
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'hotspot'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+          🎮 Periksa & Simpan Label Pin
+        </button>
+      </div>
+    `;
+    } else if (tipe === 'simulator') {
+        return `
+      <div class="space-y-4">
+        <div class="bg-purple-50 border border-purple-200 p-4 rounded-3xl space-y-1">
+          <span class="font-black text-purple-900 block text-xs">🧪 Skenario Proyek STEAM:</span>
+          <p class="text-purple-800 font-bold text-xs">${items[0]?.soal || 'Skenario Keputusan Proyek'}</p>
+        </div>
+
+        <div class="space-y-3">
+          ${items.map((item, idx) => `
+            <div class="bg-white p-4 rounded-3xl border space-y-2">
+              <span class="font-black text-brand-navy block">Parameter #${idx + 1}: ${item.parameter || 'Variabel Keputusan'}</span>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button id="gm-sim-${idx}-A" onclick="setSimChoice(${idx}, 'A')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_a || 'Pilihan A'}</button>
+                <button id="gm-sim-${idx}-B" onclick="setSimChoice(${idx}, 'B')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_b || 'Pilihan B'}</button>
+                <button id="gm-sim-${idx}-C" onclick="setSimChoice(${idx}, 'C')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_c || 'Pilihan C'}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'simulator'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+          🎮 Simulasikan Keputusan & Hitung Skor
+        </button>
+      </div>
+    `;
+    } else if (tipe === 'word_search') {
+        const words = items.map(it => String(it.soal).toUpperCase().trim());
+        if (!state.wordSearchState) {
+            state.wordSearchState = { targetWords: words, foundWords: [] };
+        }
+
+        return `
+      <div class="space-y-4">
+        <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl space-y-1">
+          <span class="font-black text-purple-900 block text-xs">🔍 Cari Kata-Kata Istilah Berikut:</span>
+          <div class="flex flex-wrap gap-1.5 mt-1">
+            ${words.map(w => `
+              <span class="px-2.5 py-1 rounded-xl text-xs font-black ${state.wordSearchState.foundWords.includes(w) ? 'bg-emerald-500 text-white line-through' : 'bg-white border text-purple-800'}">${w}</span>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-3xl border space-y-3">
+          <label class="block font-bold text-slate-700 text-xs">Ketikkan kata istilah IPA yang kamu temukan di bawah ini:</label>
+          <div class="flex gap-2">
+            <input type="text" id="ws-input-word" placeholder="Ketik kata di sini..." class="w-full p-2.5 rounded-xl border font-bold uppercase text-brand-navy" />
+            <button onclick="checkWordSearchMatch('${ptmId}')" class="px-4 py-2.5 bg-brand-navy text-white font-bold rounded-xl shrink-0">Klaim Kata</button>
+          </div>
+        </div>
+
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'word_search'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+          🎮 Periksa & Simpan Skor Kata
+        </button>
+      </div>
+    `;
     } else {
         return `
       <div class="space-y-3">
@@ -883,6 +993,53 @@ function setQuizChoice(idx, choice) {
     } else {
         btnA.className = 'p-2.5 rounded-xl border bg-slate-50 font-bold text-left';
         btnB.className = 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-600 text-left';
+    }
+}
+
+function setSimChoice(idx, choice) {
+    state.gameAnswers[idx] = choice;
+    ['A', 'B', 'C'].forEach(ch => {
+        const btn = document.getElementById(`gm-sim-${idx}-${ch}`);
+        if (btn) {
+            btn.className = choice === ch 
+                ? 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-700 text-left text-xs' 
+                : 'p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs';
+        }
+    });
+}
+
+function moveSequencerItem(index, direction, ptmId) {
+    if (!state.sequencerItems) return;
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= state.sequencerItems.length) return;
+
+    const temp = state.sequencerItems[index];
+    state.sequencerItems[index] = state.sequencerItems[targetIndex];
+    state.sequencerItems[targetIndex] = temp;
+
+    const viewport = document.getElementById('content-viewport');
+    viewport.innerHTML = renderGameView(ptmId);
+}
+
+function checkWordSearchMatch(ptmId) {
+    const inputElem = document.getElementById('ws-input-word');
+    if (!inputElem || !state.wordSearchState) return;
+
+    const val = inputElem.value.trim().toUpperCase();
+    if (!val) return;
+
+    if (state.wordSearchState.targetWords.includes(val)) {
+        if (!state.wordSearchState.foundWords.includes(val)) {
+            state.wordSearchState.foundWords.push(val);
+            showToast('success', `Hebat! Kata "${val}" ditemukan!`);
+            inputElem.value = '';
+            const viewport = document.getElementById('content-viewport');
+            viewport.innerHTML = renderGameView(ptmId);
+        } else {
+            showToast('info', 'Kata tersebut sudah kamu temukan!');
+        }
+    } else {
+        showToast('error', 'Kata tersebut tidak ada dalam daftar!');
     }
 }
 
@@ -1250,7 +1407,6 @@ function exportRekapToCsv() {
 /* ==========================================================
    9. CANVAS DRAWING LOGIC (LKPD + STANDALONE STEAM LAB)
    ========================================================== */
-// Canvas Khas LKPD
 let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
@@ -1333,7 +1489,6 @@ function clearCanvas() {
     }
 }
 
-// Standalone STEAM Lab Canvas Engine
 let stCanvasCtx = null;
 let stPenColor = '#0B2545';
 let stLineWidth = 3;
@@ -1500,16 +1655,38 @@ async function submitGameSiswa(ptmId, tipe) {
     const items = state.activeGameItems || [];
     let correctCount = 0;
 
-    items.forEach((item, idx) => {
-        const userAns = state.gameAnswers[idx];
-        if (tipe === 'matching') {
+    if (tipe === 'matching') {
+        items.forEach((item, idx) => {
+            const userAns = state.gameAnswers[idx];
             if (String(userAns || '').trim().toLowerCase() === String(item.kunci || '').trim().toLowerCase()) correctCount++;
-        } else if (tipe === 'drag_drop') {
-            if (userAns === item.kategori_kunci) correctCount++;
-        } else {
-            if (userAns === item.kunci) correctCount++;
+        });
+    } else if (tipe === 'drag_drop') {
+        items.forEach((item, idx) => {
+            if (state.gameAnswers[idx] === item.kategori_kunci) correctCount++;
+        });
+    } else if (tipe === 'sequencer') {
+        if (state.sequencerItems) {
+            state.sequencerItems.forEach((it, currentIdx) => {
+                if (it.correctOrder === currentIdx) correctCount++;
+            });
         }
-    });
+    } else if (tipe === 'hotspot') {
+        items.forEach((item, idx) => {
+            if (state.gameAnswers[idx] === item.soal) correctCount++;
+        });
+    } else if (tipe === 'simulator') {
+        items.forEach((item, idx) => {
+            if (state.gameAnswers[idx] === item.kunci) correctCount++;
+        });
+    } else if (tipe === 'word_search') {
+        if (state.wordSearchState) {
+            correctCount = state.wordSearchState.foundWords.length;
+        }
+    } else {
+        items.forEach((item, idx) => {
+            if (state.gameAnswers[idx] === item.kunci) correctCount++;
+        });
+    }
 
     const score = Math.round((correctCount / Math.max(items.length, 1)) * 100);
     const btn = document.getElementById('btn-submit-game-siswa');
@@ -1521,7 +1698,7 @@ async function submitGameSiswa(ptmId, tipe) {
         username_siswa: state.currentUser.username,
         nama_siswa: state.currentUser.name,
         kelas: state.currentUser.kelas,
-        jawaban_json: state.gameAnswers,
+        jawaban_json: tipe === 'word_search' ? state.wordSearchState?.foundWords || [] : state.gameAnswers,
         skor_game: score
     });
 
@@ -1896,8 +2073,10 @@ function openGameModal() {
 function closeGameModal() { document.getElementById('game-modal').classList.add('hidden'); document.getElementById('game-modal').classList.remove('flex'); }
 
 function renderGameConfigInputs() {
-    const tipe = document.getElementById('game-form-tipe').value;
+    const tipeElem = document.getElementById('game-form-tipe');
+    const tipe = tipeElem ? tipeElem.value : 'matching';
     const container = document.getElementById('game-dynamic-builder-container');
+    if (!container) return;
     container.innerHTML = '';
 
     if (tipe === 'matching') {
@@ -1915,6 +2094,30 @@ function renderGameConfigInputs() {
         </div>
       </div>
     `;
+    } else if (tipe === 'sequencer') {
+        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan tahapan proses berurutan DARI AWAL HINGGA AKHIR:</div>`;
+    } else if (tipe === 'hotspot') {
+        container.innerHTML = `
+      <div class="space-y-2 mb-3">
+        <div>
+          <label class="block font-bold text-slate-700">URL Gambar Diagram Diagram / STEAM</label>
+          <input type="url" id="gm-hotspot-img-url" placeholder="https://example.com/diagram.png" class="w-full p-2 border rounded-xl font-mono text-[11px]" />
+        </div>
+        <div class="text-[10px] text-purple-700 font-bold">Isikan Label Bagian/Pin Gambar:</div>
+      </div>
+    `;
+    } else if (tipe === 'simulator') {
+        container.innerHTML = `
+      <div class="space-y-2 mb-3">
+        <div>
+          <label class="block font-bold text-slate-700">Teks Skenario Studi Kasus Proyek</label>
+          <textarea id="gm-sim-scenario" rows="2" placeholder="Contoh: Merancang Oven Tenaga Surya Efisien..." class="w-full p-2 border rounded-xl text-[11px]"></textarea>
+        </div>
+        <div class="text-[10px] text-purple-700 font-bold">Isikan Parameter & Pilihan Keputusan:</div>
+      </div>
+    `;
+    } else if (tipe === 'word_search') {
+        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Kata-Kata Kunci Istilah IPA (Satu kata per baris):</div>`;
     } else {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan Singkat beserta Kunci Jawabannya:</div>`;
     }
@@ -1923,8 +2126,10 @@ function renderGameConfigInputs() {
 }
 
 function addGameItemRow() {
-    const tipe = document.getElementById('game-form-tipe').value;
+    const tipeElem = document.getElementById('game-form-tipe');
+    const tipe = tipeElem ? tipeElem.value : 'matching';
     const container = document.getElementById('game-dynamic-builder-container');
+    if (!container) return;
 
     const row = document.createElement('div');
     row.className = 'gm-item-row p-2.5 bg-white border rounded-2xl space-y-1.5 shadow-2xs relative';
@@ -1939,16 +2144,50 @@ function addGameItemRow() {
     } else if (tipe === 'drag_drop') {
         row.innerHTML = `
       <div class="grid grid-cols-3 gap-2">
-        <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" placeholder="Objek / Teks (misal: Kelapa Jatuh)" />
+        <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" placeholder="Objek / Teks" />
         <select class="gm-input-cat-kunci w-full p-2 rounded-xl border font-bold text-[11px] text-purple-700">
           <option value="A">Kategori A</option>
           <option value="B">Kategori B</option>
         </select>
       </div>
     `;
+    } else if (tipe === 'sequencer') {
+        const count = container.querySelectorAll('.gm-item-row').length + 1;
+        row.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 font-black text-[10px] flex items-center justify-center shrink-0">${count}</span>
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Langkah urutan ke-${count}..." />
+      </div>
+    `;
+    } else if (tipe === 'hotspot') {
+        const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
+        row.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-[10px] flex items-center justify-center shrink-0">Pin ${pinNum}</span>
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Nama label pin ${pinNum}..." />
+      </div>
+    `;
+    } else if (tipe === 'simulator') {
+        row.innerHTML = `
+      <input type="text" class="gm-input-param w-full p-2 rounded-xl border text-[11px] font-bold" placeholder="Nama Parameter (misal: Material Wadah)" />
+      <div class="grid grid-cols-3 gap-1">
+        <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
+        <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
+        <input type="text" class="gm-input-opsi-c w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi C" />
+      </div>
+      <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
+        <option value="A">Kunci Terbaik: Opsi A</option>
+        <option value="B">Kunci Terbaik: Opsi B</option>
+        <option value="C">Kunci Terbaik: Opsi C</option>
+      </select>
+    `;
+    } else if (tipe === 'word_search') {
+        row.innerHTML = `
+      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px] font-mono uppercase" placeholder="KATA ISTILAH (misal: KALOR)" />
+    `;
     } else {
         row.innerHTML = `
-      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Pertanyaan Kuis Kilat..." />
+      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Pertanyaan Kuis..." />
       <div class="grid grid-cols-3 gap-1">
         <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
         <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
@@ -1972,23 +2211,38 @@ async function handleGameSubmit(e) {
     const rows = document.querySelectorAll('.gm-item-row');
     let itemsList = [];
 
+    const hotspotUrl = document.getElementById('gm-hotspot-img-url')?.value || '';
+    const simScenario = document.getElementById('gm-sim-scenario')?.value || '';
+
     rows.forEach(r => {
         const soal = r.querySelector('.gm-input-soal')?.value || '';
-        if (!soal) return;
 
         if (tipe === 'matching') {
             const kunci = r.querySelector('.gm-input-kunci')?.value || '';
-            itemsList.push({ soal, kunci });
+            if (soal) itemsList.push({ soal, kunci });
         } else if (tipe === 'drag_drop') {
             const catA = document.getElementById('gm-cat-name-a')?.value || 'Kategori A';
             const catB = document.getElementById('gm-cat-name-b')?.value || 'Kategori B';
             const catKunci = r.querySelector('.gm-input-cat-kunci')?.value || 'A';
-            itemsList.push({ soal, kategori_a: catA, kategori_b: catB, kategori_kunci: catKunci });
+            if (soal) itemsList.push({ soal, kategori_a: catA, kategori_b: catB, kategori_kunci: catKunci });
+        } else if (tipe === 'sequencer') {
+            if (soal) itemsList.push({ soal });
+        } else if (tipe === 'hotspot') {
+            if (soal) itemsList.push({ soal, img_url: hotspotUrl });
+        } else if (tipe === 'simulator') {
+            const param = r.querySelector('.gm-input-param')?.value || '';
+            const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
+            const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
+            const opsiC = r.querySelector('.gm-input-opsi-c')?.value || '';
+            const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
+            if (param) itemsList.push({ soal: simScenario, parameter: param, opsi_a: opsiA, opsi_b: opsiB, opsi_c: opsiC, kunci });
+        } else if (tipe === 'word_search') {
+            if (soal) itemsList.push({ soal: soal.toUpperCase().trim() });
         } else {
             const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
             const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
             const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
-            itemsList.push({ soal, opsi_a: opsiA, opsi_b: opsiB, kunci });
+            if (soal) itemsList.push({ soal, opsi_a: opsiA, opsi_b: opsiB, kunci });
         }
     });
 

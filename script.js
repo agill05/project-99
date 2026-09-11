@@ -2,7 +2,7 @@
    E-LKPD INTERAKTIF STEAM (V2.2 OPTIMIZED LOGIC ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwoGZpveL0UbKQ4RmuGWDiv-vBsRZ802t-ymZKDLuWuvVPL1lcgwJELbZRQZ0dQSOntkQ/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzVXxoAKyRXlgu98nHbriFucYkmzlU801QvB-XMiNR6_WZAwbKJ0UZYEZbIgebLMM2rfg/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V2';
 
 const state = {

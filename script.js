@@ -1,8 +1,12 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V2.5 OPTIMIZED LOGIC & GAME ENGINE)
-   Fitur:
-   1. Standalone Ruang STEAM Lab terintegrasi Modul Pertemuan
-   2. 7 Variasi Game Interaktif STEAM
+   E-LKPD INTERAKTIF STEAM (V2.6 FULL CRUD INTEGRATION)
+   Fitur Baru:
+   1. Full CRUD (Create, Read, Update, Delete) pada Admin:
+      - Pengguna (Guru, Siswa, Admin)
+      - Data Kelas
+   2. Full CRUD pada Guru:
+      - Modul Pertemuan, Bahan Ajar, LKPD, Game Interaktif, Bank Soal
+   3. Ruang STEAM Lab Standalone & 7 Variasi Game Interaktif
    ========================================================== */
 
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz-ZUlxuqR0lMQguX64qWJoXP5VwgNucrkPIuYqEOaHGw6OgCA34Nppvhoaq6DlwCd91w/exec';
@@ -1090,7 +1094,7 @@ function selectEvalOption(soalId, option) {
 }
 
 /* ==========================================================
-   7. ADMIN CMS VIEWS
+   7. ADMIN CMS VIEWS & FULL CRUD HANDLERS
    ========================================================== */
 function renderAdminUsersView(container) {
     const usersList = state.cachedData.users || [];
@@ -1119,7 +1123,8 @@ function renderAdminUsersView(container) {
                 <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin' ? 'bg-red-100 text-red-700' : u.role === 'guru' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${String(u.role).toUpperCase()}</span></td>
                 <td class="p-3 font-bold">${u.kelas || '-'}</td>
                 <td class="p-3 text-center">
-                  <button onclick="deleteUser('${u.user_id}')" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200">Hapus</button>
+                  <button onclick="openUserModal('${u.user_id}')" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-lg hover:bg-amber-200 transition mr-1">Edit</button>
+                  <button onclick="deleteUser('${u.user_id}')" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition">Hapus</button>
                 </td>
               </tr>
             `).join('')}
@@ -1146,7 +1151,10 @@ function renderAdminClassesView(container) {
               <h4 class="font-black text-brand-navy text-sm mt-1">${k.nama_kelas}</h4>
               <p class="text-slate-500 text-[11px]">${k.keterangan || ''}</p>
             </div>
-            <button onclick="deleteKelas('${k.id_kelas}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200">Hapus</button>
+            <div class="flex items-center gap-1">
+              <button onclick="openKelasModal('${k.id_kelas}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+              <button onclick="deleteKelas('${k.id_kelas}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1173,8 +1181,9 @@ function renderGuruPertemuanView(container) {
               <h4 class="font-black text-brand-navy text-xs mt-1">${p.judul_pertemuan}</h4>
               <p class="text-slate-500 text-[11px]">${p.deskripsi}</p>
             </div>
-            <div class="space-x-1">
-              <button onclick="deletePertemuan('${p.id_pertemuan}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button>
+            <div class="flex items-center gap-1">
+              <button onclick="openPertemuanModal('${p.id_pertemuan}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+              <button onclick="deletePertemuan('${p.id_pertemuan}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
         `).join('')}
@@ -1199,7 +1208,8 @@ function renderGuruMateriView(container) {
               <h4 class="font-black text-brand-navy mt-1">${m.judul_materi}</h4>
             </div>
             <div class="flex justify-end gap-1 pt-2 border-t">
-              <button onclick="deleteMateri('${m.id_materi}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button>
+              <button onclick="openMateriModal('${m.id_materi}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+              <button onclick="deleteMateri('${m.id_materi}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
         `).join('')}
@@ -1224,7 +1234,10 @@ function renderGuruLkpdView(container) {
               <h4 class="font-black text-brand-navy mt-1">${l.judul_lkpd}</h4>
               <p class="text-slate-500">${l.instruksi}</p>
             </div>
-            <button onclick="deleteLkpd('${l.id_lkpd}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button>
+            <div class="flex items-center gap-1">
+              <button onclick="openLkpdModal('${l.id_lkpd}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+              <button onclick="deleteLkpd('${l.id_lkpd}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1248,7 +1261,10 @@ function renderGuruGameView(container) {
               <h4 class="font-black text-brand-navy mt-1">${g.judul_game}</h4>
               <p class="text-slate-500">${g.instruksi}</p>
             </div>
-            <button onclick="deleteGame('${g.id_game}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button>
+            <div class="flex items-center gap-1">
+              <button onclick="openGameModal('${g.id_game}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+              <button onclick="deleteGame('${g.id_game}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1269,7 +1285,10 @@ function renderGuruSoalView(container) {
           <div class="bg-white p-4 rounded-3xl border space-y-1">
             <div class="flex items-center justify-between border-b pb-1">
               <span class="font-black text-brand-navy">#${idx + 1} Kunci: ${s.kunci_jawaban}</span>
-              <button onclick="deleteSoal('${s.id_soal}')" class="px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold">Hapus</button>
+              <div class="flex items-center gap-1">
+                <button onclick="openSoalModal('${s.id_soal}')" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold hover:bg-amber-200 transition">Edit</button>
+                <button onclick="deleteSoal('${s.id_soal}')" class="px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold hover:bg-red-200 transition">Hapus</button>
+              </div>
             </div>
             <p class="font-bold text-slate-800">${s.pertanyaan}</p>
           </div>
@@ -1742,11 +1761,12 @@ async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
 }
 
 /* ==========================================================
-   11. CMS ADMIN MODALS & HANDLERS
+   11. CMS ADMIN MODALS & HANDLERS (FULL EDIT INTEGRATION)
    ========================================================== */
-function openUserModal() {
+function openUserModal(userId = null) {
     populateKelasSelects();
 
+    const titleElem = document.querySelector('#user-modal h3');
     const idElem = document.getElementById('user-form-id');
     const namaElem = document.getElementById('user-form-nama');
     const usernameElem = document.getElementById('user-form-username');
@@ -1754,12 +1774,26 @@ function openUserModal() {
     const roleElem = document.getElementById('user-form-role');
     const kelasElem = document.getElementById('user-form-kelas');
 
-    if (idElem) idElem.value = '';
-    if (namaElem) namaElem.value = '';
-    if (usernameElem) usernameElem.value = '';
-    if (passElem) passElem.value = '';
-    if (roleElem) roleElem.value = 'siswa';
-    if (kelasElem) kelasElem.value = '-';
+    if (userId) {
+        const u = (state.cachedData.users || []).find(x => String(x.user_id) === String(userId));
+        if (u) {
+            if (titleElem) titleElem.textContent = 'Edit Data Pengguna';
+            if (idElem) idElem.value = u.user_id;
+            if (namaElem) namaElem.value = u.nama_lengkap || '';
+            if (usernameElem) usernameElem.value = u.username || '';
+            if (passElem) passElem.value = u.password || '';
+            if (roleElem) roleElem.value = u.role || 'siswa';
+            if (kelasElem) kelasElem.value = u.kelas || '-';
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Tambah Pengguna Baru';
+        if (idElem) idElem.value = '';
+        if (namaElem) namaElem.value = '';
+        if (usernameElem) usernameElem.value = '';
+        if (passElem) passElem.value = '';
+        if (roleElem) roleElem.value = 'siswa';
+        if (kelasElem) kelasElem.value = '-';
+    }
 
     document.getElementById('user-modal').classList.remove('hidden');
     document.getElementById('user-modal').classList.add('flex');
@@ -1796,16 +1830,29 @@ async function handleUserSubmit(e) {
     }
 }
 
-function openKelasModal() {
+function openKelasModal(idKelas = null) {
+    const titleElem = document.querySelector('#kelas-modal h3');
     const idElem = document.getElementById('kelas-form-id');
     const namaElem = document.getElementById('kelas-form-nama');
     const tingkatElem = document.getElementById('kelas-form-tingkat');
     const ketElem = document.getElementById('kelas-form-keterangan');
 
-    if (idElem) idElem.value = '';
-    if (namaElem) namaElem.value = '';
-    if (tingkatElem) tingkatElem.value = '';
-    if (ketElem) ketElem.value = '';
+    if (idKelas) {
+        const k = (state.cachedData.kelas || []).find(x => String(x.id_kelas) === String(idKelas));
+        if (k) {
+            if (titleElem) titleElem.textContent = 'Edit Data Kelas';
+            if (idElem) idElem.value = k.id_kelas;
+            if (namaElem) namaElem.value = k.nama_kelas || '';
+            if (tingkatElem) tingkatElem.value = k.tingkat || '';
+            if (ketElem) ketElem.value = k.keterangan || '';
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Tambah Data Kelas Baru';
+        if (idElem) idElem.value = '';
+        if (namaElem) namaElem.value = '';
+        if (tingkatElem) tingkatElem.value = '';
+        if (ketElem) ketElem.value = '';
+    }
 
     document.getElementById('kelas-modal').classList.remove('hidden');
     document.getElementById('kelas-modal').classList.add('flex');
@@ -1863,7 +1910,7 @@ function deleteKelas(id) {
 }
 
 /* ==========================================================
-   12. CMS GURU HANDLERS & MODALS
+   12. CMS GURU HANDLERS & MODALS (FULL EDIT INTEGRATION)
    ========================================================== */
 function populatePertemuanSelects() {
     const ptmList = state.cachedData.pertemuan || [];
@@ -1875,14 +1922,37 @@ function populatePertemuanSelects() {
     const sSel = document.getElementById('soal-form-pertemuan'); if (sSel) sSel.innerHTML = opts;
 }
 
-function openPertemuanModal() {
+function openPertemuanModal(idPtm = null) {
     populateKelasSelects();
 
-    document.getElementById('pertemuan-form-id').value = '';
-    document.getElementById('pertemuan-form-nomor').value = '1';
-    document.getElementById('pertemuan-form-judul').value = '';
-    document.getElementById('pertemuan-form-deskripsi').value = '';
-    document.getElementById('pertemuan-form-status').value = 'Publish';
+    const titleElem = document.getElementById('pertemuan-modal-title');
+    const idElem = document.getElementById('pertemuan-form-id');
+    const nomorElem = document.getElementById('pertemuan-form-nomor');
+    const judulElem = document.getElementById('pertemuan-form-judul');
+    const descElem = document.getElementById('pertemuan-form-deskripsi');
+    const kelasElem = document.getElementById('pertemuan-form-kelas');
+    const statusElem = document.getElementById('pertemuan-form-status');
+
+    if (idPtm) {
+        const p = (state.cachedData.pertemuan || []).find(x => String(x.id_pertemuan) === String(idPtm));
+        if (p) {
+            if (titleElem) titleElem.textContent = 'Edit Pertemuan Pembelajaran';
+            if (idElem) idElem.value = p.id_pertemuan;
+            if (nomorElem) nomorElem.value = p.nomor_pertemuan || '1';
+            if (judulElem) judulElem.value = p.judul_pertemuan || '';
+            if (descElem) descElem.value = p.deskripsi || '';
+            if (kelasElem) kelasElem.value = p.id_kelas || 'ALL';
+            if (statusElem) statusElem.value = p.status || 'Publish';
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Buat Pertemuan Pembelajaran';
+        if (idElem) idElem.value = '';
+        if (nomorElem) nomorElem.value = '1';
+        if (judulElem) judulElem.value = '';
+        if (descElem) descElem.value = '';
+        if (kelasElem) kelasElem.value = 'ALL';
+        if (statusElem) statusElem.value = 'Publish';
+    }
 
     document.getElementById('pertemuan-modal').classList.remove('hidden');
     document.getElementById('pertemuan-modal').classList.add('flex');
@@ -1915,17 +1985,43 @@ async function handlePertemuanSubmit(e) {
     }
 }
 
-function openMateriModal() {
+function openMateriModal(idMateri = null) {
     populatePertemuanSelects();
 
-    document.getElementById('materi-form-id').value = '';
-    document.getElementById('materi-form-pdf-id').value = '';
-    document.getElementById('materi-form-judul').value = '';
-    document.getElementById('materi-form-teks').value = '';
-    document.getElementById('materi-form-pdf-url').value = '';
+    const titleElem = document.getElementById('materi-modal-title');
+    const idElem = document.getElementById('materi-form-id');
+    const pdfIdElem = document.getElementById('materi-form-pdf-id');
+    const ptmElem = document.getElementById('materi-form-pertemuan');
+    const tipeElem = document.getElementById('materi-form-tipe');
+    const judulElem = document.getElementById('materi-form-judul');
+    const teksElem = document.getElementById('materi-form-teks');
+    const pdfUrlElem = document.getElementById('materi-form-pdf-url');
     const filePdf = document.getElementById('materi-form-file-pdf');
+
     if (filePdf) filePdf.value = '';
 
+    if (idMateri) {
+        const m = (state.cachedData.materi || []).find(x => String(x.id_materi) === String(idMateri));
+        if (m) {
+            if (titleElem) titleElem.textContent = 'Edit Bahan Ajar Materi';
+            if (idElem) idElem.value = m.id_materi;
+            if (pdfIdElem) pdfIdElem.value = m.file_drive_id || '';
+            if (ptmElem) ptmElem.value = m.id_pertemuan || '';
+            if (tipeElem) tipeElem.value = m.tipe_media || 'web_text';
+            if (judulElem) judulElem.value = m.judul_materi || '';
+            if (teksElem) teksElem.value = m.isi_teks || '';
+            if (pdfUrlElem) pdfUrlElem.value = m.file_pdf_url || '';
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Tambah Bahan Ajar Materi';
+        if (idElem) idElem.value = '';
+        if (pdfIdElem) pdfIdElem.value = '';
+        if (judulElem) judulElem.value = '';
+        if (teksElem) teksElem.value = '';
+        if (pdfUrlElem) pdfUrlElem.value = '';
+    }
+
+    toggleMateriFormTipe();
     document.getElementById('materi-modal').classList.remove('hidden');
     document.getElementById('materi-modal').classList.add('flex');
 }
@@ -1995,20 +2091,59 @@ async function handleMateriSubmit(e) {
     }
 }
 
-function openLkpdModal() {
+function openLkpdModal(idLkpd = null) {
     populatePertemuanSelects();
 
-    document.getElementById('lkpd-form-id').value = '';
-    document.getElementById('lkpd-form-pdf-id').value = '';
-    document.getElementById('lkpd-form-judul').value = '';
-    document.getElementById('lkpd-form-instruksi').value = '';
-    document.getElementById('lkpd-form-pdf-url').value = '';
-    document.getElementById('lkpd-form-gambar-url').value = '';
-    document.getElementById('lkpd-form-soal-text').value = '';
-    document.getElementById('lkpd-form-kanvas').checked = false;
+    const titleElem = document.getElementById('lkpd-modal-title');
+    const idElem = document.getElementById('lkpd-form-id');
+    const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
+    const ptmElem = document.getElementById('lkpd-form-pertemuan');
+    const tipeElem = document.getElementById('lkpd-form-tipe');
+    const judulElem = document.getElementById('lkpd-form-judul');
+    const instruksiElem = document.getElementById('lkpd-form-instruksi');
+    const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
+    const gambarUrlElem = document.getElementById('lkpd-form-gambar-url');
+    const soalTextElem = document.getElementById('lkpd-form-soal-text');
+    const kanvasElem = document.getElementById('lkpd-form-kanvas');
     const filePdf = document.getElementById('lkpd-form-file-pdf');
+
     if (filePdf) filePdf.value = '';
 
+    if (idLkpd) {
+        const l = (state.cachedData.lkpd || []).find(x => String(x.id_lkpd) === String(idLkpd));
+        if (l) {
+            if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
+            if (idElem) idElem.value = l.id_lkpd;
+            if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
+            if (ptmElem) ptmElem.value = l.id_pertemuan || '';
+            if (tipeElem) tipeElem.value = l.tipe_lkpd || 'manual';
+            if (judulElem) judulElem.value = l.judul_lkpd || '';
+            if (instruksiElem) instruksiElem.value = l.instruksi || '';
+            if (pdfUrlElem) pdfUrlElem.value = l.file_pdf_url || '';
+            if (gambarUrlElem) gambarUrlElem.value = l.gambar_url || '';
+
+            let questions = [];
+            try {
+                questions = typeof l.soal_json === 'string' ? JSON.parse(l.soal_json) : (l.soal_json || []);
+            } catch (e) {
+                questions = [];
+            }
+            if (soalTextElem) soalTextElem.value = Array.isArray(questions) ? questions.join('\n') : String(questions);
+            if (kanvasElem) kanvasElem.checked = (l.fitur_kanvas === 'TRUE' || l.fitur_kanvas === true);
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Kelola LKPD Pertemuan';
+        if (idElem) idElem.value = '';
+        if (pdfIdElem) pdfIdElem.value = '';
+        if (judulElem) judulElem.value = '';
+        if (instruksiElem) instruksiElem.value = '';
+        if (pdfUrlElem) pdfUrlElem.value = '';
+        if (gambarUrlElem) gambarUrlElem.value = '';
+        if (soalTextElem) soalTextElem.value = '';
+        if (kanvasElem) kanvasElem.checked = false;
+    }
+
+    toggleLkpdFormTipe();
     document.getElementById('lkpd-modal').classList.remove('hidden');
     document.getElementById('lkpd-modal').classList.add('flex');
 }
@@ -2059,59 +2194,91 @@ async function handleLkpdSubmit(e) {
     }
 }
 
-function openGameModal() {
+function openGameModal(idGame = null) {
     populatePertemuanSelects();
 
-    document.getElementById('game-form-id').value = '';
-    document.getElementById('game-form-judul').value = '';
-    document.getElementById('game-form-instruksi').value = '';
+    const titleElem = document.getElementById('game-modal-title');
+    const idElem = document.getElementById('game-form-id');
+    const ptmElem = document.getElementById('game-form-pertemuan');
+    const tipeElem = document.getElementById('game-form-tipe');
+    const judulElem = document.getElementById('game-form-judul');
+    const instruksiElem = document.getElementById('game-form-instruksi');
 
-    renderGameConfigInputs();
+    if (idGame) {
+        const g = (state.cachedData.games || []).find(x => String(x.id_game) === String(idGame));
+        if (g) {
+            if (titleElem) titleElem.textContent = 'Edit Game Interaktif';
+            if (idElem) idElem.value = g.id_game;
+            if (ptmElem) ptmElem.value = g.id_pertemuan || '';
+            if (tipeElem) tipeElem.value = g.tipe_game || 'matching';
+            if (judulElem) judulElem.value = g.judul_game || '';
+            if (instruksiElem) instruksiElem.value = g.instruksi || '';
+
+            let config = { items: [] };
+            try { config = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : (g.konfigurasi_json || { items: [] }); } catch (e) { }
+
+            renderGameConfigInputs(config.items || []);
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Konfigurasi Game Interaktif';
+        if (idElem) idElem.value = '';
+        if (judulElem) judulElem.value = '';
+        if (instruksiElem) instruksiElem.value = '';
+
+        renderGameConfigInputs();
+    }
+
     document.getElementById('game-modal').classList.remove('hidden');
     document.getElementById('game-modal').classList.add('flex');
 }
 function closeGameModal() { document.getElementById('game-modal').classList.add('hidden'); document.getElementById('game-modal').classList.remove('flex'); }
 
-function renderGameConfigInputs() {
+function renderGameConfigInputs(existingItems = null) {
     const tipeElem = document.getElementById('game-form-tipe');
     const tipe = tipeElem ? tipeElem.value : 'matching';
     const container = document.getElementById('game-dynamic-builder-container');
     if (!container) return;
     container.innerHTML = '';
 
+    const firstItem = (existingItems && existingItems.length > 0) ? existingItems[0] : null;
+
     if (tipe === 'matching') {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan / Teks dan Pasangan Kunci Jawaban:</div>`;
     } else if (tipe === 'drag_drop') {
+        const catA = firstItem?.kategori_a || 'Energi Potensial';
+        const catB = firstItem?.kategori_b || 'Energi Kinetik';
         container.innerHTML = `
       <div class="grid grid-cols-2 gap-2 mb-2">
         <div>
           <label class="block font-bold text-slate-700">Nama Kategori A</label>
-          <input type="text" id="gm-cat-name-a" value="Energi Potensial" class="w-full p-2 border rounded-xl font-bold" />
+          <input type="text" id="gm-cat-name-a" value="${catA}" class="w-full p-2 border rounded-xl font-bold" />
         </div>
         <div>
           <label class="block font-bold text-slate-700">Nama Kategori B</label>
-          <input type="text" id="gm-cat-name-b" value="Energi Kinetik" class="w-full p-2 border rounded-xl font-bold" />
+          <input type="text" id="gm-cat-name-b" value="${catB}" class="w-full p-2 border rounded-xl font-bold" />
         </div>
       </div>
     `;
     } else if (tipe === 'sequencer') {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan tahapan proses berurutan DARI AWAL HINGGA AKHIR:</div>`;
     } else if (tipe === 'hotspot') {
+        const imgUrl = firstItem?.img_url || '';
         container.innerHTML = `
       <div class="space-y-2 mb-3">
         <div>
-          <label class="block font-bold text-slate-700">URL Gambar Diagram Diagram / STEAM</label>
-          <input type="url" id="gm-hotspot-img-url" placeholder="https://example.com/diagram.png" class="w-full p-2 border rounded-xl font-mono text-[11px]" />
+          <label class="block font-bold text-slate-700">URL Gambar Diagram / STEAM</label>
+          <input type="url" id="gm-hotspot-img-url" value="${imgUrl}" placeholder="https://example.com/diagram.png" class="w-full p-2 border rounded-xl font-mono text-[11px]" />
         </div>
         <div class="text-[10px] text-purple-700 font-bold">Isikan Label Bagian/Pin Gambar:</div>
       </div>
     `;
     } else if (tipe === 'simulator') {
+        const scenario = firstItem?.soal || '';
         container.innerHTML = `
       <div class="space-y-2 mb-3">
         <div>
           <label class="block font-bold text-slate-700">Teks Skenario Studi Kasus Proyek</label>
-          <textarea id="gm-sim-scenario" rows="2" placeholder="Contoh: Merancang Oven Tenaga Surya Efisien..." class="w-full p-2 border rounded-xl text-[11px]"></textarea>
+          <textarea id="gm-sim-scenario" rows="2" placeholder="Contoh: Merancang Oven Tenaga Surya Efisien..." class="w-full p-2 border rounded-xl text-[11px]">${scenario}</textarea>
         </div>
         <div class="text-[10px] text-purple-700 font-bold">Isikan Parameter & Pilihan Keputusan:</div>
       </div>
@@ -2122,10 +2289,14 @@ function renderGameConfigInputs() {
         container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan Singkat beserta Kunci Jawabannya:</div>`;
     }
 
-    addGameItemRow();
+    if (existingItems && Array.isArray(existingItems) && existingItems.length > 0) {
+        existingItems.forEach(item => addGameItemRow(item));
+    } else {
+        addGameItemRow();
+    }
 }
 
-function addGameItemRow() {
+function addGameItemRow(itemData = null) {
     const tipeElem = document.getElementById('game-form-tipe');
     const tipe = tipeElem ? tipeElem.value : 'matching';
     const container = document.getElementById('game-dynamic-builder-container');
@@ -2134,67 +2305,98 @@ function addGameItemRow() {
     const row = document.createElement('div');
     row.className = 'gm-item-row p-2.5 bg-white border rounded-2xl space-y-1.5 shadow-2xs relative';
 
+    const removeBtnHtml = `<button type="button" onclick="this.closest('.gm-item-row').remove()" class="text-red-500 font-bold text-[10px] hover:underline float-right">✕ Hapus Item</button>`;
+
     if (tipe === 'matching') {
+        const soal = itemData?.soal || '';
+        const kunci = itemData?.kunci || '';
         row.innerHTML = `
-      <div class="grid grid-cols-2 gap-2">
-        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Soal / Teks (misal: Air Terjun)" />
-        <input type="text" class="gm-input-kunci w-full p-2 rounded-xl border text-[11px]" placeholder="Pasangan Kunci" />
+      ${removeBtnHtml}
+      <div class="grid grid-cols-2 gap-2 clear-both">
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Soal / Teks (misal: Air Terjun)" />
+        <input type="text" class="gm-input-kunci w-full p-2 rounded-xl border text-[11px]" value="${kunci}" placeholder="Pasangan Kunci" />
       </div>
     `;
     } else if (tipe === 'drag_drop') {
+        const soal = itemData?.soal || '';
+        const catKunci = itemData?.kategori_kunci || 'A';
         row.innerHTML = `
-      <div class="grid grid-cols-3 gap-2">
-        <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" placeholder="Objek / Teks" />
+      ${removeBtnHtml}
+      <div class="grid grid-cols-3 gap-2 clear-both">
+        <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Objek / Teks" />
         <select class="gm-input-cat-kunci w-full p-2 rounded-xl border font-bold text-[11px] text-purple-700">
-          <option value="A">Kategori A</option>
-          <option value="B">Kategori B</option>
+          <option value="A" ${catKunci === 'A' ? 'selected' : ''}>Kategori A</option>
+          <option value="B" ${catKunci === 'B' ? 'selected' : ''}>Kategori B</option>
         </select>
       </div>
     `;
     } else if (tipe === 'sequencer') {
         const count = container.querySelectorAll('.gm-item-row').length + 1;
+        const soal = itemData?.soal || '';
         row.innerHTML = `
-      <div class="flex items-center gap-2">
+      ${removeBtnHtml}
+      <div class="flex items-center gap-2 clear-both">
         <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 font-black text-[10px] flex items-center justify-center shrink-0">${count}</span>
-        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Langkah urutan ke-${count}..." />
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Langkah urutan..." />
       </div>
     `;
     } else if (tipe === 'hotspot') {
         const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
+        const soal = itemData?.soal || '';
         row.innerHTML = `
-      <div class="flex items-center gap-2">
+      ${removeBtnHtml}
+      <div class="flex items-center gap-2 clear-both">
         <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-[10px] flex items-center justify-center shrink-0">Pin ${pinNum}</span>
-        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Nama label pin ${pinNum}..." />
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Nama label pin ${pinNum}..." />
       </div>
     `;
     } else if (tipe === 'simulator') {
+        const param = itemData?.parameter || '';
+        const opsiA = itemData?.opsi_a || '';
+        const opsiB = itemData?.opsi_b || '';
+        const opsiC = itemData?.opsi_c || '';
+        const kunci = itemData?.kunci || 'A';
         row.innerHTML = `
-      <input type="text" class="gm-input-param w-full p-2 rounded-xl border text-[11px] font-bold" placeholder="Nama Parameter (misal: Material Wadah)" />
-      <div class="grid grid-cols-3 gap-1">
-        <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
-        <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
-        <input type="text" class="gm-input-opsi-c w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi C" />
+      ${removeBtnHtml}
+      <div class="clear-both space-y-1">
+        <input type="text" class="gm-input-param w-full p-2 rounded-xl border text-[11px] font-bold" value="${param}" placeholder="Nama Parameter (misal: Material Wadah)" />
+        <div class="grid grid-cols-3 gap-1">
+          <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" value="${opsiA}" placeholder="Opsi A" />
+          <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" value="${opsiB}" placeholder="Opsi B" />
+          <input type="text" class="gm-input-opsi-c w-full p-1.5 rounded-lg border text-[10px]" value="${opsiC}" placeholder="Opsi C" />
+        </div>
+        <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
+          <option value="A" ${kunci === 'A' ? 'selected' : ''}>Kunci Terbaik: Opsi A</option>
+          <option value="B" ${kunci === 'B' ? 'selected' : ''}>Kunci Terbaik: Opsi B</option>
+          <option value="C" ${kunci === 'C' ? 'selected' : ''}>Kunci Terbaik: Opsi C</option>
+        </select>
       </div>
-      <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
-        <option value="A">Kunci Terbaik: Opsi A</option>
-        <option value="B">Kunci Terbaik: Opsi B</option>
-        <option value="C">Kunci Terbaik: Opsi C</option>
-      </select>
     `;
     } else if (tipe === 'word_search') {
+        const soal = itemData?.soal || '';
         row.innerHTML = `
-      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px] font-mono uppercase" placeholder="KATA ISTILAH (misal: KALOR)" />
+      ${removeBtnHtml}
+      <div class="clear-both">
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px] font-mono uppercase" value="${soal}" placeholder="KATA ISTILAH (misal: KALOR)" />
+      </div>
     `;
     } else {
+        const soal = itemData?.soal || '';
+        const opsiA = itemData?.opsi_a || '';
+        const opsiB = itemData?.opsi_b || '';
+        const kunci = itemData?.kunci || 'A';
         row.innerHTML = `
-      <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" placeholder="Pertanyaan Kuis..." />
-      <div class="grid grid-cols-3 gap-1">
-        <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi A" />
-        <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" placeholder="Opsi B" />
-        <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
-          <option value="A">Kunci A</option>
-          <option value="B">Kunci B</option>
-        </select>
+      ${removeBtnHtml}
+      <div class="clear-both space-y-1">
+        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Pertanyaan Kuis..." />
+        <div class="grid grid-cols-3 gap-1">
+          <input type="text" class="gm-input-opsi-a w-full p-1.5 rounded-lg border text-[10px]" value="${opsiA}" placeholder="Opsi A" />
+          <input type="text" class="gm-input-opsi-b w-full p-1.5 rounded-lg border text-[10px]" value="${opsiB}" placeholder="Opsi B" />
+          <select class="gm-input-kunci w-full p-1.5 rounded-lg border font-bold text-[10px] text-purple-700">
+            <option value="A" ${kunci === 'A' ? 'selected' : ''}>Kunci A</option>
+            <option value="B" ${kunci === 'B' ? 'selected' : ''}>Kunci B</option>
+          </select>
+        </div>
       </div>
     `;
     }
@@ -2267,16 +2469,44 @@ async function handleGameSubmit(e) {
     }
 }
 
-function openSoalModal() {
+function openSoalModal(idSoal = null) {
     populatePertemuanSelects();
 
-    document.getElementById('soal-form-id').value = '';
-    document.getElementById('soal-form-pertanyaan').value = '';
-    document.getElementById('soal-form-opsi-a').value = '';
-    document.getElementById('soal-form-opsi-b').value = '';
-    document.getElementById('soal-form-opsi-c').value = '';
-    document.getElementById('soal-form-opsi-d').value = '';
-    document.getElementById('soal-form-kunci').value = 'A';
+    const titleElem = document.getElementById('soal-modal-title');
+    const idElem = document.getElementById('soal-form-id');
+    const ptmElem = document.getElementById('soal-form-pertemuan');
+    const pertElem = document.getElementById('soal-form-pertanyaan');
+    const opsiAElem = document.getElementById('soal-form-opsi-a');
+    const opsiBElem = document.getElementById('soal-form-opsi-b');
+    const opsiCElem = document.getElementById('soal-form-opsi-c');
+    const opsiDElem = document.getElementById('soal-form-opsi-d');
+    const kunciElem = document.getElementById('soal-form-kunci');
+
+    if (idSoal) {
+        const s = (state.cachedData.soal_evaluasi || []).find(x => String(x.id_soal) === String(idSoal));
+        if (s) {
+            const evalObj = (state.cachedData.evaluasi || []).find(ev => ev.id_evaluasi === s.id_evaluasi);
+
+            if (titleElem) titleElem.textContent = 'Edit Soal Evaluasi';
+            if (idElem) idElem.value = s.id_soal;
+            if (ptmElem) ptmElem.value = evalObj ? evalObj.id_pertemuan : '';
+            if (pertElem) pertElem.value = s.pertanyaan || '';
+            if (opsiAElem) opsiAElem.value = s.opsi_a || '';
+            if (opsiBElem) opsiBElem.value = s.opsi_b || '';
+            if (opsiCElem) opsiCElem.value = s.opsi_c || '';
+            if (opsiDElem) opsiDElem.value = s.opsi_d || '';
+            if (kunciElem) kunciElem.value = s.kunci_jawaban || 'A';
+        }
+    } else {
+        if (titleElem) titleElem.textContent = 'Tambah Soal Evaluasi Baru';
+        if (idElem) idElem.value = '';
+        if (pertElem) pertElem.value = '';
+        if (opsiAElem) opsiAElem.value = '';
+        if (opsiBElem) opsiBElem.value = '';
+        if (opsiCElem) opsiCElem.value = '';
+        if (opsiDElem) opsiDElem.value = '';
+        if (kunciElem) kunciElem.value = 'A';
+    }
 
     document.getElementById('soal-modal').classList.remove('hidden');
     document.getElementById('soal-modal').classList.add('flex');

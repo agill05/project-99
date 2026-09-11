@@ -2,7 +2,7 @@
    E-LKPD INTERAKTIF STEAM (V2.2 OPTIMIZED LOGIC ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzVXxoAKyRXlgu98nHbriFucYkmzlU801QvB-XMiNR6_WZAwbKJ0UZYEZbIgebLMM2rfg/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzByUlEwo9CGXnDTKOB2S7jHVupTzz1t6dpD5fwqhA_ooRNh80l0dZs4tNZdSs0Qxv4OA/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V2';
 
 const state = {
@@ -16,7 +16,8 @@ const state = {
         submissions: [], reviews: []
     },
     evaluasiAnswers: {},
-    gameAnswers: {}
+    gameAnswers: {},
+    activeGameItems: [] // Memori aman untuk items game
 };
 
 /* ==========================================================
@@ -90,7 +91,6 @@ async function fetchAllInitialData(forceRefresh = false) {
     if (!forceRefresh) {
         loadFromLocalStorage();
         if (state.isDataLoaded) {
-            // Jalankan sync async di latar belakang tanpa menghambat antarmuka
             fetchDataFromNetwork();
             return;
         }
@@ -203,6 +203,19 @@ function toggleDrawer(isOpen) {
         drawer.classList.add('-translate-x-full');
         backdrop.classList.add('hidden');
     }
+}
+
+function populateKelasSelects() {
+    const kelasList = state.cachedData.kelas || [];
+    const optionsHtml = '<option value="-">- (Khusus Guru/Admin)</option>' + 
+        kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
+    
+    const userKelasSel = document.getElementById('user-form-kelas');
+    if (userKelasSel) userKelasSel.innerHTML = optionsHtml;
+
+    const ptmKelasSel = document.getElementById('pertemuan-form-kelas');
+    if (ptmKelasSel) ptmKelasSel.innerHTML = '<option value="ALL">Semua Kelas</option>' + 
+        kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 }
 
 /* ==========================================================
@@ -354,6 +367,16 @@ async function switchView(viewId, paramId = null) {
             viewport.innerHTML = renderEvaluasiView(paramId);
             break;
 
+        case 'admin-users':
+            titleElem.textContent = 'KELOLA PENGGUNA SISTEM';
+            renderAdminUsersView(viewport);
+            break;
+
+        case 'admin-classes':
+            titleElem.textContent = 'KELOLA DATA KELAS';
+            renderAdminClassesView(viewport);
+            break;
+
         case 'guru-pertemuan':
             titleElem.textContent = 'KELOLA PERTEMUAN PEMBELAJARAN';
             renderGuruPertemuanView(viewport);
@@ -394,7 +417,7 @@ async function switchView(viewId, paramId = null) {
     }
 
     if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise();
+        MathJax.typesetPromise().catch((err) => console.log('MathJax typeset info:', err));
     }
 }
 
@@ -540,6 +563,7 @@ function renderGameView(ptmId) {
     try { config = typeof gameObj.konfigurasi_json === 'string' ? JSON.parse(gameObj.konfigurasi_json) : gameObj.konfigurasi_json; } catch (e) { }
 
     const items = config.items || [];
+    state.activeGameItems = items; // Simpan ke state aman
     const tipe = gameObj.tipe_game || 'matching';
 
     return `
@@ -569,7 +593,7 @@ function renderGameInteractiveBody(tipe, items, ptmId) {
             </div>
           </div>
         `).join('')}
-        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'matching', ${JSON.stringify(items).replace(/"/g, '&quot;')}))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'matching'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Skor Game
         </button>
       </div>
@@ -599,7 +623,7 @@ function renderGameInteractiveBody(tipe, items, ptmId) {
           </div>
         `).join('')}
 
-        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'drag_drop', ${JSON.stringify(items).replace(/"/g, '&quot;')}))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'drag_drop'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Skor Game
         </button>
       </div>
@@ -617,7 +641,7 @@ function renderGameInteractiveBody(tipe, items, ptmId) {
           </div>
         `).join('')}
 
-        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'quiz_speed', ${JSON.stringify(items).replace(/"/g, '&quot;')}))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
+        <button id="btn-submit-game-siswa" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', 'quiz_speed'))" class="w-full py-3.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Skor Game
         </button>
       </div>
@@ -698,7 +722,72 @@ function selectEvalOption(soalId, option) {
 }
 
 /* ==========================================================
-   7. GURU CMS VIEWS
+   7. ADMIN CMS VIEWS
+   ========================================================== */
+function renderAdminUsersView(container) {
+    const usersList = state.cachedData.users || [];
+    container.innerHTML = `
+    <div class="space-y-4 text-xs">
+      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+        <span class="font-bold text-slate-700">Total Pengguna: <b>${usersList.length}</b></span>
+        <button onclick="openUserModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Pengguna</button>
+      </div>
+      <div class="bg-white p-4 rounded-3xl border shadow-sm overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-brand-navy text-white font-heading">
+            <tr>
+              <th class="p-3">Nama Lengkap</th>
+              <th class="p-3">Username</th>
+              <th class="p-3">Role</th>
+              <th class="p-3">Kelas</th>
+              <th class="p-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${usersList.map(u => `
+              <tr>
+                <td class="p-3 font-bold">${u.nama_lengkap}</td>
+                <td class="p-3 font-mono">${u.username}</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin' ? 'bg-red-100 text-red-700' : u.role === 'guru' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${String(u.role).toUpperCase()}</span></td>
+                <td class="p-3 font-bold">${u.kelas || '-'}</td>
+                <td class="p-3 text-center">
+                  <button onclick="deleteUser('${u.user_id}')" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200">Hapus</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminClassesView(container) {
+    const kelasList = state.cachedData.kelas || [];
+    container.innerHTML = `
+    <div class="space-y-4 text-xs">
+      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+        <span class="font-bold text-slate-700">Total Kelas Registered: <b>${kelasList.length}</b></span>
+        <button onclick="openKelasModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Kelas</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        ${kelasList.map(k => `
+          <div class="bg-white p-4 rounded-3xl border flex items-center justify-between shadow-xs">
+            <div>
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${k.tingkat || '-'}</span>
+              <h4 class="font-black text-brand-navy text-sm mt-1">${k.nama_kelas}</h4>
+              <p class="text-slate-500 text-[11px]">${k.keterangan || ''}</p>
+            </div>
+            <button onclick="deleteKelas('${k.id_kelas}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200">Hapus</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ==========================================================
+   8. GURU CMS VIEWS
    ========================================================== */
 function renderGuruPertemuanView(container) {
     const ptmList = state.cachedData.pertemuan || [];
@@ -839,16 +928,18 @@ function renderGuruKoreksiView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.map(s => `
+              ${subs.map(s => {
+                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 'Belum');
+                return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
                   <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
-                  <td class="p-3 font-bold text-brand-blue">${s.nilai_esai || s.skor_otomatis || 'Belum'}</td>
+                  <td class="p-3 font-bold text-brand-blue">${scoreDisplay}</td>
                   <td class="p-3 text-center">
                     <button onclick="openKoreksiModal('${s.id_sub}')" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-lg">Periksa</button>
                   </td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
         </div>
@@ -874,14 +965,16 @@ function renderGuruRekapView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.map(s => `
+              ${subs.map(s => {
+                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
+                return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa}</td>
                   <td class="p-3">${s.kelas}</td>
                   <td class="p-3 text-center uppercase font-mono">${s.tipe_sub}</td>
-                  <td class="p-3 text-center font-black text-emerald-600">${s.nilai_esai || s.skor_otomatis || 0}</td>
+                  <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
         </div>
@@ -891,7 +984,7 @@ function renderGuruRekapView(container) {
 }
 
 /* ==========================================================
-   8. CANVAS DRAWING ENGINE LOGIC
+   9. CANVAS DRAWING ENGINE LOGIC
    ========================================================== */
 let canvasCtx = null;
 let isDrawing = false;
@@ -926,7 +1019,7 @@ function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasC
 function clearCanvas() { const canvas = document.getElementById('steam-canvas'); if (canvas && canvasCtx) { canvasCtx.fillStyle = '#FFFFFF'; canvasCtx.fillRect(0, 0, canvas.width, canvas.height); } }
 
 /* ==========================================================
-   9. SUBMISSION ACTIONS SISWA
+   10. SUBMISSION ACTIONS SISWA
    ========================================================== */
 async function submitLkpdSiswa(ptmId, questionCount) {
     const user = state.currentUser;
@@ -960,7 +1053,8 @@ async function submitLkpdSiswa(ptmId, questionCount) {
     }
 }
 
-async function submitGameSiswa(ptmId, tipe, items) {
+async function submitGameSiswa(ptmId, tipe) {
+    const items = state.activeGameItems || [];
     let correctCount = 0;
 
     items.forEach((item, idx) => {
@@ -1028,7 +1122,101 @@ async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
 }
 
 /* ==========================================================
-   10. CMS GURU HANDLERS & MODALS
+   11. CMS ADMIN MODALS & HANDLERS
+   ========================================================== */
+function openUserModal() {
+    populateKelasSelects();
+    document.getElementById('user-modal').classList.remove('hidden');
+    document.getElementById('user-modal').classList.add('flex');
+}
+function closeUserModal() {
+    document.getElementById('user-modal').classList.add('hidden');
+    document.getElementById('user-modal').classList.remove('flex');
+}
+
+async function handleUserSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-user');
+    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Pengguna');
+
+    const res = await apiPost({
+        action: 'add_user',
+        user_id: document.getElementById('user-form-id').value,
+        nama_lengkap: document.getElementById('user-form-nama').value,
+        username: document.getElementById('user-form-username').value,
+        password: document.getElementById('user-form-password').value,
+        role: document.getElementById('user-form-role').value,
+        kelas: document.getElementById('user-form-kelas').value
+    });
+
+    setButtonLoading(btn, false, '', '💾 Simpan Pengguna');
+    if (res.success) {
+        closeUserModal();
+        showToast('success', res.message);
+        await fetchAllInitialData(true);
+        switchView('admin-users');
+    } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+    }
+}
+
+function openKelasModal() {
+    document.getElementById('kelas-modal').classList.remove('hidden');
+    document.getElementById('kelas-modal').classList.add('flex');
+}
+function closeKelasModal() {
+    document.getElementById('kelas-modal').classList.add('hidden');
+    document.getElementById('kelas-modal').classList.remove('flex');
+}
+
+async function handleKelasSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-kelas');
+    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Kelas');
+
+    const res = await apiPost({
+        action: 'save_kelas',
+        id_kelas: document.getElementById('kelas-form-id').value,
+        nama_kelas: document.getElementById('kelas-form-nama').value,
+        tingkat: document.getElementById('kelas-form-tingkat').value,
+        keterangan: document.getElementById('kelas-form-keterangan').value
+    });
+
+    setButtonLoading(btn, false, '', '💾 Simpan Kelas');
+    if (res.success) {
+        closeKelasModal();
+        showToast('success', res.message);
+        await fetchAllInitialData(true);
+        switchView('admin-classes');
+    } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+    }
+}
+
+function deleteUser(id) {
+    showConfirm('Hapus Pengguna?', 'Akun pengguna ini akan dihapus permanen!', async () => {
+        showLoading('Menghapus data...');
+        await apiPost({ action: 'delete_user', user_id: id });
+        closeLoading();
+        showToast('success', 'Pengguna berhasil dihapus');
+        await fetchAllInitialData(true);
+        switchView('admin-users');
+    });
+}
+
+function deleteKelas(id) {
+    showConfirm('Hapus Data Kelas?', 'Data kelas ini akan dihapus!', async () => {
+        showLoading('Menghapus kelas...');
+        await apiPost({ action: 'delete_kelas', id_kelas: id });
+        closeLoading();
+        showToast('success', 'Kelas berhasil dihapus');
+        await fetchAllInitialData(true);
+        switchView('admin-classes');
+    });
+}
+
+/* ==========================================================
+   12. CMS GURU HANDLERS & MODALS
    ========================================================== */
 function populatePertemuanSelects() {
     const ptmList = state.cachedData.pertemuan || [];
@@ -1040,7 +1228,11 @@ function populatePertemuanSelects() {
     const sSel = document.getElementById('soal-form-pertemuan'); if (sSel) sSel.innerHTML = opts;
 }
 
-function openPertemuanModal() { document.getElementById('pertemuan-modal').classList.remove('hidden'); document.getElementById('pertemuan-modal').classList.add('flex'); }
+function openPertemuanModal() {
+    populateKelasSelects();
+    document.getElementById('pertemuan-modal').classList.remove('hidden');
+    document.getElementById('pertemuan-modal').classList.add('flex');
+}
 function closePertemuanModal() { document.getElementById('pertemuan-modal').classList.add('hidden'); document.getElementById('pertemuan-modal').classList.remove('flex'); }
 
 async function handlePertemuanSubmit(e) {
@@ -1356,7 +1548,7 @@ function openKoreksiModal(idSub) {
 
     document.getElementById('koreksi-sub-id').value = sub.id_sub;
     document.getElementById('koreksi-siswa-info').textContent = `Siswa: ${sub.nama_siswa} (${sub.kelas}) | Modul: ${sub.tipe_sub.toUpperCase()}`;
-    document.getElementById('koreksi-nilai-esai').value = sub.nilai_esai || sub.skor_otomatis || 80;
+    document.getElementById('koreksi-nilai-esai').value = (sub.nilai_esai !== "" && sub.nilai_esai !== null && sub.nilai_esai !== undefined) ? sub.nilai_esai : (sub.skor_otomatis || 80);
     document.getElementById('koreksi-catatan').value = sub.catatan_guru || '';
 
     const body = document.getElementById('koreksi-detail-body');
@@ -1454,7 +1646,7 @@ function deleteSoal(id) {
 }
 
 /* ==========================================================
-   11. AUTHENTICATION HANDLERS
+   13. AUTHENTICATION HANDLERS
    ========================================================== */
 async function handleLoginSubmit(e) {
     e.preventDefault();

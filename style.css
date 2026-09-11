@@ -1,0 +1,63 @@
+/* ==========================================================
+   E-LKPD INTERAKTIF STEAM - CUSTOM STYLESHEET
+   ========================================================== */
+
+body {
+    font-family: "Nunito", sans-serif;
+    background-color: #0b2545;
+    color: #1e293b;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+    font-family: "Poppins", sans-serif;
+}
+
+/* Canvas Touch Action Optimization */
+canvas {
+    touch-action: none;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.05);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(11, 37, 69, 0.2);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(11, 37, 69, 0.4);
+}
+
+/* Drawer Transitions */
+#main-drawer {
+    will-change: transform;
+}
+
+/* Modals Backdrops */
+.backdrop-blur-xs {
+    backdrop-filter: blur(2px);
+}
+
+/* Game Item Row Animations */
+.gm-item-row {
+    transition: all 0.2s ease-in-out;
+}
+
+.gm-item-row:hover {
+    border-color: #6b38fb;
+}

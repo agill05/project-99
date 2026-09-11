@@ -1,5 +1,6 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM - CUSTOM STYLESHEET
+   E-LKPD INTERAKTIF STEAM - CUSTOM STYLESHEET (V2.3 OPTIMIZED)
+   Tahap 3: Custom Styling, Responsive Canvas & Motion Enhancements
    ========================================================== */
 
 body {
@@ -18,9 +19,12 @@ h4,
     font-family: "Poppins", sans-serif;
 }
 
-/* Canvas Touch Action Optimization */
+/* Canvas Touch & Gesture Optimization */
 canvas {
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: crosshair;
 }
 
 /* Custom Scrollbars */
@@ -43,21 +47,48 @@ canvas {
     background: rgba(11, 37, 69, 0.4);
 }
 
-/* Drawer Transitions */
+/* Drawer & Modal Transitions */
 #main-drawer {
     will-change: transform;
 }
 
-/* Modals Backdrops */
 .backdrop-blur-xs {
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
-/* Game Item Row Animations */
+/* Interactive Game & Item Row Animations */
 .gm-item-row {
     transition: all 0.2s ease-in-out;
 }
 
 .gm-item-row:hover {
     border-color: #6b38fb;
+    box-shadow: 0 2px 8px rgba(107, 56, 251, 0.1);
+}
+
+/* Form Inputs Focus Ring Optimization */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+}
+
+/* Print Stylesheet for Quick Report Printing */
+@media print {
+    #main-drawer,
+    header,
+    button,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    #content-viewport {
+        padding: 0 !important;
+    }
 }

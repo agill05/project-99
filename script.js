@@ -1,8 +1,9 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V2.2 OPTIMIZED LOGIC ENGINE)
+   E-LKPD INTERAKTIF STEAM (V2.3 OPTIMIZED LOGIC ENGINE)
+   Tahap 2: Auto-Save Draft, Canvas Steam + Undo, & Ekspor CSV
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzVXxoAKyRXlgu98nHbriFucYkmzlU801QvB-XMiNR6_WZAwbKJ0UZYEZbIgebLMM2rfg/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz-ZUlxuqR0lMQguX64qWJoXP5VwgNucrkPIuYqEOaHGw6OgCA34Nppvhoaq6DlwCd91w/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V2';
 
 const state = {
@@ -30,7 +31,7 @@ function showToast(icon, title) {
         icon: icon,
         title: title,
         showConfirmButton: false,
-        timer: 2000,
+        timer: 2500,
         timerProgressBar: true
     });
 }
@@ -136,7 +137,7 @@ async function apiPost(payload) {
         return await res.json();
     } catch (err) {
         console.error('API POST Error:', err);
-        return { success: false, message: 'Gagal terhubung ke server database!' };
+        return { success: false, message: 'Gagal terhubung ke server database! Periksa koneksi internet kamu.' };
     }
 }
 
@@ -354,7 +355,11 @@ async function switchView(viewId, paramId = null) {
         case 'lkpd-ptm':
             titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK (LKPD)';
             viewport.innerHTML = renderLkpdView(paramId);
-            setTimeout(initCanvas, 200);
+            setTimeout(() => {
+                initCanvas();
+                const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
+                loadLkpdDraft(paramId, qCount);
+            }, 150);
             break;
 
         case 'game-ptm':
@@ -483,6 +488,8 @@ function renderLkpdView(ptmId) {
     let questions = [];
     try { questions = typeof lkpdObj.soal_json === 'string' ? JSON.parse(lkpdObj.soal_json) : lkpdObj.soal_json; } catch (e) { }
 
+    const questionCount = Math.max(questions.length, 1);
+
     return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
@@ -517,16 +524,19 @@ function renderLkpdView(ptmId) {
       ` : ''}
 
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-        <h4 class="font-black text-brand-navy border-b pb-2">✍️ Lembar Jawaban Siswa</h4>
+        <div class="flex items-center justify-between border-b pb-2">
+          <h4 class="font-black text-brand-navy">✍️ Lembar Jawaban Siswa</h4>
+          <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">💾 Auto-Save Draft Aktif</span>
+        </div>
         ${questions.length > 0 ? questions.map((q, idx) => `
           <div class="space-y-1">
             <label class="block font-bold text-slate-800">${idx + 1}. ${q}</label>
-            <textarea id="lkpd-ans-${idx}" rows="2" class="w-full p-2.5 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none" placeholder="Tuliskan jawaban kamu..."></textarea>
+            <textarea id="lkpd-ans-${idx}" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="2" class="w-full p-2.5 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none" placeholder="Tuliskan jawaban kamu..."></textarea>
           </div>
         `).join('') : `
           <div class="space-y-1">
             <label class="block font-bold text-slate-800">Tuliskan hasil pengerjaan/jawaban LKPD kamu di bawah ini:</label>
-            <textarea id="lkpd-ans-0" rows="5" class="w-full p-2.5 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none" placeholder="Tuliskan jawaban kamu secara lengkap..."></textarea>
+            <textarea id="lkpd-ans-0" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="5" class="w-full p-2.5 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none" placeholder="Tuliskan jawaban kamu secara lengkap..."></textarea>
           </div>
         `}
       </div>
@@ -536,19 +546,23 @@ function renderLkpdView(ptmId) {
           <h4 class="font-black text-brand-navy border-b pb-2">🎨 Kanvas Gambar Proyek STEAM</h4>
           <div class="flex items-center justify-between p-2 bg-slate-50 rounded-2xl border">
             <div class="flex items-center gap-1.5">
-              <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white"></button>
-              <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white"></button>
-              <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white"></button>
+              <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs" title="Biru Tua"></button>
+              <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs" title="Merah"></button>
+              <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs" title="Hijau"></button>
+              <button onclick="setCanvasColor('#6B38FB')" class="w-6 h-6 rounded-full bg-purple-600 border-2 border-white shadow-xs" title="Ungu"></button>
             </div>
-            <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px]">🗑️ Bersihkan</button>
+            <div class="flex items-center gap-1.5">
+              <button onclick="undoCanvas()" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-xl text-[10px] hover:bg-amber-200 transition">↩️ Urungkan (Undo)</button>
+              <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200 transition">🗑️ Bersihkan</button>
+            </div>
           </div>
           <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden">
-            <canvas id="steam-canvas" class="w-full h-[220px] cursor-crosshair"></canvas>
+            <canvas id="steam-canvas" class="w-full h-[240px] cursor-crosshair touch-none"></canvas>
           </div>
         </div>
       ` : ''}
 
-      <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', ${Math.max(questions.length, 1)}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
+      <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
         🚀 Kirim Jawaban LKPD
       </button>
     </div>
@@ -787,7 +801,7 @@ function renderAdminClassesView(container) {
 }
 
 /* ==========================================================
-   8. GURU CMS VIEWS
+   8. GURU CMS VIEWS & EKSPOR REKAP CSV
    ========================================================== */
 function renderGuruPertemuanView(container) {
     const ptmList = state.cachedData.pertemuan || [];
@@ -952,8 +966,14 @@ function renderGuruRekapView(container) {
     const subs = state.cachedData.submissions || [];
     container.innerHTML = `
     <div class="space-y-4 text-xs">
+      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+        <span class="font-bold text-slate-700">Total Submisi Nilai: <b>${subs.length}</b></span>
+        <button onclick="exportRekapToCsv()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow flex items-center gap-1.5 transition">
+          <span>📊 Ekspor Excel / CSV</span>
+        </button>
+      </div>
       <div class="bg-white p-5 rounded-3xl border shadow-sm">
-        <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">🏆 Rekapitulasi Nilai Siswa</h3>
+        <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">🏆 Buku Nilai & Rekapitulasi Siswa</h3>
         <div class="overflow-x-auto mt-3">
           <table class="w-full text-left">
             <thead class="bg-brand-navy text-white font-heading">
@@ -962,17 +982,20 @@ function renderGuruRekapView(container) {
                 <th class="p-3">Kelas</th>
                 <th class="p-3 text-center">Tipe Submisi</th>
                 <th class="p-3 text-center">Nilai Akhir</th>
+                <th class="p-3">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.map(s => {
+              ${subs.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>` : 
+                subs.map(s => {
                 const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
                 return `
                 <tr>
-                  <td class="p-3 font-bold">${s.nama_siswa}</td>
-                  <td class="p-3">${s.kelas}</td>
-                  <td class="p-3 text-center uppercase font-mono">${s.tipe_sub}</td>
+                  <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
+                  <td class="p-3">${s.kelas || '-'}</td>
+                  <td class="p-3 text-center uppercase font-mono">${s.tipe_sub || '-'}</td>
                   <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.status || 'Belum'}</span></td>
                 </tr>
               `}).join('')}
             </tbody>
@@ -983,12 +1006,55 @@ function renderGuruRekapView(container) {
   `;
 }
 
+function exportRekapToCsv() {
+    const subs = state.cachedData.submissions || [];
+    if (subs.length === 0) {
+        showToast('warning', 'Belum ada data submisi untuk diekspor!');
+        return;
+    }
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM agar Excel membaca karakter khusus dengan rapi
+    csvContent += "ID Submisi,Username,Nama Siswa,Kelas,Tipe Modul,Skor Otomatis,Nilai Esai,Nilai Akhir,Status,Waktu Submisi,Catatan Guru\n";
+
+    subs.forEach(s => {
+        const finalScore = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) 
+            ? s.nilai_esai 
+            : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
+
+        const row = [
+            `"${s.id_sub || ''}"`,
+            `"${s.username_siswa || ''}"`,
+            `"${(s.nama_siswa || '').replace(/"/g, '""')}"`,
+            `"${s.kelas || ''}"`,
+            `"${String(s.tipe_sub || '').toUpperCase()}"`,
+            `"${s.skor_otomatis || 0}"`,
+            `"${s.nilai_esai || ''}"`,
+            `"${finalScore}"`,
+            `"${s.status || ''}"`,
+            `"${s.timestamp || ''}"`,
+            `"${(s.catatan_guru || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rekap_Nilai_ELKPD_STEAM_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('success', 'Rekap nilai berhasil diunduh (CSV)!');
+}
+
 /* ==========================================================
-   9. CANVAS DRAWING ENGINE LOGIC
+   9. CANVAS DRAWING ENGINE LOGIC + UNDO & TOUCH
    ========================================================== */
 let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
+let canvasUndoStack = [];
 
 function initCanvas() {
     const canvas = document.getElementById('steam-canvas');
@@ -996,31 +1062,127 @@ function initCanvas() {
 
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 600;
-    canvas.height = 220;
+    canvas.height = 240;
 
     canvasCtx = canvas.getContext('2d');
     canvasCtx.fillStyle = '#FFFFFF';
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 3;
     canvasCtx.lineCap = 'round';
+    canvasCtx.lineJoin = 'round';
     canvasCtx.strokeStyle = currentPenColor;
 
-    canvas.onmousedown = (e) => { isDrawing = true; canvasCtx.beginPath(); const c = getCoords(e, canvas); canvasCtx.moveTo(c.x, c.y); };
-    canvas.onmousemove = (e) => { if (isDrawing) { const c = getCoords(e, canvas); canvasCtx.lineTo(c.x, c.y); canvasCtx.stroke(); } };
-    canvas.onmouseup = () => isDrawing = false;
+    canvasUndoStack = [];
+    saveCanvasState(); // Simpan kondisi putih awal
+
+    // Mouse Listeners
+    canvas.onmousedown = (e) => { startDrawing(e, canvas); };
+    canvas.onmousemove = (e) => { draw(e, canvas); };
+    canvas.onmouseup = () => { stopDrawing(); };
+    canvas.onmouseleave = () => { stopDrawing(); };
+
+    // Touch Screen Listeners (HP / Tablet)
+    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas); };
+    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas); };
+    canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
+}
+
+function startDrawing(e, canvas) {
+    isDrawing = true;
+    canvasCtx.beginPath();
+    const c = getCoords(e, canvas);
+    canvasCtx.moveTo(c.x, c.y);
+}
+
+function draw(e, canvas) {
+    if (!isDrawing) return;
+    const c = getCoords(e, canvas);
+    canvasCtx.lineTo(c.x, c.y);
+    canvasCtx.stroke();
+}
+
+function stopDrawing() {
+    if (isDrawing) {
+        isDrawing = false;
+        saveCanvasState();
+    }
+}
+
+function saveCanvasState() {
+    const canvas = document.getElementById('steam-canvas');
+    if (canvas && canvasCtx && canvasUndoStack.length < 15) {
+        canvasUndoStack.push(canvasCtx.getImageData(0, 0, canvas.width, canvas.height));
+    }
+}
+
+function undoCanvas() {
+    const canvas = document.getElementById('steam-canvas');
+    if (canvas && canvasCtx && canvasUndoStack.length > 1) {
+        canvasUndoStack.pop(); // Buang state terakhir
+        const prevState = canvasUndoStack[canvasUndoStack.length - 1];
+        canvasCtx.putImageData(prevState, 0, 0);
+    }
 }
 
 function getCoords(e, canvas) {
     const rect = canvas.getBoundingClientRect();
-    return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
 }
 
 function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
-function clearCanvas() { const canvas = document.getElementById('steam-canvas'); if (canvas && canvasCtx) { canvasCtx.fillStyle = '#FFFFFF'; canvasCtx.fillRect(0, 0, canvas.width, canvas.height); } }
+function clearCanvas() {
+    const canvas = document.getElementById('steam-canvas');
+    if (canvas && canvasCtx) {
+        canvasCtx.fillStyle = '#FFFFFF';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        saveCanvasState();
+    }
+}
 
 /* ==========================================================
-   10. SUBMISSION ACTIONS SISWA
+   10. SUBMISSION ACTIONS SISWA & AUTO-SAVE DRAFT
    ========================================================== */
+function saveLkpdDraft(ptmId, questionCount) {
+    const username = state.currentUser ? state.currentUser.username : 'guest';
+    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+    const answers = [];
+    for (let i = 0; i < questionCount; i++) {
+        answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
+    }
+    localStorage.setItem(draftKey, JSON.stringify({ answers, timestamp: new Date().toISOString() }));
+}
+
+function loadLkpdDraft(ptmId, questionCount) {
+    const username = state.currentUser ? state.currentUser.username : 'guest';
+    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+    try {
+        const saved = localStorage.getItem(draftKey);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && Array.isArray(parsed.answers)) {
+                parsed.answers.forEach((ans, idx) => {
+                    const elem = document.getElementById(`lkpd-ans-${idx}`);
+                    if (elem) elem.value = ans;
+                });
+                showToast('info', 'Draft pengerjaan berhasil dipulihkan!');
+            }
+        }
+    } catch (e) {
+        console.error('Gagal memulihkan draft:', e);
+    }
+}
+
+function clearLkpdDraft(ptmId) {
+    const username = state.currentUser ? state.currentUser.username : 'guest';
+    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+    localStorage.removeItem(draftKey);
+}
+
 async function submitLkpdSiswa(ptmId, questionCount) {
     const user = state.currentUser;
     let answers = [];
@@ -1046,6 +1208,7 @@ async function submitLkpdSiswa(ptmId, questionCount) {
 
     setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD');
     if (res.success) {
+        clearLkpdDraft(ptmId);
         await fetchAllInitialData(true);
         showToast('success', 'Jawaban LKPD Berhasil Terkirim!');
     } else {

@@ -208,14 +208,14 @@ function toggleDrawer(isOpen) {
 
 function populateKelasSelects() {
     const kelasList = state.cachedData.kelas || [];
-    const optionsHtml = '<option value="-">- (Khusus Guru/Admin)</option>' + 
+    const optionsHtml = '<option value="-">- (Khusus Guru/Admin)</option>' +
         kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
-    
+
     const userKelasSel = document.getElementById('user-form-kelas');
     if (userKelasSel) userKelasSel.innerHTML = optionsHtml;
 
     const ptmKelasSel = document.getElementById('pertemuan-form-kelas');
-    if (ptmKelasSel) ptmKelasSel.innerHTML = '<option value="ALL">Semua Kelas</option>' + 
+    if (ptmKelasSel) ptmKelasSel.innerHTML = '<option value="ALL">Semua Kelas</option>' +
         kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 }
 
@@ -461,38 +461,75 @@ function renderHomeView() {
   `;
 }
 
+/* ==========================================================
+   RUANG STEAM LAB (DENGAN INTEGRASI PERTEMUAN MODUL)
+   ========================================================== */
+
 function renderRuangSteamView() {
+    // Mengambil daftar pertemuan yang dipublikasikan
+    const userKelas = state.currentUser?.kelas || 'ALL';
+    const pertemuanList = (state.cachedData.pertemuan || [])
+        .filter(p => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
+        .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
+
+    const optionsHtml = pertemuanList.length > 0 
+        ? pertemuanList.map(p => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`).join('')
+        : '<option value="">-- Belum ada pertemuan aktif --</option>';
+
+    const defaultPtm = pertemuanList[0] || null;
+
     return `
     <div class="max-w-5xl mx-auto space-y-5 text-xs">
       <!-- Header Banner Ruang STEAM -->
-      <div class="bg-gradient-to-r from-purple-900 via-brand-navy to-blue-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <span class="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-400/30 rounded-full text-[10px] uppercase font-mono font-bold">
-            🎨 Laboratorium Kreatif & Eksperimen Mandiri
-          </span>
-          <h2 class="text-xl sm:text-2xl font-black font-heading mt-2">RUANG EKSPERIMEN STEAM</h2>
-          <p class="text-slate-300 text-xs mt-1 max-w-lg">
-            Wadah kreatif mandiri untuk merancang sketsa, menuangkan gagasan teknologi, serta mendokumentasikan konsep Science, Technology, Engineering, Arts, dan Mathematics.
-          </p>
+      <div class="bg-gradient-to-r from-purple-900 via-brand-navy to-blue-900 text-white p-6 rounded-3xl shadow-xl space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-800/60 pb-3">
+          <div>
+            <span class="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-400/30 rounded-full text-[10px] uppercase font-mono font-bold">
+              Laboratorium Kreatif & Eksperimen
+            </span>
+            <h2 class="text-xl sm:text-2xl font-black font-heading mt-1">RUANG EKSPERIMEN STEAM</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="downloadSteamCanvasImage()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition">
+              💾 Unduh PNG
+            </button>
+            <button id="btn-submit-steam-lab" onclick="requireStudentAuth(() => submitSteamLabToTeacher())" class="px-4 py-2 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-xl shadow transition">
+              🚀 Kirim ke Guru
+            </button>
+          </div>
         </div>
-        <button onclick="downloadSteamCanvasImage()" class="px-4 py-2.5 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg flex items-center gap-2 transition shrink-0">
-          <span>💾 Unduh Sketsa (PNG)</span>
-        </button>
+
+        <!-- Pemilih Pertemuan Target -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center bg-slate-900/80 p-3.5 rounded-2xl border border-purple-500/30">
+          <div>
+            <label class="block font-black text-brand-yellow uppercase text-[10px] tracking-wider mb-1">
+              Fokus Pertemuan Modul:
+            </label>
+            <select id="steam-select-pertemuan" onchange="updateSteamPertemuanInfo(this.value)" class="w-full p-2.5 rounded-xl border-0 bg-slate-800 text-white font-bold text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none">
+              ${optionsHtml}
+            </select>
+          </div>
+          <div class="md:col-span-2 text-slate-300 text-[11px] border-t md:border-t-0 md:border-l border-slate-700 pt-2 md:pt-0 md:pl-3">
+            <span class="font-bold text-white block">Capaian & Fokus Topik:</span>
+            <p id="steam-pertemuan-deskripsi" class="text-slate-300 font-medium mt-0.5">
+              ${defaultPtm ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.' : 'Belum ada modul tersedia.'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <!-- Area Kanvas Gambar Utama -->
+        <!-- Area Kanvas Gambar -->
         <div class="lg:col-span-2 bg-white p-5 rounded-3xl border shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
-            <h3 class="font-black text-brand-navy text-sm font-heading flex items-center gap-2">
-              <span>🎨 Kanvas Lukis & Prototyping</span>
-            </h3>
-            <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">Layar Bebas</span>
+            <h3 class="font-black text-brand-navy text-sm font-heading">Kanvas Lukis & Prototyping</h3>
+            <span id="steam-canvas-badge-ptm" class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+              ${defaultPtm ? `Pertemuan ${defaultPtm.nomor_pertemuan}` : 'Mode Bebas'}
+            </span>
           </div>
 
           <!-- Toolbar Pengatur Alat Gambar -->
           <div class="p-3 bg-slate-50 border rounded-2xl flex flex-wrap items-center justify-between gap-3">
-            <!-- Warna -->
             <div class="flex items-center gap-1.5">
               <span class="text-[10px] font-bold text-slate-500 mr-1">Warna:</span>
               <button onclick="setStandaloneCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs hover:scale-110 transition" title="Biru Tua"></button>
@@ -504,22 +541,19 @@ function renderRuangSteamView() {
               <button onclick="setStandaloneCanvasColor('#FFFFFF')" class="w-6 h-6 rounded-full bg-white border-2 border-slate-300 shadow-xs hover:scale-110 transition flex items-center justify-center text-[9px]" title="Penghapus">🧹</button>
             </div>
 
-            <!-- Ukuran Kuas -->
             <div class="flex items-center gap-1.5">
-              <span class="text-[10px] font-bold text-slate-500">Ukuran:</span>
+              <span class="text-[10px] font-bold text-slate-500">Kuas:</span>
               <button onclick="setStandaloneCanvasSize(2)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Halus</button>
               <button onclick="setStandaloneCanvasSize(5)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Sedang</button>
               <button onclick="setStandaloneCanvasSize(10)" class="px-2 py-0.5 bg-white border rounded-lg text-[10px] font-bold hover:bg-slate-100">Tebal</button>
             </div>
 
-            <!-- Aksi Gambar -->
             <div class="flex items-center gap-1.5">
-              <button onclick="undoStandaloneCanvas()" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-xl text-[10px] hover:bg-amber-200 transition">↩️ Undo</button>
-              <button onclick="clearStandaloneCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200 transition">🗑️ Clear</button>
+              <button onclick="undoStandaloneCanvas()" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-xl text-[10px] hover:bg-amber-200 transition">Undo</button>
+              <button onclick="clearStandaloneCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200 transition">Clear</button>
             </div>
           </div>
 
-          <!-- Area Canvas -->
           <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden shadow-inner">
             <canvas id="ruang-steam-canvas" class="w-full h-[380px] cursor-crosshair touch-none bg-white"></canvas>
           </div>
@@ -527,37 +561,87 @@ function renderRuangSteamView() {
 
         <!-- Kolom Catatan Ide & Konsep STEAM -->
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-          <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2 flex items-center gap-2">
-            <span>💡 Catatan Ide Proyek STEAM</span>
-          </h3>
+          <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">Catatan Ide Proyek</h3>
 
           <div class="space-y-3">
             <div>
               <label class="block font-bold text-slate-700 mb-1">Judul / Topik Eksperimen</label>
-              <input type="text" id="steam-note-title" placeholder="Contoh: Model Miniatur Jembatan Hydraulik" class="w-full p-2.5 rounded-xl border font-bold text-brand-navy focus:ring-2 focus:ring-purple-500 focus:outline-none" />
+              <input type="text" id="steam-note-title" placeholder="Contoh: Rancangan Katrol Sederhana" class="w-full p-2.5 rounded-xl border font-bold text-brand-navy focus:ring-2 focus:ring-purple-500 focus:outline-none" />
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">🔬 Konsep Science & Technology</label>
+              <label class="block font-bold text-slate-700 mb-1">Konsep Science & Technology</label>
               <textarea id="steam-note-science" rows="2" placeholder="Jelaskan fenomena sains/teknologi yang melandasi gambar kamu..." class="w-full p-2.5 rounded-xl border text-[11px] font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">⚙️ Konsep Engineering & Math</label>
+              <label class="block font-bold text-slate-700 mb-1">Konsep Engineering & Math</label>
               <textarea id="steam-note-engineering" rows="2" placeholder="Jelaskan rancangan struktur, ukuran, atau perhitungan matematika..." class="w-full p-2.5 rounded-xl border text-[11px] font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
-            </div>
-
-            <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl space-y-1">
-              <span class="font-bold text-purple-900 block text-[11px]">✨ Tip Eksperimen</span>
-              <p class="text-[10px] text-purple-700 leading-relaxed">
-                Kamu dapat membuat sketsa ide rancangan kapan saja, lalu klik tombol **"Unduh Sketsa (PNG)"** di atas untuk menyimpannya sebagai portofolio belajar!
-              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+// Fungsi pembantu memperbarui informasi saat dropdown pertemuan diganti
+function updateSteamPertemuanInfo(ptmId) {
+    const ptmList = state.cachedData.pertemuan || [];
+    const ptm = ptmList.find(p => p.id_pertemuan === ptmId);
+
+    const descElem = document.getElementById('steam-pertemuan-deskripsi');
+    const badgeElem = document.getElementById('steam-canvas-badge-ptm');
+
+    if (ptm) {
+        if (descElem) descElem.textContent = ptm.deskripsi || 'Tidak ada deskripsi khusus.';
+        if (badgeElem) badgeElem.textContent = `Pertemuan ${ptm.nomor_pertemuan}`;
+    } else {
+        if (descElem) descElem.textContent = 'Pilih modul pertemuan di atas.';
+        if (badgeElem) badgeElem.textContent = 'Mode Bebas';
+    }
+}
+
+// Fungsi mengirim karya Ruang STEAM ke database guru
+async function submitSteamLabToTeacher() {
+    const ptmId = document.getElementById('steam-select-pertemuan')?.value;
+    if (!ptmId) {
+        showToast('warning', 'Pilih pertemuan target terlebih dahulu!');
+        return;
+    }
+
+    const title = document.getElementById('steam-note-title')?.value || 'Sketsa Eksperimen STEAM';
+    const sci = document.getElementById('steam-note-science')?.value || '';
+    const eng = document.getElementById('steam-note-engineering')?.value || '';
+
+    const canvas = document.getElementById('ruang-steam-canvas');
+    const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
+
+    const btn = document.getElementById('btn-submit-steam-lab');
+    setButtonLoading(btn, true, 'Mengirim...', '🚀 Kirim ke Guru');
+
+    const res = await apiPost({
+        action: 'submit_lkpd',
+        id_pertemuan: ptmId,
+        username_siswa: state.currentUser.username,
+        nama_siswa: state.currentUser.name,
+        kelas: state.currentUser.kelas,
+        jawaban_json: [
+            `[RUANG STEAM LAB] Judul: ${title}`,
+            `Science & Tech: ${sci}`,
+            `Engineering & Math: ${eng}`
+        ],
+        canvas_image_base64: canvasBase64
+    });
+
+    setButtonLoading(btn, false, '', '🚀 Kirim ke Guru');
+
+    if (res.success) {
+        await fetchAllInitialData(true);
+        showToast('success', 'Karya STEAM berhasil dikirim ke guru!');
+    } else {
+        Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
+    }
 }
 
 function renderMateriView(ptmId) {
@@ -1056,8 +1140,8 @@ function renderGuruKoreksiView(container) {
             </thead>
             <tbody class="divide-y divide-slate-100">
               ${subs.map(s => {
-                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 'Belum');
-                return `
+        const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 'Belum');
+        return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
                   <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
@@ -1099,10 +1183,10 @@ function renderGuruRekapView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>` : 
-                subs.map(s => {
-                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) 
-                    ? s.nilai_esai 
+              ${subs.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>` :
+            subs.map(s => {
+                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined)
+                    ? s.nilai_esai
                     : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
                 return `
                 <tr>
@@ -1132,8 +1216,8 @@ function exportRekapToCsv() {
     csvContent += "ID Submisi,Username,Nama Siswa,Kelas,Tipe Modul,Skor Otomatis,Nilai Esai,Nilai Akhir,Status,Waktu Submisi,Catatan Guru\n";
 
     subs.forEach(s => {
-        const finalScore = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) 
-            ? s.nilai_esai 
+        const finalScore = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined)
+            ? s.nilai_esai
             : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
 
         const row = [
@@ -1156,7 +1240,7 @@ function exportRekapToCsv() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Rekap_Nilai_ELKPD_STEAM_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", `Rekap_Nilai_ELKPD_STEAM_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1654,8 +1738,8 @@ async function handlePertemuanSubmit(e) {
     }
 }
 
-function openMateriModal() { 
-    populatePertemuanSelects(); 
+function openMateriModal() {
+    populatePertemuanSelects();
 
     document.getElementById('materi-form-id').value = '';
     document.getElementById('materi-form-pdf-id').value = '';
@@ -1665,8 +1749,8 @@ function openMateriModal() {
     const filePdf = document.getElementById('materi-form-file-pdf');
     if (filePdf) filePdf.value = '';
 
-    document.getElementById('materi-modal').classList.remove('hidden'); 
-    document.getElementById('materi-modal').classList.add('flex'); 
+    document.getElementById('materi-modal').classList.remove('hidden');
+    document.getElementById('materi-modal').classList.add('flex');
 }
 function closeMateriModal() { document.getElementById('materi-modal').classList.add('hidden'); document.getElementById('materi-modal').classList.remove('flex'); }
 
@@ -1734,8 +1818,8 @@ async function handleMateriSubmit(e) {
     }
 }
 
-function openLkpdModal() { 
-    populatePertemuanSelects(); 
+function openLkpdModal() {
+    populatePertemuanSelects();
 
     document.getElementById('lkpd-form-id').value = '';
     document.getElementById('lkpd-form-pdf-id').value = '';
@@ -1748,8 +1832,8 @@ function openLkpdModal() {
     const filePdf = document.getElementById('lkpd-form-file-pdf');
     if (filePdf) filePdf.value = '';
 
-    document.getElementById('lkpd-modal').classList.remove('hidden'); 
-    document.getElementById('lkpd-modal').classList.add('flex'); 
+    document.getElementById('lkpd-modal').classList.remove('hidden');
+    document.getElementById('lkpd-modal').classList.add('flex');
 }
 function closeLkpdModal() { document.getElementById('lkpd-modal').classList.add('hidden'); document.getElementById('lkpd-modal').classList.remove('flex'); }
 
@@ -1929,8 +2013,8 @@ async function handleGameSubmit(e) {
     }
 }
 
-function openSoalModal() { 
-    populatePertemuanSelects(); 
+function openSoalModal() {
+    populatePertemuanSelects();
 
     document.getElementById('soal-form-id').value = '';
     document.getElementById('soal-form-pertanyaan').value = '';
@@ -1940,8 +2024,8 @@ function openSoalModal() {
     document.getElementById('soal-form-opsi-d').value = '';
     document.getElementById('soal-form-kunci').value = 'A';
 
-    document.getElementById('soal-modal').classList.remove('hidden'); 
-    document.getElementById('soal-modal').classList.add('flex'); 
+    document.getElementById('soal-modal').classList.remove('hidden');
+    document.getElementById('soal-modal').classList.add('flex');
 }
 function closeSoalModal() { document.getElementById('soal-modal').classList.add('hidden'); document.getElementById('soal-modal').classList.remove('flex'); }
 
@@ -2169,7 +2253,7 @@ async function handleLoginSubmit(e) {
     if (res.success) {
         state.currentUser = res.user;
         closeLoginModal();
-        
+
         if (unElem) unElem.value = '';
         if (pwElem) pwElem.value = '';
 
@@ -2184,19 +2268,19 @@ async function handleLoginSubmit(e) {
     }
 }
 
-function openLoginModal() { 
+function openLoginModal() {
     const unElem = document.getElementById('login-username');
     const pwElem = document.getElementById('login-password');
     if (unElem) unElem.value = '';
     if (pwElem) pwElem.value = '';
 
-    document.getElementById('login-modal').classList.remove('hidden'); 
-    document.getElementById('login-modal').classList.add('flex'); 
+    document.getElementById('login-modal').classList.remove('hidden');
+    document.getElementById('login-modal').classList.add('flex');
 }
 
-function closeLoginModal() { 
-    document.getElementById('login-modal').classList.add('hidden'); 
-    document.getElementById('login-modal').classList.remove('flex'); 
+function closeLoginModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+    document.getElementById('login-modal').classList.remove('flex');
 }
 
 function logout() {

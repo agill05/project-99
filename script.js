@@ -1,5 +1,5 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V3.1 FULL COMPLETE ENGINE)
+   E-LKPD INTERAKTIF STEAM (V3.2 FULL COMPLETE ENGINE)
    ========================================================== */
 
 const GAS_API_URL =
@@ -153,39 +153,86 @@ async function apiPost(payload) {
   }
 }
 
-/* Helper Fetch PDF ArrayBuffer dengan Penanganan CORS Google Drive */
-async function fetchPdfArrayBuffer(pdfUrl) {
-  let driveFileId = '';
-  if (pdfUrl.includes('drive.google.com') || pdfUrl.includes('googleusercontent.com')) {
+/* Validasi Header Magic Bytes PDF (%PDF-) */
+function isValidPdfBuffer(buffer) {
+  if (!buffer || buffer.byteLength < 5) return false;
+  const uint8 = new Uint8Array(buffer);
+  // Header PDF selalu diawali byte 0x25 (% ), 0x50 (P), 0x44 (D), 0x46 (F)
+  return uint8[0] === 0x25 && uint8[1] === 0x50 && uint8[2] === 0x44 && uint8[3] === 0x46;
+}
+
+function base64ToArrayBuffer(base64) {
+  const binaryString = atob(base64.replace(/\s/g, ''));
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+/* Helper Fetch PDF ArrayBuffer dengan Pemulihan Otomatis */
+async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
+  if (!pdfUrl) throw new Error('URL PDF tidak valid atau kosong.');
+
+  if (pdfUrl.startsWith('data:application/pdf') || pdfUrl.startsWith('data:base64')) {
+    const base64Str = pdfUrl.split(',')[1] || pdfUrl;
+    const buf = base64ToArrayBuffer(base64Str);
+    if (isValidPdfBuffer(buf)) return buf;
+  }
+
+  let driveFileId = fileDriveId;
+  if (!driveFileId && (pdfUrl.includes('drive.google.com') || pdfUrl.includes('googleusercontent.com') || pdfUrl.includes('docs.google.com'))) {
     const match = pdfUrl.match(/\/d\/([^\/]+)/) || pdfUrl.match(/id=([^&]+)/);
     if (match && match[1]) driveFileId = match[1];
   }
 
+  // Strategi 1: Ambil Base64 langsung melalui API Apps Script Backend
   if (driveFileId) {
-    // Endpoint lh3.googleusercontent.com mendukung CORS penuh untuk PDF.js
-    const directUrl = `https://lh3.googleusercontent.com/d/${driveFileId}`;
     try {
-      const res = await fetch(directUrl);
-      if (res.ok) return await res.arrayBuffer();
-    } catch (e) {
-      console.warn('Metode direct fetch gagal, memproses via API GAS Base64...', e);
-    }
-
-    // Fallback jika direct fetch terhalang
-    const resData = await apiPost({ action: 'get_pdf_base64', fileId: driveFileId });
-    if (resData && resData.base64) {
-      const binaryString = atob(resData.base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      const resData = await apiPost({ action: 'get_pdf_base64', fileId: driveFileId });
+      if (resData && resData.base64) {
+        const buf = base64ToArrayBuffer(resData.base64);
+        if (isValidPdfBuffer(buf)) return buf;
       }
-      return bytes.buffer;
+    } catch (e) {
+      console.warn('API GAS Base64 fetch tidak merespons, mencoba proxy...', e);
     }
   }
 
-  const res = await fetch(pdfUrl);
-  if (!res.ok) throw new Error('Gagal mengambil berkas PDF dari server');
-  return await res.arrayBuffer();
+  // Strategi 2: Pengunduhan via Endpoint Proxy CORS
+  if (driveFileId) {
+    const proxyUrls = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + driveFileId)}`,
+      `https://corsproxy.io/?${encodeURIComponent('https://drive.google.com/uc?export=download&confirm=t&id=' + driveFileId)}`
+    ];
+
+    for (const pUrl of proxyUrls) {
+      try {
+        const res = await fetch(pUrl);
+        if (res.ok) {
+          const buf = await res.arrayBuffer();
+          if (isValidPdfBuffer(buf)) return buf;
+        }
+      } catch (e) {
+        console.warn('Proxy fetch gagal untuk URL:', pUrl, e);
+      }
+    }
+  }
+
+  // Strategi 3: Fetch Langsung ke URL Asli
+  try {
+    const res = await fetch(pdfUrl);
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      if (isValidPdfBuffer(buf)) return buf;
+      else throw new Error('Format berkas yang diterima bukan PDF valid (terdeteksi halaman HTML/Error Google Drive).');
+    }
+  } catch (e) {
+    throw new Error(e.message || 'Gagal mengambil berkas PDF.');
+  }
+
+  throw new Error('Gagal memuat PDF. Pastikan hak akses file di Google Drive diset ke "Siapa saja yang memiliki link" (Public).');
 }
 
 /* ==========================================================
@@ -2175,7 +2222,7 @@ function openModalPetakanFieldGuru(idLkpd) {
   modal.classList.add('flex');
 
   const container = document.getElementById('guru-editor-container');
-  openFieldMapEditorGuru(container, lkpdObj.file_pdf_url, lkpdObj.peta_field_json);
+  openFieldMapEditorGuru(container, lkpdObj.file_pdf_url, lkpdObj.peta_field_json, lkpdObj.file_drive_id);
 }
 
 function closeModalPetakanFieldGuru() {
@@ -2186,7 +2233,7 @@ function closeModalPetakanFieldGuru() {
   }
 }
 
-async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson) {
+async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson, fileDriveId = null) {
   try {
     fieldsByPageGuru = existingFieldMapJson ? JSON.parse(existingFieldMapJson).fields || {} : {};
   } catch (e) {
@@ -2198,7 +2245,7 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson)
   containerEl.innerHTML = `<div class="p-8 text-slate-500 font-bold text-xs text-center">Memuat PDF untuk pemetaan...</div>`;
 
   try {
-    const arrayBuffer = await fetchPdfArrayBuffer(pdfUrl);
+    const arrayBuffer = await fetchPdfArrayBuffer(pdfUrl, fileDriveId);
     currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     totalPagesGuru = currentPdfDocGuru.numPages;
 
@@ -2408,7 +2455,7 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
   try {
     const fieldMap = JSON.parse(lkpdObj.peta_field_json);
-    const arrayBuffer = await fetchPdfArrayBuffer(lkpdObj.file_pdf_url);
+    const arrayBuffer = await fetchPdfArrayBuffer(lkpdObj.file_pdf_url, lkpdObj.file_drive_id);
     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
     const jawabanRes = await apiPost({

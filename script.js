@@ -823,7 +823,6 @@ function renderSingleGameCard(g, gameIdx, ptmId) {
 
 function renderGameTypeBody(gameId, tipe, items, ptmId) {
     if (tipe === 'matching') {
-        // Mengacak urutan opsi jawaban di kolom kanan (sekali buat)
         let rightAnswers = state.gameStates[gameId]?.shuffledRight;
         if (!rightAnswers) {
             rightAnswers = items.map((item) => ({ text: item.kunci }))
@@ -833,20 +832,21 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         }
 
         return `
-      <div id="matching-container-${gameId}" class="relative select-none my-4 p-2">
+      <div id="matching-container-${gameId}" class="relative select-none my-4 p-2 touch-none">
         <!-- SVG Layer untuk Garis Interaktif -->
         <svg id="matching-svg-${gameId}" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
         
-        <div class="grid grid-cols-2 gap-8 sm:gap-16">
+        <div class="grid grid-cols-2 gap-6 sm:gap-16">
           <!-- Kolom Kiri: Pertanyaan -->
           <div class="space-y-4">
             <span class="font-black text-brand-navy block text-[11px] uppercase tracking-wider mb-2">Soal / Pertanyaan</span>
             ${items.map((item, leftIdx) => `
-              <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[56px] shadow-xs">
-                <span class="font-bold text-slate-800 text-xs">${leftIdx + 1}. ${item.soal}</span>
-                <div class="matching-dot left-dot absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-brand-blue text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition z-20"
+              <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[60px] shadow-xs">
+                <span class="font-bold text-slate-800 text-xs pr-2">${leftIdx + 1}. ${item.soal}</span>
+                <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
+                <div class="matching-dot left-dot absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-brand-blue text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
                      data-game-id="${gameId}" data-left-idx="${leftIdx}">
-                  <span class="w-2 h-2 rounded-full bg-white pointer-events-none"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-white pointer-events-none"></span>
                 </div>
               </div>
             `).join('')}
@@ -856,10 +856,11 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
           <div class="space-y-4">
             <span class="font-black text-purple-700 block text-[11px] uppercase tracking-wider mb-2">Pilihan Pasangan</span>
             ${rightAnswers.map((rightItem) => `
-              <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[56px] shadow-xs">
-                <div class="matching-dot right-dot absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition z-20"
-                    data-game-id="${gameId}" data-right-text="${rightItem.text}">
-                  <span class="w-2 h-2 rounded-full bg-white pointer-events-none"></span>
+              <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[60px] shadow-xs">
+                <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
+                <div class="matching-dot right-dot absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
+                     data-game-id="${gameId}" data-right-text="${rightItem.text}">
+                  <span class="w-2.5 h-2.5 rounded-full bg-white pointer-events-none"></span>
                 </div>
                 <span class="font-bold text-purple-950 text-xs pl-3">${rightItem.text}</span>
               </div>
@@ -1136,22 +1137,42 @@ function initPointerDragAndDropEngine() {
 /* ==========================================================
    SVG LINE CONNECTOR ENGINE (MATCHING GAME)
    ========================================================== */
+/* ==========================================================
+   SVG LINE CONNECTOR ENGINE (SUPPORT MOBILE DRAG + TAP)
+   ========================================================== */
+let activeSelectedLeftDot = null; // Menyimpan state titik kiri yang sedang di-tap
+
 function initMatchingLineEngine() {
     const leftDots = document.querySelectorAll('.matching-dot.left-dot');
+    const rightDots = document.querySelectorAll('.matching-dot.right-dot');
+
     leftDots.forEach(dot => {
         dot.removeEventListener('pointerdown', handleDotPointerDown);
         dot.addEventListener('pointerdown', handleDotPointerDown);
+    });
+
+    rightDots.forEach(dot => {
+        dot.removeEventListener('click', handleRightDotClick);
+        dot.addEventListener('click', handleRightDotClick);
     });
 
     window.removeEventListener('resize', redrawAllMatchingLines);
     window.addEventListener('resize', redrawAllMatchingLines);
 }
 
+// 1. Dukungan Mode Drag & Tap Titik Kiri
 function handleDotPointerDown(e) {
     e.preventDefault();
     const startDot = e.currentTarget;
     const gameId = startDot.getAttribute('data-game-id');
     const leftIdx = startDot.getAttribute('data-left-idx');
+
+    // Aktifkan mode Tap-to-Connect jika user mengetuk titik kiri
+    if (activeSelectedLeftDot && activeSelectedLeftDot !== startDot) {
+        activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
+    }
+    activeSelectedLeftDot = startDot;
+    startDot.classList.add('ring-4', 'ring-amber-400'); // Indikator visual titik terpilih
 
     const container = document.getElementById(`matching-container-${gameId}`);
     const svg = document.getElementById(`matching-svg-${gameId}`);
@@ -1163,11 +1184,10 @@ function handleDotPointerDown(e) {
     const x1 = dRect.left + dRect.width / 2 - cRect.left;
     const y1 = dRect.top + dRect.height / 2 - cRect.top;
 
-    // Hapus garis terdahulu untuk soal ini jika ada
+    // Hapus garis lama jika ada
     const existingLine = svg.querySelector(`line[data-left-idx="${leftIdx}"]`);
     if (existingLine) existingLine.remove();
 
-    // Buat element garis SVG baru
     const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     tempLine.setAttribute('x1', x1);
     tempLine.setAttribute('y1', y1);
@@ -1179,9 +1199,11 @@ function handleDotPointerDown(e) {
     tempLine.setAttribute('data-left-idx', leftIdx);
     svg.appendChild(tempLine);
 
+    let isDragging = false;
     startDot.setPointerCapture(e.pointerId);
 
     function onPointerMove(ev) {
+        isDragging = true;
         const curX = ev.clientX - cRect.left;
         const curY = ev.clientY - cRect.top;
         tempLine.setAttribute('x2', curX);
@@ -1192,34 +1214,68 @@ function handleDotPointerDown(e) {
         startDot.removeEventListener('pointermove', onPointerMove);
         startDot.removeEventListener('pointerup', onPointerUp);
 
-        // Deteksi elemen target di bawah penunjuk saat dilepas
+        if (!isDragging) {
+            // Jika hanya di-tap (bukan di-drag), biarkan garis sementara tetap ada menunggu tap titik kanan
+            return;
+        }
+
+        // Jika di-drag dan dilepas
         const targetElem = document.elementFromPoint(ev.clientX, ev.clientY);
         const targetDot = targetElem ? targetElem.closest('.matching-dot.right-dot') : null;
 
         if (targetDot && targetDot.getAttribute('data-game-id') === gameId) {
-            const rRect = targetDot.getBoundingClientRect();
-            const x2 = rRect.left + rRect.width / 2 - cRect.left;
-            const y2 = rRect.top + rRect.height / 2 - cRect.top;
-
-            tempLine.setAttribute('x2', x2);
-            tempLine.setAttribute('y2', y2);
-            tempLine.setAttribute('stroke', '#0D6EFD'); // Garis berubah jadi biru saat terhubung
-
-            const rightText = targetDot.getAttribute('data-right-text');
-
-            if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-            state.gameAnswers[gameId][leftIdx] = rightText;
+            connectDots(startDot, targetDot, tempLine, gameId, leftIdx);
         } else {
-            // Garis dibatalkan jika dilepas di luar titik target
             tempLine.remove();
-            if (state.gameAnswers[gameId]) {
-                delete state.gameAnswers[gameId][leftIdx];
-            }
+            if (state.gameAnswers[gameId]) delete state.gameAnswers[gameId][leftIdx];
         }
     }
 
     startDot.addEventListener('pointermove', onPointerMove);
     startDot.addEventListener('pointerup', onPointerUp);
+}
+
+// 2. Dukungan Mode Tap Titik Kanan
+function handleRightDotClick(e) {
+    if (!activeSelectedLeftDot) return;
+
+    const rightDot = e.currentTarget;
+    const gameId = rightDot.getAttribute('data-game-id');
+
+    if (activeSelectedLeftDot.getAttribute('data-game-id') !== gameId) return;
+
+    const leftIdx = activeSelectedLeftDot.getAttribute('data-left-idx');
+    const svg = document.getElementById(`matching-svg-${gameId}`);
+    const line = svg ? svg.querySelector(`line[data-left-idx="${leftIdx}"]`) : null;
+
+    if (line) {
+        connectDots(activeSelectedLeftDot, rightDot, line, gameId, leftIdx);
+    }
+}
+
+// Helper Menghubungkan 2 Titik & Mengunci Garis
+function connectDots(leftDot, rightDot, lineElem, gameId, leftIdx) {
+    const container = document.getElementById(`matching-container-${gameId}`);
+    if (!container) return;
+
+    const cRect = container.getBoundingClientRect();
+    const rRect = rightDot.getBoundingClientRect();
+
+    const x2 = rRect.left + rRect.width / 2 - cRect.left;
+    const y2 = rRect.top + rRect.height / 2 - cRect.top;
+
+    lineElem.setAttribute('x2', x2);
+    lineElem.setAttribute('y2', y2);
+    lineElem.setAttribute('stroke', '#0D6EFD'); // Warna biru aktif
+
+    const rightText = rightDot.getAttribute('data-right-text');
+    if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+    state.gameAnswers[gameId][leftIdx] = rightText;
+
+    if (activeSelectedLeftDot) {
+        activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
+        activeSelectedLeftDot = null;
+    }
 }
 
 function resetMatchingLines(gameId) {

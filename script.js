@@ -2198,7 +2198,7 @@ function openModalPetakanFieldGuru(idLkpd) {
         </div>
 
         <div class="flex-1 flex gap-4 overflow-hidden">
-          <div id="guru-editor-container" class="flex-1 bg-slate-200 rounded-2xl p-4 overflow-auto flex justify-center items-start border"></div>
+          <div id="guru-editor-container" class="flex-1 min-w-0 bg-slate-200 rounded-2xl p-4 overflow-auto flex justify-center items-start border"></div>
           <div class="w-64 bg-slate-50 border rounded-2xl p-3 flex flex-col space-y-2 overflow-y-auto text-xs shrink-0">
             <h4 class="font-black text-brand-navy border-b pb-1">Daftar Field Halaman Ini</h4>
             <div id="guru-field-list" class="space-y-2 flex-1"></div>
@@ -2248,6 +2248,17 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson,
     const arrayBuffer = await fetchPdfArrayBuffer(pdfUrl, fileDriveId);
     currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     totalPagesGuru = currentPdfDocGuru.numPages;
+
+    // FIX: PDF terpotong di sisi kanan. Penyebabnya BUKAN skala render saja,
+    // tapi juga container flex yang tidak bisa menyusut (sudah diperbaiki
+    // lewat class "min-w-0" di atas). Selain itu, skala render dihitung
+    // otomatis di sini supaya lebar halaman PDF selalu pas dengan lebar
+    // container yang tersedia -- tidak lagi mengandalkan skala tetap 1.5
+    // yang bisa lebih lebar daripada container di layar kecil.
+    const firstPage = await currentPdfDocGuru.getPage(1);
+    const naturalViewport = firstPage.getViewport({ scale: 1 });
+    const availableWidth = Math.max(containerEl.clientWidth - 32, 280); // dikurangi padding container (p-4 = 16px x2)
+    renderScaleGuru = Math.min(Math.max(availableWidth / naturalViewport.width, 0.4), 2.5);
 
     containerEl.innerHTML = `
       <div style="position:relative; display:inline-block;" class="shadow-lg border rounded-xl overflow-hidden bg-white">

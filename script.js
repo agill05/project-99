@@ -3,7 +3,7 @@
    ========================================================== */
 
 const GAS_API_URL =
-  'https://script.google.com/macros/s/AKfycbz0mcL7laxymXqroBwprHnlStiwwQ37SRw2b9Ztxcy6d9_6GHd_jUPcDRyxD1XwzSt73Q/exec';
+  'https://script.google.com/macros/s/AKfycbwjFqiLUAcrOlKnxCjIsLlYi9E1oWBSg42qx1-0vL3ntSOQN5CuT5pQ2AvcftjpjpF8fQ/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 const OCR_FALLBACK_MIN_CHARS = 40;
 

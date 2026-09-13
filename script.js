@@ -2395,6 +2395,31 @@ function toggleMateriFormTipe() {
 /* ==========================================================
    ENHANCED PDF UPLOAD & AUTOMATIC OCR TEXT / QUESTION PARSER
    ========================================================== */
+/* ==========================================================
+   CLIENT-SIDE PDF EXTRACTION ENGINE (PDF.JS) & UPLOAD
+   ========================================================== */
+
+// 1. Helper Pembaca Teks PDF Langsung di Browser
+async function extractTextFromPdfClientSide(file) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n\n';
+        }
+        return fullText.trim();
+    } catch (err) {
+        console.error('PDF.js Extraction Error:', err);
+        return '';
+    }
+}
+
+// 2. Handler Upload PDF & Auto Fill Form LKPD
 async function uploadPdfToDrive(targetModule = 'materi') {
     const isLkpd = targetModule === 'lkpd';
     const fileInput = document.getElementById(isLkpd ? 'lkpd-form-file-pdf' : 'materi-form-file-pdf');
@@ -2405,13 +2430,20 @@ async function uploadPdfToDrive(targetModule = 'materi') {
         return;
     }
 
-    setButtonLoading(btn, true, 'Unggah & OCR...', 'Unggah & Ekstrak Teks PDF');
+    const file = fileInput.files[0];
+    setButtonLoading(btn, true, 'Membaca Teks PDF...', 'Unggah & Ekstrak Teks PDF');
+
+    // Ekstrak teks secara instan di browser
+    let extractedText = await extractTextFromPdfClientSide(file);
+
+    // Proses pengunggahan berkas ke Google Drive
+    setButtonLoading(btn, true, 'Mengunggah ke Drive...', 'Unggah & Ekstrak Teks PDF');
     const reader = new FileReader();
     reader.onload = async function (e) {
         const res = await apiPost({ 
             action: 'upload_pdf', 
             base64Data: e.target.result, 
-            fileName: fileInput.files[0].name 
+            fileName: file.name 
         });
 
         setButtonLoading(btn, false, '', 'Unggah & Ekstrak Teks PDF');
@@ -2426,14 +2458,13 @@ async function uploadPdfToDrive(targetModule = 'materi') {
                 if (pdfUrlElem) pdfUrlElem.value = res.url;
                 if (pdfIdElem) pdfIdElem.value = res.fileId;
                 
-                let textLength = 0;
+                let textLength = extractedText ? extractedText.length : 0;
                 let questionCount = 0;
 
-                if (res.extractedText) {
-                    textLength = res.extractedText.length;
-                    if (isiTeksElem) isiTeksElem.value = res.extractedText;
+                if (extractedText) {
+                    if (isiTeksElem) isiTeksElem.value = extractedText;
                     
-                    const autoQuestions = parseQuestionsFromText(res.extractedText);
+                    const autoQuestions = parseQuestionsFromText(extractedText);
                     questionCount = autoQuestions.length;
                     
                     if (questionCount > 0 && soalTextElem) {
@@ -2443,15 +2474,15 @@ async function uploadPdfToDrive(targetModule = 'materi') {
 
                 Swal.fire({
                     icon: textLength > 0 ? 'success' : 'warning',
-                    title: textLength > 0 ? 'PDF & Ekstraksi Berhasil!' : 'PDF Terunggah (Teks Kosong)',
+                    title: textLength > 0 ? 'Ekstraksi PDF Berhasil!' : 'PDF Terunggah (Teks Kosong)',
                     html: `
                         <div class="text-xs text-left space-y-2 mt-2">
-                            <p class="font-bold text-slate-700">Status Pengunggahan Berkas PDF:</p>
+                            <p class="font-bold text-slate-700">Hasil Pemrosesan Berkas PDF:</p>
                             <div class="p-3 ${textLength > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl space-y-1">
                                 <p>📝 <b>Panjang Teks Ditampilkan:</b> ${textLength} Karakter</p>
                                 <p>❓ <b>Soal Terdeteksi:</b> ${questionCount} Pertanyaan</p>
                             </div>
-                            ${textLength === 0 ? '<p class="text-red-600 font-bold">Pastikan kamu sudah memperbarui izin appsscript.json dan Melakukan Deploy Ulang Web App!</p>' : '<p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini.</p>'}
+                            <p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini.</p>
                         </div>
                     `
                 });
@@ -2460,9 +2491,9 @@ async function uploadPdfToDrive(targetModule = 'materi') {
                 const pdfIdElem = document.getElementById('materi-form-pdf-id');
                 if (pdfUrlElem) pdfUrlElem.value = res.url;
                 if (pdfIdElem) pdfIdElem.value = res.fileId;
-                if (res.extractedText) {
+                if (extractedText) {
                     const teksElem = document.getElementById('materi-form-teks');
-                    if (teksElem) teksElem.value = res.extractedText;
+                    if (teksElem) teksElem.value = extractedText;
                 }
                 showToast('success', 'PDF Bahan Ajar Berhasil Diunggah!');
             }
@@ -2470,9 +2501,10 @@ async function uploadPdfToDrive(targetModule = 'materi') {
             Swal.fire({ icon: 'error', title: 'Gagal Unggah PDF', text: res.message });
         }
     };
-    reader.readAsDataURL(fileInput.files[0]);
+    reader.readAsDataURL(file);
 }
 
+// 3. Parser Pemisah Soal Fleksibel
 function parseQuestionsFromText(text) {
     if (!text) return [];
     
@@ -2481,15 +2513,13 @@ function parseQuestionsFromText(text) {
     const questions = [];
     let currentQ = "";
     
-    // Pattern untuk mendeteksi nomor soal, pertanyaan bertingkat, dan bagian LKPD
     const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+)\s*(.+)/i;
 
     lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
         
-        // Mengabaikan baris judul dokumen/header berulang
-        if (trimmed.includes('LEMBAR KERJA PESERTA DIDIK') || trimmed.includes('PERTEMUAN') || trimmed.includes('UNSUR STEAM')) {
+        if (trimmed.includes('LEMBAR KERJA PESERTA DIDIK') || trimmed.includes('UNSUR STEAM') || trimmed.includes('PETUNJUK PENGGUNAAN')) {
             return;
         }
 
@@ -2502,7 +2532,6 @@ function parseQuestionsFromText(text) {
     });
 
     if (currentQ) questions.push(currentQ.trim());
-
     return questions;
 }
 

@@ -1,5 +1,5 @@
 /* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V3.0 FULL COMPLETE ENGINE)
+   E-LKPD INTERAKTIF STEAM (V3.1 FULL COMPLETE ENGINE)
    ========================================================== */
 
 const GAS_API_URL =
@@ -459,11 +459,10 @@ async function switchView(viewId, paramId = null) {
         const overlayContainer = document.getElementById('siswa-lkpd-overlay-container');
         if (lkpdObj && lkpdObj.peta_field_json && overlayContainer) {
           renderLkpdUntukSiswa(overlayContainer, lkpdObj, paramId);
-        } else {
-          initCanvas();
-          const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
-          loadLkpdDraft(paramId, qCount);
         }
+        initCanvas();
+        const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
+        loadLkpdDraft(paramId, qCount);
       }, 150);
       break;
 
@@ -808,7 +807,7 @@ function renderLkpdView(ptmId) {
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
 
-      <!-- PDF Interaktif Overlay (Jika Dipetakan) -->
+      <!-- PDF Interaktif Overlay (Jika Dipetakan Guru) -->
       ${
         hasPdfOverlay
           ? `
@@ -2175,7 +2174,7 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson)
   try {
     const res = await fetch(directPdfUrl);
     if (!res.ok) throw new Error('Gagal mengunduh file PDF dari server');
-    
+
     const arrayBuffer = await res.arrayBuffer();
     currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     totalPagesGuru = currentPdfDocGuru.numPages;
@@ -2397,7 +2396,7 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
     const fieldMap = JSON.parse(lkpdObj.peta_field_json);
     const pdfRes = await fetch(directPdfUrl);
     if (!pdfRes.ok) throw new Error('Gagal mengambil berkas PDF');
-    
+
     const arrayBuffer = await pdfRes.arrayBuffer();
     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
@@ -2482,7 +2481,7 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
   });
 
   const btn = document.getElementById('btn-simpan-jawaban-lkpd');
-  setButtonLoading(btn, true, '🚀 Mengirim...', '💾 Simpan Jawaban LKPD');
+  setButtonLoading(btn, true, '🚀 Mengirim...', '💾 Simpan Jawaban LKPD Overlay');
 
   const res = await apiPost({
     action: 'submit_lkpd_isian',
@@ -2494,10 +2493,10 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
     jawaban_json: JSON.stringify(jawaban)
   });
 
-  setButtonLoading(btn, false, '', '💾 Simpan Jawaban LKPD');
+  setButtonLoading(btn, false, '', '💾 Simpan Jawaban LKPD Overlay');
 
   if (res.success) {
-    showToast('success', 'Jawaban LKPD tersimpan!');
+    showToast('success', 'Jawaban LKPD Overlay tersimpan!');
   } else {
     Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Jawaban', text: res.message });
   }
@@ -2742,7 +2741,7 @@ async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
   const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
 
   const btn = document.getElementById('btn-submit-lkpd-siswa');
-  setButtonLoading(btn, true, '🚀 Mengirim LKPD...', '🚀 Kirim Jawaban LKPD');
+  setButtonLoading(btn, true, '🚀 Mengirim LKPD...', '🚀 Kirim Jawaban LKPD Manual & Kanvas');
 
   const res = await apiPost({
     action: 'submit_lkpd',
@@ -2755,7 +2754,7 @@ async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
     canvas_image_base64: canvasBase64
   });
 
-  setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD');
+  setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD Manual & Kanvas');
   if (res.success) {
     clearLkpdDraft(ptmId);
     await fetchAllInitialData(true);

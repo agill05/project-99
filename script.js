@@ -2487,14 +2487,26 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
     const pagesWrap = document.getElementById('siswa-lkpd-pages');
 
+    // FIX MOBILE: dulu selalu pakai fieldMap.renderScale (skala layar Guru
+    // saat memetakan, biasanya desktop) -- di HP jadi kepotong karena lebih
+    // lebar dari layar. Sekarang skala dihitung ulang dari lebar container
+    // yang BENAR-BENAR tersedia di perangkat siswa saat ini. Ini AMAN karena
+    // posisi field disimpan dalam persen (%), bukan pixel, jadi tidak
+    // bergantung pada skala render berapa pun dipakai.
+    const firstPageForScale = await pdfDoc.getPage(1);
+    const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
+    const availableWidth = Math.max(containerEl.clientWidth - 24, 260); // dikurangi padding container (p-3)
+    const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
+
     for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
       const page = await pdfDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: fieldMap.renderScale || 1.5 });
+      const viewport = page.getViewport({ scale: responsiveScale });
 
       const pageWrap = document.createElement('div');
       pageWrap.style.position = 'relative';
       pageWrap.style.width = viewport.width + 'px';
       pageWrap.style.height = viewport.height + 'px';
+      pageWrap.style.maxWidth = '100%';
       pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
 
       const canvas = document.createElement('canvas');
@@ -3967,12 +3979,24 @@ function openKoreksiModal(idSub) {
 
   if (sub.tipe_sub === 'lkpd' || sub.tipe_sub === 'lkpd_isian') {
     if (typeof parsedJawaban === 'object' && parsedJawaban !== null && !Array.isArray(parsedJawaban)) {
-      jawabanHtml = Object.keys(parsedJawaban)
+      // Untuk pemeriksaan Guru, key teknis seperti "field_1"/"field_2" tidak
+      // relevan ditampilkan -- Guru cukup lihat isian ke berapa & jawabannya.
+      // Diurutkan berdasarkan nomor field-nya (bukan urutan abjad string,
+      // supaya field_2 tetap tampil sebelum field_10).
+      const entries = Object.keys(parsedJawaban).map((key) => {
+        const numMatch = String(key).match(/(\d+)/);
+        return { key, num: numMatch ? parseInt(numMatch[1], 10) : 0, value: parsedJawaban[key] };
+      });
+      entries.sort((a, b) => a.num - b.num);
+
+      jawabanHtml = entries
         .map(
-          (key) => `
-            <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center">
-              <span class="font-bold text-slate-600">${key}:</span>
-              <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${parsedJawaban[key]}</span>
+          (entry, idx) => `
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center gap-3">
+              <span class="font-bold text-slate-600 shrink-0">Isian #${idx + 1}:</span>
+              <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-right break-words">${
+                entry.value || '<i class="text-slate-400 font-normal">(Tidak diisi)</i>'
+              }</span>
             </div>
           `
         )

@@ -157,7 +157,6 @@ async function apiPost(payload) {
 function isValidPdfBuffer(buffer) {
   if (!buffer || buffer.byteLength < 5) return false;
   const uint8 = new Uint8Array(buffer);
-  // Header PDF selalu diawali byte 0x25 (% ), 0x50 (P), 0x44 (D), 0x46 (F)
   return uint8[0] === 0x25 && uint8[1] === 0x50 && uint8[2] === 0x44 && uint8[3] === 0x46;
 }
 
@@ -2149,7 +2148,7 @@ let canvasUndoStack = [];
 let currentPdfDocGuru = null;
 let currentPageGuru = 1;
 let totalPagesGuru = 1;
-let fieldsByPageGuru = {}; // { [halaman]: [{id,type,x,y,w,h}] }
+let fieldsByPageGuru = {}; // { [halaman]: [{id,label,type,x,y,w,h}] }
 let fieldCounterGuru = 1;
 let renderScaleGuru = 1.5;
 
@@ -2190,7 +2189,7 @@ function openModalPetakanFieldGuru(idLkpd) {
             <button onclick="changeGuruPage(1)" class="px-3 py-1 bg-white border font-bold rounded-xl hover:bg-slate-200 transition">Next ▶</button>
           </div>
           <div class="text-[11px] text-slate-500 font-medium hidden sm:block">
-            💡 <b>Tips:</b> Klik dan tahan (drag) mouse di atas gambar PDF untuk membuat kotak isian baru.
+            💡 <b>Tips:</b> Klik dan tahan (drag) mouse di atas gambar PDF untuk membuat kotak isian baru & berikan label pada panel kanan.
           </div>
           <button id="btn-save-field-map-guru" class="px-4 py-2 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-700 transition">
             💾 Simpan Peta Field
@@ -2239,7 +2238,23 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson,
   } catch (e) {
     fieldsByPageGuru = {};
   }
-  fieldCounterGuru = 1;
+
+  // Hitung angka urutan tertinggi untuk penamaan default field baru
+  let maxNum = 0;
+  Object.values(fieldsByPageGuru).forEach((pageFields) => {
+    if (Array.isArray(pageFields)) {
+      pageFields.forEach((f) => {
+        if (f.id) {
+          const match = String(f.id).match(/(\d+)/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+    }
+  });
+  fieldCounterGuru = maxNum + 1;
   currentPageGuru = 1;
 
   containerEl.innerHTML = `<div class="p-8 text-slate-500 font-bold text-xs text-center">Memuat PDF untuk pemetaan...</div>`;
@@ -2249,15 +2264,9 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson,
     currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     totalPagesGuru = currentPdfDocGuru.numPages;
 
-    // FIX: PDF terpotong di sisi kanan. Penyebabnya BUKAN skala render saja,
-    // tapi juga container flex yang tidak bisa menyusut (sudah diperbaiki
-    // lewat class "min-w-0" di atas). Selain itu, skala render dihitung
-    // otomatis di sini supaya lebar halaman PDF selalu pas dengan lebar
-    // container yang tersedia -- tidak lagi mengandalkan skala tetap 1.5
-    // yang bisa lebih lebar daripada container di layar kecil.
     const firstPage = await currentPdfDocGuru.getPage(1);
     const naturalViewport = firstPage.getViewport({ scale: 1 });
-    const availableWidth = Math.max(containerEl.clientWidth - 32, 280); // dikurangi padding container (p-4 = 16px x2)
+    const availableWidth = Math.max(containerEl.clientWidth - 32, 280);
     renderScaleGuru = Math.min(Math.max(availableWidth / naturalViewport.width, 0.4), 2.5);
 
     containerEl.innerHTML = `
@@ -2351,8 +2360,13 @@ function attachGuruDrawHandlers() {
 
     if (w < 15 || h < 10) return;
 
+    const newId = 'field_' + fieldCounterGuru;
+    const newLabel = 'Field ' + fieldCounterGuru;
+    fieldCounterGuru++;
+
     fieldsByPageGuru[currentPageGuru].push({
-      id: 'field_' + fieldCounterGuru++,
+      id: newId,
+      label: newLabel,
       type: 'text',
       x: (x / rect.width) * 100,
       y: (y / rect.height) * 100,
@@ -2379,9 +2393,32 @@ function redrawGuruFieldBoxes() {
       width: f.w + '%',
       height: f.h + '%',
       border: '2px dashed #2563eb',
-      background: 'rgba(37,99,235,0.12)'
+      background: 'rgba(37,99,235,0.12)',
+      boxSizing: 'border-box'
     });
-    box.title = `${f.id} (${f.type})`;
+    box.title = `${f.label || f.id} (${f.type})`;
+
+    // Label Badge Visual Tepat di Atas Kotak Overlay
+    const labelBadge = document.createElement('div');
+    labelBadge.className = 'guru-field-badge';
+    labelBadge.textContent = f.label || f.id;
+    Object.assign(labelBadge.style, {
+      position: 'absolute',
+      top: '-20px',
+      left: '0px',
+      background: '#2563eb',
+      color: '#ffffff',
+      fontSize: '10px',
+      fontWeight: 'bold',
+      padding: '1px 5px',
+      borderRadius: '4px',
+      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
+      zIndex: '10',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+    });
+    box.appendChild(labelBadge);
+
     overlay.appendChild(box);
   });
 
@@ -2401,22 +2438,36 @@ function renderGuruFieldListPanel() {
 
   currentFields.forEach((f) => {
     const item = document.createElement('div');
-    item.className = 'p-2 bg-white rounded-xl border space-y-1 shadow-2xs';
+    item.className = 'p-2 bg-white rounded-xl border space-y-1.5 shadow-2xs';
     item.innerHTML = `
       <div class="flex items-center justify-between">
-        <span class="font-bold text-slate-800 text-[11px]">${f.id}</span>
+        <span class="font-bold text-slate-800 text-[11px] font-mono">${f.id}</span>
         <button onclick="deleteGuruField('${f.id}')" class="text-red-500 font-bold text-[10px] hover:underline">Hapus</button>
       </div>
-      <div class="flex items-center gap-1">
-        <label class="text-[10px] text-slate-500 font-medium">Tipe:</label>
-        <select onchange="changeGuruFieldType('${f.id}', this.value)" class="p-1 text-[10px] border rounded-lg font-bold bg-slate-50">
-          <option value="text" ${f.type === 'text' ? 'selected' : ''}>Input Teks Singkat</option>
-          <option value="textarea" ${f.type === 'textarea' ? 'selected' : ''}>Textarea Paragraf</option>
-        </select>
+      <div class="space-y-1">
+        <div class="flex items-center gap-1">
+          <label class="text-[10px] text-slate-500 font-medium shrink-0 w-10">Label:</label>
+          <input type="text" value="${(f.label || f.id).replace(/"/g, '&quot;')}" onchange="changeGuruFieldLabel('${f.id}', this.value)" placeholder="Label field..." class="w-full p-1 text-[10px] border rounded-lg font-bold bg-slate-50 text-brand-navy" />
+        </div>
+        <div class="flex items-center gap-1">
+          <label class="text-[10px] text-slate-500 font-medium shrink-0 w-10">Tipe:</label>
+          <select onchange="changeGuruFieldType('${f.id}', this.value)" class="w-full p-1 text-[10px] border rounded-lg font-bold bg-slate-50">
+            <option value="text" ${f.type === 'text' ? 'selected' : ''}>Input Teks Singkat</option>
+            <option value="textarea" ${f.type === 'textarea' ? 'selected' : ''}>Textarea Paragraf</option>
+          </select>
+        </div>
       </div>
     `;
     listContainer.appendChild(item);
   });
+}
+
+function changeGuruFieldLabel(fieldId, newLabel) {
+  const f = (fieldsByPageGuru[currentPageGuru] || []).find((x) => x.id === fieldId);
+  if (f) {
+    f.label = newLabel.trim() || fieldId;
+    redrawGuruFieldBoxes();
+  }
 }
 
 function changeGuruFieldType(fieldId, newType) {
@@ -2487,15 +2538,9 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
     const pagesWrap = document.getElementById('siswa-lkpd-pages');
 
-    // FIX MOBILE: dulu selalu pakai fieldMap.renderScale (skala layar Guru
-    // saat memetakan, biasanya desktop) -- di HP jadi kepotong karena lebih
-    // lebar dari layar. Sekarang skala dihitung ulang dari lebar container
-    // yang BENAR-BENAR tersedia di perangkat siswa saat ini. Ini AMAN karena
-    // posisi field disimpan dalam persen (%), bukan pixel, jadi tidak
-    // bergantung pada skala render berapa pun dipakai.
     const firstPageForScale = await pdfDoc.getPage(1);
     const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
-    const availableWidth = Math.max(containerEl.clientWidth - 24, 260); // dikurangi padding container (p-3)
+    const availableWidth = Math.max(containerEl.clientWidth - 24, 260);
     const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
 
     for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
@@ -2521,6 +2566,8 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
         if (f.type !== 'textarea') el.type = 'text';
         el.className = 'lkpd-fill-input';
         el.dataset.fieldId = f.id;
+        el.placeholder = f.label || f.id;
+        el.title = f.label || f.id;
         el.value = savedAnswers[f.id] || '';
         Object.assign(el.style, {
           position: 'absolute',
@@ -3979,10 +4026,23 @@ function openKoreksiModal(idSub) {
 
   if (sub.tipe_sub === 'lkpd' || sub.tipe_sub === 'lkpd_isian') {
     if (typeof parsedJawaban === 'object' && parsedJawaban !== null && !Array.isArray(parsedJawaban)) {
-      // Untuk pemeriksaan Guru, key teknis seperti "field_1"/"field_2" tidak
-      // relevan ditampilkan -- Guru cukup lihat isian ke berapa & jawabannya.
-      // Diurutkan berdasarkan nomor field-nya (bukan urutan abjad string,
-      // supaya field_2 tetap tampil sebelum field_10).
+      let fieldLabels = {};
+      const lkpdObj = (state.cachedData.lkpd || []).find((l) => String(l.id_lkpd) === String(sub.id_game));
+      if (lkpdObj && lkpdObj.peta_field_json) {
+        try {
+          const pMap = typeof lkpdObj.peta_field_json === 'string' ? JSON.parse(lkpdObj.peta_field_json) : lkpdObj.peta_field_json;
+          if (pMap && pMap.fields) {
+            Object.values(pMap.fields).forEach((pageFields) => {
+              if (Array.isArray(pageFields)) {
+                pageFields.forEach((f) => {
+                  if (f.id) fieldLabels[f.id] = f.label || f.id;
+                });
+              }
+            });
+          }
+        } catch (e) {}
+      }
+
       const entries = Object.keys(parsedJawaban).map((key) => {
         const numMatch = String(key).match(/(\d+)/);
         return { key, num: numMatch ? parseInt(numMatch[1], 10) : 0, value: parsedJawaban[key] };
@@ -3993,7 +4053,7 @@ function openKoreksiModal(idSub) {
         .map(
           (entry, idx) => `
             <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center gap-3">
-              <span class="font-bold text-slate-600 shrink-0">Isian #${idx + 1}:</span>
+              <span class="font-bold text-slate-600 shrink-0">${fieldLabels[entry.key] || entry.key || `Isian #${idx + 1}`}:</span>
               <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-right break-words">${
                 entry.value || '<i class="text-slate-400 font-normal">(Tidak diisi)</i>'
               }</span>

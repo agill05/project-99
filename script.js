@@ -784,34 +784,6 @@ function renderLkpdView(ptmId) {
   const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
   if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
 
-  // Jika LKPD sudah dipetakan kotaknya oleh guru (Form PDF Interaktif Overlay)
-  if (lkpdObj.peta_field_json && lkpdObj.file_pdf_url) {
-    return `
-      <div class="max-w-4xl mx-auto space-y-4 text-xs">
-        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
-          <div class="flex items-center justify-between border-b pb-2">
-            <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
-            <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
-              📄 Form PDF Interaktif Overlay
-            </span>
-          </div>
-          <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
-        </div>
-
-        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b pb-2">
-            <h4 class="font-black text-brand-navy">✍️ Form Jawaban PDF Interaktif</h4>
-            <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
-              Ketik jawaban di atas kotak dokumen PDF
-            </span>
-          </div>
-          <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
-        </div>
-      </div>
-    `;
-  }
-
-  // Tampilan LKPD Berbasis Teks / Soal Standar
   let questions = [];
   try {
     questions = typeof lkpdObj.soal_json === 'string' ? JSON.parse(lkpdObj.soal_json) : lkpdObj.soal_json || [];
@@ -821,19 +793,39 @@ function renderLkpdView(ptmId) {
 
   const questionCount = Math.max(questions.length, 1);
   const isiTeks = lkpdObj.isi_teks || '';
+  const hasPdfOverlay = Boolean(lkpdObj.peta_field_json && lkpdObj.file_pdf_url);
 
   return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
+      <!-- Informasi LKPD -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b pb-2">
           <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
-          <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
-            ✨ Modul Interaktif Web
+          <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+            ${hasPdfOverlay ? '📄 Form PDF Interaktif Overlay' : '✨ Modul Interaktif Web'}
           </span>
         </div>
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
 
+      <!-- PDF Interaktif Overlay (Jika Dipetakan) -->
+      ${
+        hasPdfOverlay
+          ? `
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h4 class="font-black text-brand-navy">✍️ Form Isian PDF Interaktif</h4>
+            <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
+              Ketik jawaban langsung di atas dokumen PDF
+            </span>
+          </div>
+          <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
+        </div>
+      `
+          : ''
+      }
+
+      <!-- Material Teks LKPD (Jika Ada) -->
       ${
         isiTeks
           ? `
@@ -849,6 +841,7 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
+      <!-- Visual Gambar (Jika Ada) -->
       ${
         lkpdObj.gambar_url
           ? `
@@ -860,9 +853,10 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
+      <!-- Form Jawaban Manual / Teks -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b pb-2">
-          <h4 class="font-black text-brand-navy">✍️ Form Jawaban & Pertanyaan LKPD</h4>
+          <h4 class="font-black text-brand-navy">✍️ Form Jawaban Teks / Manual LKPD</h4>
           <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
             💾 Auto-Save Draft Aktif
           </span>
@@ -889,8 +883,9 @@ function renderLkpdView(ptmId) {
         }
       </div>
 
+      <!-- Kanvas Prototyping STEAM (Jika Diberdayakan) -->
       ${
-        lkpdObj.fitur_kanvas === 'TRUE'
+        lkpdObj.fitur_kanvas === 'TRUE' || lkpdObj.fitur_kanvas === true
           ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
           <h4 class="font-black text-brand-navy border-b pb-2">🎨 Kanvas Prototyping STEAM</h4>
@@ -914,8 +909,9 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
+      <!-- Tombol Kirim Jawaban Manual -->
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
-        🚀 Kirim Jawaban LKPD
+        🚀 Kirim Jawaban LKPD Manual & Kanvas
       </button>
     </div>
   `;
@@ -2165,22 +2161,44 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson)
   fieldCounterGuru = 1;
   currentPageGuru = 1;
 
-  containerEl.innerHTML = `<div class="p-8 text-slate-500 font-bold text-xs">Memuat PDF untuk pemetaan...</div>`;
+  containerEl.innerHTML = `<div class="p-8 text-slate-500 font-bold text-xs text-center">Memuat PDF untuk pemetaan...</div>`;
 
-  const res = await fetch(pdfUrl);
-  const arrayBuffer = await res.arrayBuffer();
-  currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  totalPagesGuru = currentPdfDocGuru.numPages;
+  // Ubah URL Google Drive preview/view menjadi link direct download agar tidak diblokir CORS/PDF.js
+  let directPdfUrl = pdfUrl;
+  if (pdfUrl.includes('drive.google.com')) {
+    const match = pdfUrl.match(/\/d\/([^\/]+)/);
+    if (match && match[1]) {
+      directPdfUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+  }
 
-  containerEl.innerHTML = `
-    <div style="position:relative; display:inline-block;" class="shadow-lg border rounded-xl overflow-hidden bg-white">
-      <canvas id="guru-pdf-canvas"></canvas>
-      <div id="guru-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:crosshair;"></div>
-    </div>
-  `;
+  try {
+    const res = await fetch(directPdfUrl);
+    if (!res.ok) throw new Error('Gagal mengunduh file PDF dari server');
+    
+    const arrayBuffer = await res.arrayBuffer();
+    currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    totalPagesGuru = currentPdfDocGuru.numPages;
 
-  await renderGuruPage();
-  attachGuruDrawHandlers();
+    containerEl.innerHTML = `
+      <div style="position:relative; display:inline-block;" class="shadow-lg border rounded-xl overflow-hidden bg-white">
+        <canvas id="guru-pdf-canvas"></canvas>
+        <div id="guru-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:crosshair;"></div>
+      </div>
+    `;
+
+    await renderGuruPage();
+    attachGuruDrawHandlers();
+  } catch (err) {
+    console.error('Error loading PDF:', err);
+    containerEl.innerHTML = `
+      <div class="p-8 text-red-500 font-bold text-xs text-center space-y-2">
+        <p>⚠️ Gagal memuat PDF untuk pemetaan.</p>
+        <p class="font-mono text-[10px] text-slate-500">${err.message}</p>
+        <p class="text-[11px] text-slate-600 font-normal">Pastikan hak akses berkas PDF di Google Drive sudah diatur ke <b>"Siapa saja yang memiliki link" (Public)</b>.</p>
+      </div>
+    `;
+  }
 }
 
 async function renderGuruPage() {
@@ -2366,73 +2384,89 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
   containerEl.innerHTML = `<div class="p-4 text-center text-slate-500 font-bold text-xs">Memuat Lembar Isian LKPD...</div>`;
 
-  const fieldMap = JSON.parse(lkpdObj.peta_field_json);
-  const pdfRes = await fetch(lkpdObj.file_pdf_url);
-  const arrayBuffer = await pdfRes.arrayBuffer();
-  const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  const jawabanRes = await apiPost({
-    action: 'get_jawaban_lkpd_isian',
-    id_lkpd: lkpdObj.id_lkpd,
-    username_siswa: user.username
-  });
-  const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
-
-  containerEl.innerHTML = `
-    <div class="space-y-4">
-      <div id="siswa-lkpd-pages" class="space-y-4"></div>
-      <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
-        💾 Simpan Jawaban LKPD
-      </button>
-    </div>
-  `;
-
-  const pagesWrap = document.getElementById('siswa-lkpd-pages');
-
-  for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
-    const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: fieldMap.renderScale || 1.5 });
-
-    const pageWrap = document.createElement('div');
-    pageWrap.style.position = 'relative';
-    pageWrap.style.width = viewport.width + 'px';
-    pageWrap.style.height = viewport.height + 'px';
-    pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
-
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    pageWrap.appendChild(canvas);
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-    const fields = fieldMap.fields[pageNum] || [];
-    fields.forEach((f) => {
-      const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
-      if (f.type !== 'textarea') el.type = 'text';
-      el.className = 'lkpd-fill-input';
-      el.dataset.fieldId = f.id;
-      el.value = savedAnswers[f.id] || '';
-      Object.assign(el.style, {
-        position: 'absolute',
-        left: f.x + '%',
-        top: f.y + '%',
-        width: f.w + '%',
-        height: f.h + '%',
-        border: '1.5px solid #2563eb',
-        background: 'rgba(255, 255, 255, 0.85)',
-        fontFamily: 'inherit',
-        fontSize: '12px',
-        padding: '3px 6px',
-        borderRadius: '6px',
-        boxSizing: 'border-box'
-      });
-      pageWrap.appendChild(el);
-    });
-
-    pagesWrap.appendChild(pageWrap);
+  // Ubah URL Google Drive preview/view menjadi link direct download
+  let directPdfUrl = lkpdObj.file_pdf_url;
+  if (directPdfUrl.includes('drive.google.com')) {
+    const match = directPdfUrl.match(/\/d\/([^\/]+)/);
+    if (match && match[1]) {
+      directPdfUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
   }
 
-  document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, lkpdObj.id_lkpd);
+  try {
+    const fieldMap = JSON.parse(lkpdObj.peta_field_json);
+    const pdfRes = await fetch(directPdfUrl);
+    if (!pdfRes.ok) throw new Error('Gagal mengambil berkas PDF');
+    
+    const arrayBuffer = await pdfRes.arrayBuffer();
+    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    const jawabanRes = await apiPost({
+      action: 'get_jawaban_lkpd_isian',
+      id_lkpd: lkpdObj.id_lkpd,
+      username_siswa: user.username
+    });
+    const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
+
+    containerEl.innerHTML = `
+      <div class="space-y-4">
+        <div id="siswa-lkpd-pages" class="space-y-4"></div>
+        <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
+          💾 Simpan Jawaban LKPD Overlay
+        </button>
+      </div>
+    `;
+
+    const pagesWrap = document.getElementById('siswa-lkpd-pages');
+
+    for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: fieldMap.renderScale || 1.5 });
+
+      const pageWrap = document.createElement('div');
+      pageWrap.style.position = 'relative';
+      pageWrap.style.width = viewport.width + 'px';
+      pageWrap.style.height = viewport.height + 'px';
+      pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      pageWrap.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+      const fields = fieldMap.fields[pageNum] || [];
+      fields.forEach((f) => {
+        const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
+        if (f.type !== 'textarea') el.type = 'text';
+        el.className = 'lkpd-fill-input';
+        el.dataset.fieldId = f.id;
+        el.value = savedAnswers[f.id] || '';
+        Object.assign(el.style, {
+          position: 'absolute',
+          left: f.x + '%',
+          top: f.y + '%',
+          width: f.w + '%',
+          height: f.h + '%',
+          border: '1.5px solid #2563eb',
+          background: 'rgba(255, 255, 255, 0.85)',
+          fontFamily: 'inherit',
+          fontSize: '12px',
+          padding: '3px 6px',
+          borderRadius: '6px',
+          boxSizing: 'border-box'
+        });
+        pageWrap.appendChild(el);
+      });
+
+      pagesWrap.appendChild(pageWrap);
+    }
+
+    document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, lkpdObj.id_lkpd);
+  } catch (err) {
+    console.error('Error rendering student PDF overlay:', err);
+    containerEl.innerHTML = `<div class="p-4 text-center text-red-500 font-bold text-xs">Gagal memuat PDF Interaktif (${err.message})</div>`;
+  }
 }
 
 async function submitJawabanLkpdIsian(ptmId, idLkpd) {

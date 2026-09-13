@@ -394,15 +394,15 @@
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tipe LKPD</label>
             <select id="lkpd-form-tipe" onchange="toggleLkpdFormTipe()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+              <option value="pdf_interaktif">📄 Upload PDF (Ekstraksi Teks Interaktif)</option>
               <option value="manual">📝 Form Pertanyaan Manual</option>
-              <option value="pdf">📄 Dokumen PDF LKPD</option>
             </select>
           </div>
         </div>
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">Judul LKPD</label>
-          <input type="text" id="lkpd-form-judul" autocomplete="off" required placeholder="Contoh: LKPD 1: Identifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          <input type="text" id="lkpd-form-judul" autocomplete="off" required placeholder="Contoh: LKPD 1: Identifikasi Masalah STEAM" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
         </div>
 
         <div>
@@ -410,25 +410,30 @@
           <textarea id="lkpd-form-instruksi" rows="2" placeholder="Petunjuk pengerjaan untuk siswa..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
         </div>
 
-        <!-- Section PDF LKPD -->
-        <div id="container-lkpd-pdf" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
-          <label class="block font-bold text-brand-navy">📄 Unggah File PDF LKPD ke Google Drive</label>
+        <!-- Section Upload PDF & OCR Extractor -->
+        <div id="container-lkpd-pdf" class="p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
+          <label class="block font-bold text-brand-navy">📄 Unggah PDF LKPD & Ekstrak Teks Pembelajaran</label>
           <input type="file" id="lkpd-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
           <button type="button" id="btn-upload-pdf-lkpd" onclick="uploadPdfToDrive('lkpd')" class="w-full py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow">
-            📤 Unggah PDF LKPD ke Drive
+            📤 Unggah & Ekstrak Teks PDF
           </button>
-          <input type="text" id="lkpd-form-pdf-url" readonly placeholder="URL Preview PDF..." class="w-full p-2 rounded-xl border bg-slate-100 font-mono text-[10px] text-slate-600" />
+          <input type="hidden" id="lkpd-form-pdf-url" />
         </div>
 
-        <!-- Section Manual LKPD Gambar & Soal -->
-        <div id="container-lkpd-manual" class="space-y-3">
+        <!-- Section Konten Teks & Preview Soal Interaktif -->
+        <div class="space-y-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">URL Gambar Ilustrasi / Visual LKPD (Opsional)</label>
+            <label class="block font-bold text-slate-700 mb-1">Konten / Teks Utama LKPD (Hasil Ekstraksi/Teks)</label>
+            <textarea id="lkpd-form-isi-teks" rows="4" placeholder="Konten bacaan LKPD, narasi fenomena sains, atau teks dari PDF..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">URL Gambar Ilustrasi LKPD (Opsional)</label>
             <input type="url" id="lkpd-form-gambar-url" autocomplete="off" placeholder="https://example.com/gambar-soal.png" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-[11px]" />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Soal-Soal Pertanyaan Esai (Pisahkan dengan baris baru Enter)</label>
+            <label class="block font-bold text-slate-700 mb-1">Pertanyaan Esai (Pisahkan dengan baris baru Enter)</label>
             <textarea id="lkpd-form-soal-text" rows="4" placeholder="Pertanyaan 1&#10;Pertanyaan 2&#10;Pertanyaan 3" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
           </div>
         </div>
@@ -470,7 +475,7 @@
             <label class="block font-bold text-slate-700 mb-1">Tipe Game Interaktif</label>
             <select id="game-form-tipe" onchange="renderGameConfigInputs()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-purple-600">
               <option value="matching">🧩 Pasangkan Pasangan (Matching)</option>
-              <option value="drag_drop">🎯 Drag and Drop (Pengelompokan)</option>
+              <option value="drag_drop">🎯 Drag and Drop (Pengelompokan Real)</option>
               <option value="quiz_speed">⚡ Kuis Kilat (Speed Quiz)</option>
               <option value="sequencer">🔄 Susun Urutan Proses (Sequencer)</option>
               <option value="hotspot">📍 Label Gambar Interaktif (Hotspot Pinning)</option>

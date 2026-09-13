@@ -2,461 +2,539 @@
    E-LKPD INTERAKTIF STEAM (V3.0 FULL COMPLETE ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwCoC4UW95KqZTp0FNiuvXs2b7gUFsW8r6saw0nvZTq-oHd6BWrutyA3-ytXqsvKZkrzw/exec';
+const GAS_API_URL =
+  'https://script.google.com/macros/s/AKfycbyTefK78f5YPmRJpJqJ9VngZkOU3IKUd0W_mcCwrVzoqt-7UlCHx6SAigwdByrha9Tt1w/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 const OCR_FALLBACK_MIN_CHARS = 40;
 
 const state = {
-    currentUser: null,
-    currentView: 'home',
-    activePertemuanId: null,
-    isDataLoaded: false,
-    cachedData: {
-        users: [], kelas: [], pertemuan: [], materi: [],
-        lkpd: [], games: [], evaluasi: [], soal_evaluasi: [],
-        submissions: [], reviews: []
-    },
-    evaluasiAnswers: {},
-    gameAnswers: {}, // Format: gameAnswers[gameId] = { 0: '...', 1: '...' }
-    gameStates: {}   // Format: gameStates[gameId] = { sequencerItems, wordSearchState }
+  currentUser: null,
+  currentView: 'home',
+  activePertemuanId: null,
+  isDataLoaded: false,
+  cachedData: {
+    users: [],
+    kelas: [],
+    pertemuan: [],
+    materi: [],
+    lkpd: [],
+    games: [],
+    evaluasi: [],
+    soal_evaluasi: [],
+    submissions: [],
+    reviews: []
+  },
+  evaluasiAnswers: {},
+  gameAnswers: {}, // Format: gameAnswers[gameId] = { 0: '...', 1: '...' }
+  gameStates: {} // Format: gameStates[gameId] = { sequencerItems, wordSearchState }
 };
 
 /* ==========================================================
    1. NOTIFICATION WRAPPERS
    ========================================================== */
 function showToast(icon, title) {
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: icon,
-        title: title,
-        showConfirmButton: false,
-        timer: 2500,
-        timerProgressBar: true
-    });
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: icon,
+    title: title,
+    showConfirmButton: false,
+    timer: 2500,
+    timerProgressBar: true
+  });
 }
 
 function showConfirm(title, text, confirmCallback, confirmBtnText = 'Ya, Lanjutkan') {
-    Swal.fire({
-        title: title,
-        text: text,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#0D6EFD',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: confirmBtnText,
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed && confirmCallback) {
-            confirmCallback();
-        }
-    });
+  Swal.fire({
+    title: title,
+    text: text,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#0D6EFD',
+    cancelButtonColor: '#64748B',
+    confirmButtonText: confirmBtnText,
+    cancelButtonText: 'Batal'
+  }).then((result) => {
+    if (result.isConfirmed && confirmCallback) {
+      confirmCallback();
+    }
+  });
 }
 
 function showLoading(title = 'Memproses data...') {
-    Swal.fire({
-        title: title,
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+  Swal.fire({
+    title: title,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 }
 
 function closeLoading() {
-    Swal.close();
+  Swal.close();
 }
 
 /* ==========================================================
    2. DATA CACHING & API CALLS
    ========================================================== */
 function loadFromLocalStorage() {
-    try {
-        const saved = localStorage.getItem(CACHE_KEY);
-        if (saved) {
-            state.cachedData = JSON.parse(saved);
-            state.isDataLoaded = true;
-        }
-    } catch (e) {
-        console.error('Gagal membaca cache lokal:', e);
+  try {
+    const saved = localStorage.getItem(CACHE_KEY);
+    if (saved) {
+      state.cachedData = JSON.parse(saved);
+      state.isDataLoaded = true;
     }
+  } catch (e) {
+    console.error('Gagal membaca cache lokal:', e);
+  }
 }
 
 function saveToLocalStorage() {
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(state.cachedData));
-    } catch (e) {
-        console.error('Gagal menyimpan cache lokal:', e);
-    }
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state.cachedData));
+  } catch (e) {
+    console.error('Gagal menyimpan cache lokal:', e);
+  }
 }
 
 async function fetchAllInitialData(forceRefresh = false) {
-    if (!forceRefresh) {
-        loadFromLocalStorage();
-        if (state.isDataLoaded) {
-            fetchDataFromNetwork();
-            return;
-        }
+  if (!forceRefresh) {
+    loadFromLocalStorage();
+    if (state.isDataLoaded) {
+      fetchDataFromNetwork();
+      return;
     }
-    await fetchDataFromNetwork();
+  }
+  await fetchDataFromNetwork();
 }
 
 async function fetchDataFromNetwork() {
-    try {
-        const res = await fetch(`${GAS_API_URL}?action=get_all_data`);
-        const result = await res.json();
-        const data = result.data || result;
+  try {
+    const res = await fetch(`${GAS_API_URL}?action=get_all_data`);
+    const result = await res.json();
+    const data = result.data || result;
 
-        if (data) {
-            state.cachedData = {
-                users: data.users || [],
-                kelas: data.kelas || [],
-                pertemuan: data.pertemuan || [],
-                materi: data.materi || [],
-                lkpd: data.lkpd || [],
-                games: data.games || [],
-                evaluasi: data.evaluasi || [],
-                soal_evaluasi: data.soal_evaluasi || [],
-                submissions: data.submissions || [],
-                reviews: data.reviews || []
-            };
-            state.isDataLoaded = true;
-            saveToLocalStorage();
-            renderSidebarNav();
-        }
-    } catch (err) {
-        console.error('Gagal memuat data dari database:', err);
+    if (data) {
+      state.cachedData = {
+        users: data.users || [],
+        kelas: data.kelas || [],
+        pertemuan: data.pertemuan || [],
+        materi: data.materi || [],
+        lkpd: data.lkpd || [],
+        games: data.games || [],
+        evaluasi: data.evaluasi || [],
+        soal_evaluasi: data.soal_evaluasi || [],
+        submissions: data.submissions || [],
+        reviews: data.reviews || []
+      };
+      state.isDataLoaded = true;
+      saveToLocalStorage();
+      renderSidebarNav();
     }
+  } catch (err) {
+    console.error('Gagal memuat data dari database:', err);
+  }
 }
 
 async function apiPost(payload) {
-    try {
-        const res = await fetch(GAS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        return await res.json();
-    } catch (err) {
-        console.error('API POST Error:', err);
-        return { success: false, message: 'Gagal terhubung ke server database! Periksa koneksi internet.' };
-    }
+  try {
+    const res = await fetch(GAS_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('API POST Error:', err);
+    return {
+      success: false,
+      message: 'Gagal terhubung ke server database! Periksa koneksi internet.'
+    };
+  }
 }
 
 /* ==========================================================
    3. HELPER UTILITIES
    ========================================================== */
 function togglePasswordVisibility(inputId, btnElem) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    if (btnElem) {
-        btnElem.innerHTML = isPassword ? '🙈' : '👁️';
-        btnElem.setAttribute('title', isPassword ? 'Sembunyikan Password' : 'Lihat Password');
-    }
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  if (btnElem) {
+    btnElem.innerHTML = isPassword ? '🙈' : '👁️';
+    btnElem.setAttribute('title', isPassword ? 'Sembunyikan Password' : 'Lihat Password');
+  }
 }
 
 function openPdfFullscreen(url, title = 'Dokumen PDF') {
-    document.getElementById('pdf-fullscreen-title').textContent = title;
-    document.getElementById('pdf-fullscreen-iframe').src = url;
-    document.getElementById('pdf-fullscreen-external-link').href = url.replace('/preview', '/view');
-    const modal = document.getElementById('pdf-fullscreen-modal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+  document.getElementById('pdf-fullscreen-title').textContent = title;
+  document.getElementById('pdf-fullscreen-iframe').src = url;
+  document.getElementById('pdf-fullscreen-external-link').href = url.replace('/preview', '/view');
+  const modal = document.getElementById('pdf-fullscreen-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 }
 
 function closePdfFullscreenModal() {
-    const modal = document.getElementById('pdf-fullscreen-modal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.getElementById('pdf-fullscreen-iframe').src = '';
+  const modal = document.getElementById('pdf-fullscreen-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.getElementById('pdf-fullscreen-iframe').src = '';
 }
 
 function requireStudentAuth(actionCallback) {
-    if (!state.currentUser) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Akses Terbatas (Mode Guest)',
-            text: 'Kamu sedang dalam Mode Guest. Silakan login sebagai Siswa untuk menyimpan jawaban!',
-            showCancelButton: true,
-            confirmButtonColor: '#0D6EFD',
-            cancelButtonColor: '#64748B',
-            confirmButtonText: '🔑 Login Siswa',
-            cancelButtonText: 'Lanjut Melihat'
-        }).then((res) => {
-            if (res.isConfirmed) openLoginModal();
-        });
-        return false;
-    }
-    if (actionCallback) actionCallback();
-    return true;
+  if (!state.currentUser) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Akses Terbatas (Mode Guest)',
+      text: 'Kamu sedang dalam Mode Guest. Silakan login sebagai Siswa untuk menyimpan jawaban!',
+      showCancelButton: true,
+      confirmButtonColor: '#0D6EFD',
+      cancelButtonColor: '#64748B',
+      confirmButtonText: '🔑 Login Siswa',
+      cancelButtonText: 'Lanjut Melihat'
+    }).then((res) => {
+      if (res.isConfirmed) openLoginModal();
+    });
+    return false;
+  }
+  if (actionCallback) actionCallback();
+  return true;
 }
 
 function setButtonLoading(btn, isLoading, loadText = 'Menyimpan...', origText = 'Simpan') {
-    if (!btn) return;
-    if (isLoading) {
-        btn.disabled = true;
-        btn.setAttribute('data-orig-text', origText);
-        btn.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span> ${loadText}`;
-        btn.classList.add('opacity-75', 'cursor-not-allowed');
-    } else {
-        btn.disabled = false;
-        btn.innerHTML = btn.getAttribute('data-orig-text') || origText;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-    }
+  if (!btn) return;
+  if (isLoading) {
+    btn.disabled = true;
+    btn.setAttribute('data-orig-text', origText);
+    btn.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span> ${loadText}`;
+    btn.classList.add('opacity-75', 'cursor-not-allowed');
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.getAttribute('data-orig-text') || origText;
+    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+  }
 }
 
 function toggleDrawer(isOpen) {
-    const drawer = document.getElementById('main-drawer');
-    const backdrop = document.getElementById('drawer-backdrop');
-    if (isOpen) {
-        drawer.classList.remove('-translate-x-full');
-        backdrop.classList.remove('hidden');
-    } else {
-        drawer.classList.add('-translate-x-full');
-        backdrop.classList.add('hidden');
-    }
+  const drawer = document.getElementById('main-drawer');
+  const backdrop = document.getElementById('drawer-backdrop');
+  if (isOpen) {
+    drawer.classList.remove('-translate-x-full');
+    backdrop.classList.remove('hidden');
+  } else {
+    drawer.classList.add('-translate-x-full');
+    backdrop.classList.add('hidden');
+  }
 }
 
 function populateKelasSelects() {
-    const kelasList = state.cachedData.kelas || [];
-    const optionsHtml = '<option value="-">- (Khusus Guru/Admin)</option>' +
-        kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
+  const kelasList = state.cachedData.kelas || [];
+  const optionsHtml =
+    '<option value="-">- (Khusus Guru/Admin)</option>' +
+    kelasList.map((k) => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 
-    const userKelasSel = document.getElementById('user-form-kelas');
-    if (userKelasSel) userKelasSel.innerHTML = optionsHtml;
+  const userKelasSel = document.getElementById('user-form-kelas');
+  if (userKelasSel) userKelasSel.innerHTML = optionsHtml;
 
-    const ptmKelasSel = document.getElementById('pertemuan-form-kelas');
-    if (ptmKelasSel) ptmKelasSel.innerHTML = '<option value="ALL">Semua Kelas</option>' +
-        kelasList.map(k => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
+  const ptmKelasSel = document.getElementById('pertemuan-form-kelas');
+  if (ptmKelasSel)
+    ptmKelasSel.innerHTML =
+      '<option value="ALL">Semua Kelas</option>' +
+      kelasList.map((k) => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 }
 
 /* ==========================================================
    4. SIDEBAR NAV RENDERER
    ========================================================== */
 function renderSidebarNav() {
-    const navContainer = document.getElementById('sidebar-nav');
-    if (!navContainer) return;
-    navContainer.innerHTML = '';
+  const navContainer = document.getElementById('sidebar-nav');
+  if (!navContainer) return;
+  navContainer.innerHTML = '';
 
-    if (state.currentUser?.role === 'admin') {
-        renderAdminNav(navContainer);
-    } else if (state.currentUser?.role === 'guru') {
-        renderGuruNav(navContainer);
-    } else {
-        renderSiswaNav(navContainer);
-    }
+  if (state.currentUser?.role === 'admin') {
+    renderAdminNav(navContainer);
+  } else if (state.currentUser?.role === 'guru') {
+    renderGuruNav(navContainer);
+  } else {
+    renderSiswaNav(navContainer);
+  }
 }
 
 function renderSiswaNav(container) {
-    const homeBtn = document.createElement('button');
-    homeBtn.onclick = () => { switchView('home'); toggleDrawer(false); };
-    homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'home' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
-    homeBtn.innerHTML = `<span>🏠</span><span>Beranda</span>`;
-    container.appendChild(homeBtn);
+  const homeBtn = document.createElement('button');
+  homeBtn.onclick = () => {
+    switchView('home');
+    toggleDrawer(false);
+  };
+  homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
+    state.currentView === 'home'
+      ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
+      : 'text-slate-300 hover:bg-slate-800'
+  }`;
+  homeBtn.innerHTML = `<span>🏠</span><span>Beranda</span>`;
+  container.appendChild(homeBtn);
 
-    const steamBtn = document.createElement('button');
-    steamBtn.onclick = () => { switchView('ruang-steam'); toggleDrawer(false); };
-    steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'ruang-steam' ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
-    steamBtn.innerHTML = `<span>🎨</span><span>Ruang STEAM Lab</span>`;
-    container.appendChild(steamBtn);
+  const steamBtn = document.createElement('button');
+  steamBtn.onclick = () => {
+    switchView('ruang-steam');
+    toggleDrawer(false);
+  };
+  steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
+    state.currentView === 'ruang-steam'
+      ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
+      : 'text-slate-300 hover:bg-slate-800'
+  }`;
+  steamBtn.innerHTML = `<span>🎨</span><span>Ruang STEAM Lab</span>`;
+  container.appendChild(steamBtn);
 
-    const userKelas = state.currentUser?.kelas || 'ALL';
-    const pertemuanList = (state.cachedData.pertemuan || [])
-        .filter(p => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
-        .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
+  const userKelas = state.currentUser?.kelas || 'ALL';
+  const pertemuanList = (state.cachedData.pertemuan || [])
+    .filter((p) => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
+    .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
 
-    if (pertemuanList.length > 0) {
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'pt-3 pb-1 text-[10px] font-black text-slate-400 uppercase tracking-wider border-t border-slate-800/80';
-        titleDiv.textContent = 'MODUL PERTEMUAN';
-        container.appendChild(titleDiv);
+  if (pertemuanList.length > 0) {
+    const titleDiv = document.createElement('div');
+    titleDiv.className =
+      'pt-3 pb-1 text-[10px] font-black text-slate-400 uppercase tracking-wider border-t border-slate-800/80';
+    titleDiv.textContent = 'MODUL PERTEMUAN';
+    container.appendChild(titleDiv);
 
-        pertemuanList.forEach(ptm => {
-            const ptmId = ptm.id_pertemuan;
+    pertemuanList.forEach((ptm) => {
+      const ptmId = ptm.id_pertemuan;
 
-            const hasMateri = state.cachedData.materi.some(m => m.id_pertemuan === ptmId && m.status === 'Publish');
-            const hasLkpd = state.cachedData.lkpd.some(l => l.id_pertemuan === ptmId && l.status === 'Publish');
-            const hasGame = state.cachedData.games.some(g => g.id_pertemuan === ptmId && g.status === 'Publish');
-            const hasEvaluasi = state.cachedData.evaluasi.some(e => e.id_pertemuan === ptmId && e.status === 'Publish');
+      const hasMateri = state.cachedData.materi.some((m) => m.id_pertemuan === ptmId && m.status === 'Publish');
+      const hasLkpd = state.cachedData.lkpd.some((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
+      const hasGame = state.cachedData.games.some((g) => g.id_pertemuan === ptmId && g.status === 'Publish');
+      const hasEvaluasi = state.cachedData.evaluasi.some((e) => e.id_pertemuan === ptmId && e.status === 'Publish');
 
-            const groupWrapper = document.createElement('div');
-            groupWrapper.className = 'space-y-1 bg-slate-900/60 p-2 rounded-2xl border border-slate-800/80';
-            groupWrapper.innerHTML = `
+      const groupWrapper = document.createElement('div');
+      groupWrapper.className = 'space-y-1 bg-slate-900/60 p-2 rounded-2xl border border-slate-800/80';
+      groupWrapper.innerHTML = `
                 <div class="font-bold text-brand-yellow text-[11px] px-2 py-1 uppercase font-heading">
                   Pertemuan ${ptm.nomor_pertemuan}: ${ptm.judul_pertemuan}
                 </div>
             `;
 
-            if (hasMateri) groupWrapper.appendChild(createSubNavButton(`📖 Bahan Ajar`, () => switchView('materi-ptm', ptmId), state.currentView === 'materi-ptm' && state.activePertemuanId === ptmId));
-            if (hasLkpd) groupWrapper.appendChild(createSubNavButton(`📝 LKPD Siswa`, () => switchView('lkpd-ptm', ptmId), state.currentView === 'lkpd-ptm' && state.activePertemuanId === ptmId));
-            if (hasGame) groupWrapper.appendChild(createSubNavButton(`🎮 Game Interaktif`, () => switchView('game-ptm', ptmId), state.currentView === 'game-ptm' && state.activePertemuanId === ptmId));
-            if (hasEvaluasi) groupWrapper.appendChild(createSubNavButton(`✍️ Evaluasi Kuis`, () => switchView('evaluasi-ptm', ptmId), state.currentView === 'evaluasi-ptm' && state.activePertemuanId === ptmId));
+      if (hasMateri)
+        groupWrapper.appendChild(
+          createSubNavButton(
+            `📖 Bahan Ajar`,
+            () => switchView('materi-ptm', ptmId),
+            state.currentView === 'materi-ptm' && state.activePertemuanId === ptmId
+          )
+        );
+      if (hasLkpd)
+        groupWrapper.appendChild(
+          createSubNavButton(
+            `📝 LKPD Siswa`,
+            () => switchView('lkpd-ptm', ptmId),
+            state.currentView === 'lkpd-ptm' && state.activePertemuanId === ptmId
+          )
+        );
+      if (hasGame)
+        groupWrapper.appendChild(
+          createSubNavButton(
+            `🎮 Game Interaktif`,
+            () => switchView('game-ptm', ptmId),
+            state.currentView === 'game-ptm' && state.activePertemuanId === ptmId
+          )
+        );
+      if (hasEvaluasi)
+        groupWrapper.appendChild(
+          createSubNavButton(
+            `✍️ Evaluasi Kuis`,
+            () => switchView('evaluasi-ptm', ptmId),
+            state.currentView === 'evaluasi-ptm' && state.activePertemuanId === ptmId
+          )
+        );
 
-            container.appendChild(groupWrapper);
-        });
-    }
+      container.appendChild(groupWrapper);
+    });
+  }
 }
 
 function createSubNavButton(label, onClickFn, isActive) {
-    const btn = document.createElement('button');
-    btn.onclick = () => { onClickFn(); toggleDrawer(false); };
-    btn.className = `w-full text-left px-3 py-1.5 rounded-xl font-medium transition text-[11px] flex items-center justify-between ${isActive ? 'bg-brand-blue text-white font-bold' : 'text-slate-300 hover:bg-slate-800'}`;
-    btn.innerHTML = `<span>${label}</span> <span>&rarr;</span>`;
-    return btn;
+  const btn = document.createElement('button');
+  btn.onclick = () => {
+    onClickFn();
+    toggleDrawer(false);
+  };
+  btn.className = `w-full text-left px-3 py-1.5 rounded-xl font-medium transition text-[11px] flex items-center justify-between ${
+    isActive ? 'bg-brand-blue text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+  }`;
+  btn.innerHTML = `<span>${label}</span> <span>&rarr;</span>`;
+  return btn;
 }
 
 function renderGuruNav(container) {
-    const menus = [
-        { id: 'guru-pertemuan', title: 'Kelola Pertemuan Modul', icon: '📁' },
-        { id: 'guru-materi', title: 'Kelola Bahan Ajar', icon: '📖' },
-        { id: 'guru-lkpd', title: 'Kelola LKPD Siswa', icon: '📝' },
-        { id: 'guru-game', title: 'Kelola Game Interaktif', icon: '🎮' },
-        { id: 'guru-soal', title: 'Kelola Evaluasi & Soal', icon: '❓' },
-        { id: 'guru-koreksi', title: 'Koreksi LKPD & Nilai', icon: '📊' },
-        { id: 'guru-rekap', title: 'Buku Nilai & Rekapitulasi', icon: '🏆' }
-    ];
+  const menus = [
+    { id: 'guru-pertemuan', title: 'Kelola Pertemuan Modul', icon: '📁' },
+    { id: 'guru-materi', title: 'Kelola Bahan Ajar', icon: '📖' },
+    { id: 'guru-lkpd', title: 'Kelola LKPD Siswa', icon: '📝' },
+    { id: 'guru-game', title: 'Kelola Game Interaktif', icon: '🎮' },
+    { id: 'guru-soal', title: 'Kelola Evaluasi & Soal', icon: '❓' },
+    { id: 'guru-koreksi', title: 'Koreksi LKPD & Nilai', icon: '📊' },
+    { id: 'guru-rekap', title: 'Buku Nilai & Rekapitulasi', icon: '🏆' }
+  ];
 
-    menus.forEach(m => {
-        const btn = document.createElement('button');
-        btn.onclick = () => { switchView(m.id); toggleDrawer(false); };
-        btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === m.id ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
-        btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
-        container.appendChild(btn);
-    });
+  menus.forEach((m) => {
+    const btn = document.createElement('button');
+    btn.onclick = () => {
+      switchView(m.id);
+      toggleDrawer(false);
+    };
+    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
+      state.currentView === m.id
+        ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
+        : 'text-slate-300 hover:bg-slate-800'
+    }`;
+    btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
+    container.appendChild(btn);
+  });
 }
 
 function renderAdminNav(container) {
-    const menus = [
-        { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥' },
-        { id: 'admin-classes', title: 'Kelola Data Kelas', icon: '🏫' }
-    ];
+  const menus = [
+    { id: 'admin-users', title: 'Kelola Pengguna', icon: '👥' },
+    { id: 'admin-classes', title: 'Kelola Data Kelas', icon: '🏫' }
+  ];
 
-    menus.forEach(m => {
-        const btn = document.createElement('button');
-        btn.onclick = () => { switchView(m.id); toggleDrawer(false); };
-        btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === m.id ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md' : 'text-slate-300 hover:bg-slate-800'}`;
-        btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
-        container.appendChild(btn);
-    });
+  menus.forEach((m) => {
+    const btn = document.createElement('button');
+    btn.onclick = () => {
+      switchView(m.id);
+      toggleDrawer(false);
+    };
+    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
+      state.currentView === m.id
+        ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
+        : 'text-slate-300 hover:bg-slate-800'
+    }`;
+    btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
+    container.appendChild(btn);
+  });
 }
 
 /* ==========================================================
    5. VIEW ROUTER ENGINE
    ========================================================== */
 async function switchView(viewId, paramId = null) {
-    state.currentView = viewId;
-    state.activePertemuanId = paramId;
+  state.currentView = viewId;
+  state.activePertemuanId = paramId;
 
-    const viewport = document.getElementById('content-viewport');
-    const titleElem = document.getElementById('view-title');
+  const viewport = document.getElementById('content-viewport');
+  const titleElem = document.getElementById('view-title');
 
-    if (!state.isDataLoaded) {
-        viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat data dari database...</div>`;
-        await fetchAllInitialData();
-    }
+  if (!state.isDataLoaded) {
+    viewport.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-500">Memuat data dari database...</div>`;
+    await fetchAllInitialData();
+  }
 
-    renderSidebarNav();
+  renderSidebarNav();
 
-    switch (viewId) {
-        case 'home':
-            titleElem.textContent = 'BERANDA & DOKUMENTASI';
-            viewport.innerHTML = renderHomeView();
-            break;
+  switch (viewId) {
+    case 'home':
+      titleElem.textContent = 'BERANDA & DOKUMENTASI';
+      viewport.innerHTML = renderHomeView();
+      break;
 
-        case 'ruang-steam':
-            titleElem.textContent = 'RUANG EKSPERIMEN & LAB STEAM';
-            viewport.innerHTML = renderRuangSteamView();
-            setTimeout(() => initStandaloneSteamCanvas(), 100);
-            break;
+    case 'ruang-steam':
+      titleElem.textContent = 'RUANG EKSPERIMEN & LAB STEAM';
+      viewport.innerHTML = renderRuangSteamView();
+      setTimeout(() => initStandaloneSteamCanvas(), 100);
+      break;
 
-        case 'materi-ptm':
-            titleElem.textContent = 'BAHAN AJAR MATERI';
-            viewport.innerHTML = renderMateriView(paramId);
-            break;
+    case 'materi-ptm':
+      titleElem.textContent = 'BAHAN AJAR MATERI';
+      viewport.innerHTML = renderMateriView(paramId);
+      break;
 
-        case 'lkpd-ptm':
-            titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK (LKPD)';
-            viewport.innerHTML = renderLkpdView(paramId);
-            setTimeout(() => {
-                initCanvas();
-                const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
-                loadLkpdDraft(paramId, qCount);
-            }, 150);
-            break;
+    case 'lkpd-ptm':
+      titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK (LKPD)';
+      viewport.innerHTML = renderLkpdView(paramId);
+      setTimeout(() => {
+        initCanvas();
+        const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
+        loadLkpdDraft(paramId, qCount);
+      }, 150);
+      break;
 
-        case 'game-ptm':
-            titleElem.textContent = 'GAME INTERAKTIF PEMBELAJARAN';
-            viewport.innerHTML = renderGameView(paramId);
-            setTimeout(() => {
-                initPointerDragAndDropEngine();
-                initMatchingLineEngine();
-                redrawAllMatchingLines();
-            }, 100);
-            break;
+    case 'game-ptm':
+      titleElem.textContent = 'GAME INTERAKTIF PEMBELAJARAN';
+      viewport.innerHTML = renderGameView(paramId);
+      setTimeout(() => {
+        initPointerDragAndDropEngine();
+        initMatchingLineEngine();
+        redrawAllMatchingLines();
+      }, 100);
+      break;
 
-        case 'evaluasi-ptm':
-            titleElem.textContent = 'EVALUASI PEMBELAJARAN';
-            viewport.innerHTML = renderEvaluasiView(paramId);
-            break;
+    case 'evaluasi-ptm':
+      titleElem.textContent = 'EVALUASI PEMBELAJARAN';
+      viewport.innerHTML = renderEvaluasiView(paramId);
+      break;
 
-        case 'admin-users':
-            titleElem.textContent = 'KELOLA PENGGUNA SISTEM';
-            renderAdminUsersView(viewport);
-            break;
+    case 'admin-users':
+      titleElem.textContent = 'KELOLA PENGGUNA SISTEM';
+      renderAdminUsersView(viewport);
+      break;
 
-        case 'admin-classes':
-            titleElem.textContent = 'KELOLA DATA KELAS';
-            renderAdminClassesView(viewport);
-            break;
+    case 'admin-classes':
+      titleElem.textContent = 'KELOLA DATA KELAS';
+      renderAdminClassesView(viewport);
+      break;
 
-        case 'guru-pertemuan':
-            titleElem.textContent = 'KELOLA PERTEMUAN PEMBELAJARAN';
-            renderGuruPertemuanView(viewport);
-            break;
+    case 'guru-pertemuan':
+      titleElem.textContent = 'KELOLA PERTEMUAN PEMBELAJARAN';
+      renderGuruPertemuanView(viewport);
+      break;
 
-        case 'guru-materi':
-            titleElem.textContent = 'KELOLA BAHAN AJAR';
-            renderGuruMateriView(viewport);
-            break;
+    case 'guru-materi':
+      titleElem.textContent = 'KELOLA BAHAN AJAR';
+      renderGuruMateriView(viewport);
+      break;
 
-        case 'guru-lkpd':
-            titleElem.textContent = 'KELOLA LKPD SISWA';
-            renderGuruLkpdView(viewport);
-            break;
+    case 'guru-lkpd':
+      titleElem.textContent = 'KELOLA LKPD SISWA';
+      renderGuruLkpdView(viewport);
+      break;
 
-        case 'guru-game':
-            titleElem.textContent = 'KELOLA GAME INTERAKTIF';
-            renderGuruGameView(viewport);
-            break;
+    case 'guru-game':
+      titleElem.textContent = 'KELOLA GAME INTERAKTIF';
+      renderGuruGameView(viewport);
+      break;
 
-        case 'guru-soal':
-            titleElem.textContent = 'KELOLA EVALUASI & BANK SOAL';
-            renderGuruSoalView(viewport);
-            break;
+    case 'guru-soal':
+      titleElem.textContent = 'KELOLA EVALUASI & BANK SOAL';
+      renderGuruSoalView(viewport);
+      break;
 
-        case 'guru-koreksi':
-            titleElem.textContent = 'KOREKSI JAWABAN SISWA';
-            renderGuruKoreksiView(viewport);
-            break;
+    case 'guru-koreksi':
+      titleElem.textContent = 'KOREKSI JAWABAN SISWA';
+      renderGuruKoreksiView(viewport);
+      break;
 
-        case 'guru-rekap':
-            titleElem.textContent = 'BUKU NILAI & REKAPITULASI';
-            renderGuruRekapView(viewport);
-            break;
+    case 'guru-rekap':
+      titleElem.textContent = 'BUKU NILAI & REKAPITULASI';
+      renderGuruRekapView(viewport);
+      break;
 
-        default:
-            switchView('home');
-    }
+    default:
+      switchView('home');
+  }
 
-    if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise().catch((err) => console.log('MathJax info:', err));
-    }
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise().catch((err) => console.log('MathJax info:', err));
+  }
 }
 
 /* ==========================================================
    6. SISWA VIEWS & STANDALONE STEAM LAB
    ========================================================== */
 function renderHomeView() {
-    return `
+  return `
     <div class="space-y-4 max-w-4xl mx-auto text-xs">
       <div class="bg-gradient-to-r from-brand-navy to-blue-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl space-y-3">
         <span class="px-3 py-1 bg-brand-yellow text-brand-navy font-black text-[10px] rounded-full uppercase tracking-wider font-heading">
@@ -474,18 +552,21 @@ function renderHomeView() {
 }
 
 function renderRuangSteamView() {
-    const userKelas = state.currentUser?.kelas || 'ALL';
-    const pertemuanList = (state.cachedData.pertemuan || [])
-        .filter(p => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
-        .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
+  const userKelas = state.currentUser?.kelas || 'ALL';
+  const pertemuanList = (state.cachedData.pertemuan || [])
+    .filter((p) => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
+    .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
 
-    const optionsHtml = pertemuanList.length > 0 
-        ? pertemuanList.map(p => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`).join('')
-        : '<option value="">-- Belum ada pertemuan aktif --</option>';
+  const optionsHtml =
+    pertemuanList.length > 0
+      ? pertemuanList
+          .map((p) => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`)
+          .join('')
+      : '<option value="">-- Belum ada pertemuan aktif --</option>';
 
-    const defaultPtm = pertemuanList[0] || null;
+  const defaultPtm = pertemuanList[0] || null;
 
-    return `
+  return `
     <div class="max-w-5xl mx-auto space-y-5 text-xs">
       <div class="bg-gradient-to-r from-purple-900 via-brand-navy to-blue-900 text-white p-6 rounded-3xl shadow-xl space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-800/60 pb-3">
@@ -517,7 +598,11 @@ function renderRuangSteamView() {
           <div class="md:col-span-2 text-slate-300 text-[11px] border-t md:border-t-0 md:border-l border-slate-700 pt-2 md:pt-0 md:pl-3">
             <span class="font-bold text-white block">Capaian & Fokus Topik:</span>
             <p id="steam-pertemuan-deskripsi" class="text-slate-300 font-medium mt-0.5">
-              ${defaultPtm ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.' : 'Belum ada modul tersedia.'}
+              ${
+                defaultPtm
+                  ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.'
+                  : 'Belum ada modul tersedia.'
+              }
             </p>
           </div>
         </div>
@@ -588,73 +673,80 @@ function renderRuangSteamView() {
 }
 
 function updateSteamPertemuanInfo(ptmId) {
-    const ptmList = state.cachedData.pertemuan || [];
-    const ptm = ptmList.find(p => p.id_pertemuan === ptmId);
+  const ptmList = state.cachedData.pertemuan || [];
+  const ptm = ptmList.find((p) => p.id_pertemuan === ptmId);
 
-    const descElem = document.getElementById('steam-pertemuan-deskripsi');
-    const badgeElem = document.getElementById('steam-canvas-badge-ptm');
+  const descElem = document.getElementById('steam-pertemuan-deskripsi');
+  const badgeElem = document.getElementById('steam-canvas-badge-ptm');
 
-    if (ptm) {
-        if (descElem) descElem.textContent = ptm.deskripsi || 'Tidak ada deskripsi khusus.';
-        if (badgeElem) badgeElem.textContent = `Pertemuan ${ptm.nomor_pertemuan}`;
-    } else {
-        if (descElem) descElem.textContent = 'Pilih modul pertemuan di atas.';
-        if (badgeElem) badgeElem.textContent = 'Mode Bebas';
-    }
+  if (ptm) {
+    if (descElem) descElem.textContent = ptm.deskripsi || 'Tidak ada deskripsi khusus.';
+    if (badgeElem) badgeElem.textContent = `Pertemuan ${ptm.nomor_pertemuan}`;
+  } else {
+    if (descElem) descElem.textContent = 'Pilih modul pertemuan di atas.';
+    if (badgeElem) badgeElem.textContent = 'Mode Bebas';
+  }
 }
 
 async function submitSteamLabToTeacher() {
-    const ptmId = document.getElementById('steam-select-pertemuan')?.value;
-    if (!ptmId) {
-        showToast('warning', 'Pilih pertemuan target terlebih dahulu!');
-        return;
-    }
+  const ptmId = document.getElementById('steam-select-pertemuan')?.value;
+  if (!ptmId) {
+    showToast('warning', 'Pilih pertemuan target terlebih dahulu!');
+    return;
+  }
 
-    const title = document.getElementById('steam-note-title')?.value || 'Sketsa Eksperimen STEAM';
-    const sci = document.getElementById('steam-note-science')?.value || '';
-    const eng = document.getElementById('steam-note-engineering')?.value || '';
+  const title = document.getElementById('steam-note-title')?.value || 'Sketsa Eksperimen STEAM';
+  const sci = document.getElementById('steam-note-science')?.value || '';
+  const eng = document.getElementById('steam-note-engineering')?.value || '';
 
-    const canvas = document.getElementById('ruang-steam-canvas');
-    const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
+  const canvas = document.getElementById('ruang-steam-canvas');
+  const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
 
-    const btn = document.getElementById('btn-submit-steam-lab');
-    setButtonLoading(btn, true, 'Mengirim...', '🚀 Kirim ke Guru');
+  const btn = document.getElementById('btn-submit-steam-lab');
+  setButtonLoading(btn, true, 'Mengirim...', '🚀 Kirim ke Guru');
 
-    const res = await apiPost({
-        action: 'submit_lkpd',
-        id_pertemuan: ptmId,
-        username_siswa: state.currentUser.username,
-        nama_siswa: state.currentUser.name,
-        kelas: state.currentUser.kelas,
-        jawaban_json: [
-            `[RUANG STEAM LAB] Judul: ${title}`,
-            `Science & Tech: ${sci}`,
-            `Engineering & Math: ${eng}`
-        ],
-        canvas_image_base64: canvasBase64
-    });
+  const res = await apiPost({
+    action: 'submit_lkpd',
+    id_pertemuan: ptmId,
+    username_siswa: state.currentUser.username,
+    nama_siswa: state.currentUser.name,
+    kelas: state.currentUser.kelas,
+    jawaban_json: [
+      `[RUANG STEAM LAB] Judul: ${title}`,
+      `Science & Tech: ${sci}`,
+      `Engineering & Math: ${eng}`
+    ],
+    canvas_image_base64: canvasBase64
+  });
 
-    setButtonLoading(btn, false, '', '🚀 Kirim ke Guru');
+  setButtonLoading(btn, false, '', '🚀 Kirim ke Guru');
 
-    if (res.success) {
-        await fetchAllInitialData(true);
-        showToast('success', 'Karya STEAM berhasil dikirim ke guru!');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
-    }
+  if (res.success) {
+    await fetchAllInitialData(true);
+    showToast('success', 'Karya STEAM berhasil dikirim ke guru!');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
+  }
 }
 
 function renderMateriView(ptmId) {
-    const materiList = (state.cachedData.materi || []).filter(m => m.id_pertemuan === ptmId && m.status === 'Publish');
-    if (materiList.length === 0) return `<div class="p-8 text-center text-slate-400">Belum ada bahan ajar pada pertemuan ini.</div>`;
+  const materiList = (state.cachedData.materi || []).filter(
+    (m) => m.id_pertemuan === ptmId && m.status === 'Publish'
+  );
+  if (materiList.length === 0)
+    return `<div class="p-8 text-center text-slate-400">Belum ada bahan ajar pada pertemuan ini.</div>`;
 
-    return `
+  return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
-      ${materiList.map(m => `
+      ${materiList
+        .map(
+          (m) => `
         <div class="bg-white p-5 rounded-3xl border shadow-xs space-y-3">
           <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">${m.judul_materi}</h3>
           ${m.isi_teks ? `<p class="text-slate-700 leading-relaxed font-medium whitespace-pre-line">${m.isi_teks}</p>` : ''}
-          ${m.tipe_media === 'pdf_document' && m.file_pdf_url ? `
+          ${
+            m.tipe_media === 'pdf_document' && m.file_pdf_url
+              ? `
             <div class="space-y-2 mt-2">
               <div class="flex items-center justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-2xl">
                 <span class="font-bold text-brand-navy text-[11px]">📄 Dokumen Bahan Ajar PDF</span>
@@ -671,26 +763,32 @@ function renderMateriView(ptmId) {
                 <iframe src="${m.file_pdf_url}" class="w-full h-full border-0" allow="fullscreen"></iframe>
               </div>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>
   `;
 }
 
 function renderLkpdView(ptmId) {
-    const lkpdObj = (state.cachedData.lkpd || []).find(l => l.id_pertemuan === ptmId && l.status === 'Publish');
-    if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
+  const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
+  if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
 
-    let questions = [];
-    try {
-        questions = typeof lkpdObj.soal_json === 'string' ? JSON.parse(lkpdObj.soal_json) : (lkpdObj.soal_json || []);
-    } catch (e) { questions = []; }
+  let questions = [];
+  try {
+    questions = typeof lkpdObj.soal_json === 'string' ? JSON.parse(lkpdObj.soal_json) : lkpdObj.soal_json || [];
+  } catch (e) {
+    questions = [];
+  }
 
-    const questionCount = Math.max(questions.length, 1);
-    const isiTeks = lkpdObj.isi_teks || '';
+  const questionCount = Math.max(questions.length, 1);
+  const isiTeks = lkpdObj.isi_teks || '';
 
-    return `
+  return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b pb-2">
@@ -702,7 +800,9 @@ function renderLkpdView(ptmId) {
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
 
-      ${isiTeks ? `
+      ${
+        isiTeks
+          ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
           <h4 class="font-black text-brand-navy border-b pb-2 flex items-center gap-2">
             <span>📖 Material Teks / Lembar Kerja LKPD</span>
@@ -711,14 +811,20 @@ function renderLkpdView(ptmId) {
             ${isiTeks}
           </div>
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
-      ${lkpdObj.gambar_url ? `
+      ${
+        lkpdObj.gambar_url
+          ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
           <h4 class="font-black text-brand-navy border-b pb-2">🖼️ Visual Ilustrasi LKPD</h4>
           <img src="${lkpdObj.gambar_url}" alt="Visual LKPD" class="max-h-96 rounded-2xl border mx-auto object-contain bg-slate-50" />
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b pb-2">
@@ -728,20 +834,30 @@ function renderLkpdView(ptmId) {
           </span>
         </div>
 
-        ${questions.length > 0 ? questions.map((q, idx) => `
+        ${
+          questions.length > 0
+            ? questions
+                .map(
+                  (q, idx) => `
           <div class="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
             <label class="block font-bold text-slate-800">${idx + 1}. ${q}</label>
             <textarea id="lkpd-ans-${idx}" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="3" class="w-full p-3 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none bg-white text-xs" placeholder="Tuliskan jawaban kamu di sini..."></textarea>
           </div>
-        `).join('') : `
+        `
+                )
+                .join('')
+            : `
           <div class="space-y-1.5">
             <label class="block font-bold text-slate-800">Tuliskan hasil pengerjaan/jawaban LKPD kamu di bawah ini:</label>
             <textarea id="lkpd-ans-0" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="6" class="w-full p-3 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none bg-white text-xs" placeholder="Tuliskan jawaban kamu secara lengkap..."></textarea>
           </div>
-        `}
+        `
+        }
       </div>
 
-      ${lkpdObj.fitur_kanvas === 'TRUE' ? `
+      ${
+        lkpdObj.fitur_kanvas === 'TRUE'
+          ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
           <h4 class="font-black text-brand-navy border-b pb-2">🎨 Kanvas Prototyping STEAM</h4>
           <div class="flex items-center justify-between p-2 bg-slate-50 rounded-2xl border">
@@ -760,7 +876,9 @@ function renderLkpdView(ptmId) {
             <canvas id="steam-canvas" class="w-full h-[240px] cursor-crosshair touch-none"></canvas>
           </div>
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
         🚀 Kirim Jawaban LKPD
@@ -773,10 +891,11 @@ function renderLkpdView(ptmId) {
    7. MULTIPLE GAMES ENGINE & POINTER DRAG-DROP
    ========================================================== */
 function renderGameView(ptmId) {
-    const ptmGames = (state.cachedData.games || []).filter(g => g.id_pertemuan === ptmId && g.status === 'Publish');
-    if (ptmGames.length === 0) return `<div class="p-8 text-center text-slate-400">Belum ada game interaktif pada pertemuan ini.</div>`;
+  const ptmGames = (state.cachedData.games || []).filter((g) => g.id_pertemuan === ptmId && g.status === 'Publish');
+  if (ptmGames.length === 0)
+    return `<div class="p-8 text-center text-slate-400">Belum ada game interaktif pada pertemuan ini.</div>`;
 
-    return `
+  return `
     <div class="max-w-4xl mx-auto space-y-6 text-xs">
       <div class="bg-gradient-to-r from-purple-900 to-brand-navy text-white p-5 rounded-3xl shadow-md flex items-center justify-between">
         <div>
@@ -793,19 +912,19 @@ function renderGameView(ptmId) {
 }
 
 function renderSingleGameCard(g, gameIdx, ptmId) {
-    const gameId = g.id_game;
-    let config = { items: [] };
-    try {
-        config = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : g.konfigurasi_json;
-    } catch (e) { }
+  const gameId = g.id_game;
+  let config = { items: [] };
+  try {
+    config = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : g.konfigurasi_json;
+  } catch (e) {}
 
-    const items = config.items || [];
-    const tipe = g.tipe_game || 'matching';
+  const items = config.items || [];
+  const tipe = g.tipe_game || 'matching';
 
-    if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-    if (!state.gameStates[gameId]) state.gameStates[gameId] = {};
+  if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+  if (!state.gameStates[gameId]) state.gameStates[gameId] = {};
 
-    return `
+  return `
     <div id="game-card-${gameId}" class="bg-white p-5 rounded-3xl border border-purple-100 shadow-sm space-y-4">
       <div class="flex items-center justify-between border-b pb-2">
         <div>
@@ -823,16 +942,15 @@ function renderSingleGameCard(g, gameIdx, ptmId) {
 }
 
 function renderGameTypeBody(gameId, tipe, items, ptmId) {
-    if (tipe === 'matching') {
-        let rightAnswers = state.gameStates[gameId]?.shuffledRight;
-        if (!rightAnswers) {
-            rightAnswers = items.map((item) => ({ text: item.kunci }))
-                                 .sort(() => Math.random() - 0.5);
-            if (!state.gameStates[gameId]) state.gameStates[gameId] = {};
-            state.gameStates[gameId].shuffledRight = rightAnswers;
-        }
+  if (tipe === 'matching') {
+    let rightAnswers = state.gameStates[gameId]?.shuffledRight;
+    if (!rightAnswers) {
+      rightAnswers = items.map((item) => ({ text: item.kunci })).sort(() => Math.random() - 0.5);
+      if (!state.gameStates[gameId]) state.gameStates[gameId] = {};
+      state.gameStates[gameId].shuffledRight = rightAnswers;
+    }
 
-        return `
+    return `
       <div id="matching-container-${gameId}" class="relative select-none my-4 p-2 touch-none">
         <!-- SVG Layer untuk Garis Interaktif -->
         <svg id="matching-svg-${gameId}" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
@@ -841,7 +959,9 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
           <!-- Kolom Kiri: Pertanyaan -->
           <div class="space-y-4">
             <span class="font-black text-brand-navy block text-[11px] uppercase tracking-wider mb-2">Soal / Pertanyaan</span>
-            ${items.map((item, leftIdx) => `
+            ${items
+              .map(
+                (item, leftIdx) => `
               <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[60px] shadow-xs">
                 <span class="font-bold text-slate-800 text-xs pr-2">${leftIdx + 1}. ${item.soal}</span>
                 <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
@@ -850,13 +970,17 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
                   <span class="w-2.5 h-2.5 rounded-full bg-white pointer-events-none"></span>
                 </div>
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
 
           <!-- Kolom Kanan: Jawaban (Acak) -->
           <div class="space-y-4">
             <span class="font-black text-purple-700 block text-[11px] uppercase tracking-wider mb-2">Pilihan Pasangan</span>
-            ${rightAnswers.map((rightItem) => `
+            ${rightAnswers
+              .map(
+                (rightItem) => `
               <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[60px] shadow-xs">
                 <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
                 <div class="matching-dot right-dot absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
@@ -865,7 +989,9 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
                 </div>
                 <span class="font-bold text-purple-950 text-xs pl-3">${rightItem.text}</span>
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         </div>
       </div>
@@ -879,11 +1005,11 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </button>
       </div>
     `;
-    } else if (tipe === 'drag_drop') {
-        const cat1 = items[0]?.kategori_a || 'Kategori A';
-        const cat2 = items[0]?.kategori_b || 'Kategori B';
+  } else if (tipe === 'drag_drop') {
+    const cat1 = items[0]?.kategori_a || 'Kategori A';
+    const cat2 = items[0]?.kategori_b || 'Kategori B';
 
-        return `
+    return `
       <div class="space-y-4" data-game-id="${gameId}">
         <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-[11px] text-brand-navy font-medium">
           💡 <b>Petunjuk Drag & Drop:</b> Tekan, seret (drag), lalu lepaskan (drop) objek ke dalam area kategori yang sesuai di bawah ini!
@@ -904,11 +1030,15 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         <div id="drop-zone-${gameId}-pool" data-game-id="${gameId}" data-cat="pool" class="drop-zone bg-slate-100 p-4 rounded-3xl border space-y-2">
           <span class="font-bold text-slate-500 block text-[11px] uppercase tracking-wider text-center">Pilihan Objek (Seret dari sini):</span>
           <div class="drop-zone-items flex flex-wrap gap-2 justify-center">
-            ${items.map((item, idx) => `
+            ${items
+              .map(
+                (item, idx) => `
               <div id="drag-item-${gameId}-${idx}" data-game-id="${gameId}" data-item-idx="${idx}" class="draggable-item px-3.5 py-2.5 bg-white border border-slate-300 shadow-xs rounded-2xl font-bold text-slate-800 text-xs">
                 ${item.soal}
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         </div>
 
@@ -917,61 +1047,87 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </button>
       </div>
     `;
-    } else if (tipe === 'sequencer') {
-        let seqState = state.gameStates[gameId];
-        if (!seqState || !seqState.sequencerItems) {
-            seqState = {
-                sequencerItems: [...items].map((it, origIdx) => ({ text: it.soal, correctOrder: origIdx })).sort(() => Math.random() - 0.5)
-            };
-            state.gameStates[gameId] = seqState;
-        }
+  } else if (tipe === 'sequencer') {
+    let seqState = state.gameStates[gameId];
+    if (!seqState || !seqState.sequencerItems) {
+      seqState = {
+        sequencerItems: [...items]
+          .map((it, origIdx) => ({ text: it.soal, correctOrder: origIdx }))
+          .sort(() => Math.random() - 0.5)
+      };
+      state.gameStates[gameId] = seqState;
+    }
 
-        return `
+    return `
       <div class="space-y-3">
         <div id="sequencer-list-container-${gameId}" class="space-y-2">
-          ${seqState.sequencerItems.map((item, idx) => `
+          ${seqState.sequencerItems
+            .map(
+              (item, idx) => `
             <div class="p-3 bg-slate-50 rounded-2xl border flex items-center justify-between gap-3">
               <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">${
+                  idx + 1
+                }</span>
                 <span class="font-bold text-slate-800 text-xs">${item.text}</span>
               </div>
               <div class="flex items-center gap-1 shrink-0">
-                <button onclick="moveSequencerItem('${gameId}', ${idx}, -1, '${ptmId}')" ${idx === 0 ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▲</button>
-                <button onclick="moveSequencerItem('${gameId}', ${idx}, 1, '${ptmId}')" ${idx === seqState.sequencerItems.length - 1 ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"' : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'}>▼</button>
+                <button onclick="moveSequencerItem('${gameId}', ${idx}, -1, '${ptmId}')" ${
+                idx === 0
+                  ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
+                  : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
+              }>▲</button>
+                <button onclick="moveSequencerItem('${gameId}', ${idx}, 1, '${ptmId}')" ${
+                idx === seqState.sequencerItems.length - 1
+                  ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
+                  : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
+              }>▼</button>
               </div>
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'sequencer'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Urutan
         </button>
       </div>
     `;
-    } else if (tipe === 'hotspot') {
-        const imgUrl = items[0]?.img_url || '';
-        const allLabels = items.map(it => it.soal).sort(() => Math.random() - 0.5);
+  } else if (tipe === 'hotspot') {
+    const imgUrl = items[0]?.img_url || '';
+    const allLabels = items.map((it) => it.soal).sort(() => Math.random() - 0.5);
 
-        return `
+    return `
       <div class="space-y-4">
-        ${imgUrl ? `
+        ${
+          imgUrl
+            ? `
           <div class="bg-white p-3 rounded-3xl border text-center">
             <img src="${imgUrl}" alt="Diagram STEAM" class="max-h-80 mx-auto rounded-2xl object-contain border" />
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
         <div class="space-y-2">
-          ${items.map((item, idx) => `
+          ${items
+            .map(
+              (item, idx) => `
             <div class="bg-slate-50 p-3 rounded-2xl border flex items-center justify-between gap-3">
               <span class="font-bold text-slate-800 text-xs flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${idx + 1}</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${
+                  idx + 1
+                }</span>
                 <span>Label Pin #${idx + 1}:</span>
               </span>
               <select onchange="state.gameAnswers['${gameId}'][${idx}] = this.value" class="p-2 rounded-xl border font-bold text-xs text-brand-blue bg-white">
                 <option value="">-- Pilih Label --</option>
-                ${allLabels.map(lbl => `<option value="${lbl}">${lbl}</option>`).join('')}
+                ${allLabels.map((lbl) => `<option value="${lbl}">${lbl}</option>`).join('')}
               </select>
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
 
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'hotspot'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
@@ -979,8 +1135,8 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </button>
       </div>
     `;
-    } else if (tipe === 'simulator') {
-        return `
+  } else if (tipe === 'simulator') {
+    return `
       <div class="space-y-4">
         <div class="bg-purple-50 border border-purple-200 p-4 rounded-3xl space-y-1">
           <span class="font-black text-purple-900 block text-xs">🧪 Skenario Proyek STEAM:</span>
@@ -988,16 +1144,28 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </div>
 
         <div class="space-y-3">
-          ${items.map((item, idx) => `
+          ${items
+            .map(
+              (item, idx) => `
             <div class="bg-white p-4 rounded-3xl border space-y-2">
-              <span class="font-black text-brand-navy block">Parameter #${idx + 1}: ${item.parameter || 'Variabel Keputusan'}</span>
+              <span class="font-black text-brand-navy block">Parameter #${idx + 1}: ${
+                item.parameter || 'Variabel Keputusan'
+              }</span>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button id="gm-${gameId}-sim-${idx}-A" onclick="setSimChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_a || 'Pilihan A'}</button>
-                <button id="gm-${gameId}-sim-${idx}-B" onclick="setSimChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_b || 'Pilihan B'}</button>
-                <button id="gm-${gameId}-sim-${idx}-C" onclick="setSimChoice('${gameId}', ${idx}, 'C')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_c || 'Pilihan C'}</button>
+                <button id="gm-${gameId}-sim-${idx}-A" onclick="setSimChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
+                item.opsi_a || 'Pilihan A'
+              }</button>
+                <button id="gm-${gameId}-sim-${idx}-B" onclick="setSimChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
+                item.opsi_b || 'Pilihan B'
+              }</button>
+                <button id="gm-${gameId}-sim-${idx}-C" onclick="setSimChoice('${gameId}', ${idx}, 'C')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
+                item.opsi_c || 'Pilihan C'
+              }</button>
               </div>
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
 
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'simulator'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
@@ -1005,22 +1173,30 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </button>
       </div>
     `;
-    } else if (tipe === 'word_search') {
-        const words = items.map(it => String(it.soal).toUpperCase().trim());
-        let wsState = state.gameStates[gameId];
-        if (!wsState || !wsState.wordSearchState) {
-            wsState = { wordSearchState: { targetWords: words, foundWords: [] } };
-            state.gameStates[gameId] = wsState;
-        }
+  } else if (tipe === 'word_search') {
+    const words = items.map((it) => String(it.soal).toUpperCase().trim());
+    let wsState = state.gameStates[gameId];
+    if (!wsState || !wsState.wordSearchState) {
+      wsState = { wordSearchState: { targetWords: words, foundWords: [] } };
+      state.gameStates[gameId] = wsState;
+    }
 
-        return `
+    return `
       <div class="space-y-4">
         <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl space-y-1">
           <span class="font-black text-purple-900 block text-xs">🔍 Cari Kata-Kata Istilah Berikut:</span>
           <div class="flex flex-wrap gap-1.5 mt-1">
-            ${words.map(w => `
-              <span class="px-2.5 py-1 rounded-xl text-xs font-black ${wsState.wordSearchState.foundWords.includes(w) ? 'bg-emerald-500 text-white line-through' : 'bg-white border text-purple-800'}">${w}</span>
-            `).join('')}
+            ${words
+              .map(
+                (w) => `
+              <span class="px-2.5 py-1 rounded-xl text-xs font-black ${
+                wsState.wordSearchState.foundWords.includes(w)
+                  ? 'bg-emerald-500 text-white line-through'
+                  : 'bg-white border text-purple-800'
+              }">${w}</span>
+            `
+              )
+              .join('')}
           </div>
         </div>
 
@@ -1037,368 +1213,385 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
         </button>
       </div>
     `;
-    } else {
-        return `
+  } else {
+    return `
       <div class="space-y-3">
-        ${items.map((item, idx) => `
+        ${items
+          .map(
+            (item, idx) => `
           <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
             <p class="font-bold text-slate-800">${idx + 1}. ${item.soal}</p>
             <div class="grid grid-cols-2 gap-2">
-              <button id="gm-${gameId}-quiz-${idx}-A" onclick="setQuizChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-white font-bold text-left">A. ${item.opsi_a || 'Opsi A'}</button>
-              <button id="gm-${gameId}-quiz-${idx}-B" onclick="setQuizChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-white font-bold text-left">B. ${item.opsi_b || 'Opsi B'}</button>
+              <button id="gm-${gameId}-quiz-${idx}-A" onclick="setQuizChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-white font-bold text-left">A. ${
+              item.opsi_a || 'Opsi A'
+            }</button>
+              <button id="gm-${gameId}-quiz-${idx}-B" onclick="setQuizChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-white font-bold text-left">B. ${
+              item.opsi_b || 'Opsi B'
+            }</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'quiz_speed'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Skor Game
         </button>
       </div>
     `;
-    }
+  }
 }
 
 /* POINTER EVENT DRAG & DROP ENGINE */
 function initPointerDragAndDropEngine() {
-    const draggables = document.querySelectorAll('.draggable-item');
-    const dropZones = document.querySelectorAll('.drop-zone');
+  const draggables = document.querySelectorAll('.draggable-item');
+  const dropZones = document.querySelectorAll('.drop-zone');
 
-    draggables.forEach(item => {
-        item.removeEventListener('pointerdown', handlePointerDown);
-        item.addEventListener('pointerdown', handlePointerDown);
+  draggables.forEach((item) => {
+    item.removeEventListener('pointerdown', handlePointerDown);
+    item.addEventListener('pointerdown', handlePointerDown);
+  });
+
+  let activeItem = null;
+  let offsetX = 0,
+    offsetY = 0;
+
+  function handlePointerDown(e) {
+    activeItem = e.currentTarget;
+    const rect = activeItem.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    activeItem.setPointerCapture(e.pointerId);
+    activeItem.classList.add('dragging');
+
+    activeItem.addEventListener('pointermove', handlePointerMove);
+    activeItem.addEventListener('pointerup', handlePointerUp);
+    activeItem.addEventListener('pointercancel', handlePointerUp);
+  }
+
+  function handlePointerMove(e) {
+    if (!activeItem) return;
+
+    activeItem.style.left = `${e.clientX - offsetX}px`;
+    activeItem.style.top = `${e.clientY - offsetY}px`;
+
+    dropZones.forEach((zone) => {
+      const zRect = zone.getBoundingClientRect();
+      if (
+        e.clientX >= zRect.left &&
+        e.clientX <= zRect.right &&
+        e.clientY >= zRect.top &&
+        e.clientY <= zRect.bottom
+      ) {
+        zone.classList.add('drag-over');
+      } else {
+        zone.classList.remove('drag-over');
+      }
+    });
+  }
+
+  function handlePointerUp(e) {
+    if (!activeItem) return;
+
+    activeItem.classList.remove('dragging');
+    activeItem.style.left = '';
+    activeItem.style.top = '';
+
+    let targetZone = null;
+    dropZones.forEach((zone) => {
+      const zRect = zone.getBoundingClientRect();
+      if (
+        e.clientX >= zRect.left &&
+        e.clientX <= zRect.right &&
+        e.clientY >= zRect.top &&
+        e.clientY <= zRect.bottom
+      ) {
+        targetZone = zone;
+      }
+      zone.classList.remove('drag-over');
     });
 
-    let activeItem = null;
-    let offsetX = 0, offsetY = 0;
+    if (targetZone) {
+      const containerItems = targetZone.querySelector('.drop-zone-items') || targetZone;
+      containerItems.appendChild(activeItem);
 
-    function handlePointerDown(e) {
-        activeItem = e.currentTarget;
-        const rect = activeItem.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
+      const gameId = activeItem.getAttribute('data-game-id');
+      const itemIdx = activeItem.getAttribute('data-item-idx');
+      const catKey = targetZone.getAttribute('data-cat');
 
-        activeItem.setPointerCapture(e.pointerId);
-        activeItem.classList.add('dragging');
-
-        activeItem.addEventListener('pointermove', handlePointerMove);
-        activeItem.addEventListener('pointerup', handlePointerUp);
-        activeItem.addEventListener('pointercancel', handlePointerUp);
+      if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+      state.gameAnswers[gameId][itemIdx] = catKey === 'pool' ? null : catKey;
     }
 
-    function handlePointerMove(e) {
-        if (!activeItem) return;
-
-        activeItem.style.left = `${e.clientX - offsetX}px`;
-        activeItem.style.top = `${e.clientY - offsetY}px`;
-
-        dropZones.forEach(zone => {
-            const zRect = zone.getBoundingClientRect();
-            if (e.clientX >= zRect.left && e.clientX <= zRect.right && e.clientY >= zRect.top && e.clientY <= zRect.bottom) {
-                zone.classList.add('drag-over');
-            } else {
-                zone.classList.remove('drag-over');
-            }
-        });
-    }
-
-    function handlePointerUp(e) {
-        if (!activeItem) return;
-
-        activeItem.classList.remove('dragging');
-        activeItem.style.left = '';
-        activeItem.style.top = '';
-
-        let targetZone = null;
-        dropZones.forEach(zone => {
-            const zRect = zone.getBoundingClientRect();
-            if (e.clientX >= zRect.left && e.clientX <= zRect.right && e.clientY >= zRect.top && e.clientY <= zRect.bottom) {
-                targetZone = zone;
-            }
-            zone.classList.remove('drag-over');
-        });
-
-        if (targetZone) {
-            const containerItems = targetZone.querySelector('.drop-zone-items') || targetZone;
-            containerItems.appendChild(activeItem);
-
-            const gameId = activeItem.getAttribute('data-game-id');
-            const itemIdx = activeItem.getAttribute('data-item-idx');
-            const catKey = targetZone.getAttribute('data-cat');
-
-            if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-            state.gameAnswers[gameId][itemIdx] = catKey === 'pool' ? null : catKey;
-        }
-
-        activeItem.removeEventListener('pointermove', handlePointerMove);
-        activeItem.removeEventListener('pointerup', handlePointerUp);
-        activeItem.removeEventListener('pointercancel', handlePointerUp);
-        activeItem = null;
-    }
+    activeItem.removeEventListener('pointermove', handlePointerMove);
+    activeItem.removeEventListener('pointerup', handlePointerUp);
+    activeItem.removeEventListener('pointercancel', handlePointerUp);
+    activeItem = null;
+  }
 }
 
 /* ==========================================================
-   SVG LINE CONNECTOR ENGINE (MATCHING GAME)
-   ========================================================== */
-/* ==========================================================
-   SVG LINE CONNECTOR ENGINE (SUPPORT MOBILE DRAG + TAP)
+   SVG LINE CONNECTOR ENGINE (MATCHING GAME & MOBILE DRAG + TAP)
    ========================================================== */
 let activeSelectedLeftDot = null; // Menyimpan state titik kiri yang sedang di-tap
 
 function initMatchingLineEngine() {
-    const leftDots = document.querySelectorAll('.matching-dot.left-dot');
-    const rightDots = document.querySelectorAll('.matching-dot.right-dot');
+  const leftDots = document.querySelectorAll('.matching-dot.left-dot');
+  const rightDots = document.querySelectorAll('.matching-dot.right-dot');
 
-    leftDots.forEach(dot => {
-        dot.removeEventListener('pointerdown', handleDotPointerDown);
-        dot.addEventListener('pointerdown', handleDotPointerDown);
-    });
+  leftDots.forEach((dot) => {
+    dot.removeEventListener('pointerdown', handleDotPointerDown);
+    dot.addEventListener('pointerdown', handleDotPointerDown);
+  });
 
-    rightDots.forEach(dot => {
-        dot.removeEventListener('click', handleRightDotClick);
-        dot.addEventListener('click', handleRightDotClick);
-    });
+  rightDots.forEach((dot) => {
+    dot.removeEventListener('click', handleRightDotClick);
+    dot.addEventListener('click', handleRightDotClick);
+  });
 
-    window.removeEventListener('resize', redrawAllMatchingLines);
-    window.addEventListener('resize', redrawAllMatchingLines);
+  window.removeEventListener('resize', redrawAllMatchingLines);
+  window.addEventListener('resize', redrawAllMatchingLines);
 }
 
 // 1. Dukungan Mode Drag & Tap Titik Kiri
 function handleDotPointerDown(e) {
-    e.preventDefault();
-    const startDot = e.currentTarget;
-    const gameId = startDot.getAttribute('data-game-id');
-    const leftIdx = startDot.getAttribute('data-left-idx');
+  e.preventDefault();
+  const startDot = e.currentTarget;
+  const gameId = startDot.getAttribute('data-game-id');
+  const leftIdx = startDot.getAttribute('data-left-idx');
 
-    // Aktifkan mode Tap-to-Connect jika user mengetuk titik kiri
-    if (activeSelectedLeftDot && activeSelectedLeftDot !== startDot) {
-        activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
-    }
-    activeSelectedLeftDot = startDot;
-    startDot.classList.add('ring-4', 'ring-amber-400'); // Indikator visual titik terpilih
+  // Aktifkan mode Tap-to-Connect jika user mengetuk titik kiri
+  if (activeSelectedLeftDot && activeSelectedLeftDot !== startDot) {
+    activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
+  }
+  activeSelectedLeftDot = startDot;
+  startDot.classList.add('ring-4', 'ring-amber-400'); // Indikator visual titik terpilih
 
-    const container = document.getElementById(`matching-container-${gameId}`);
-    const svg = document.getElementById(`matching-svg-${gameId}`);
-    if (!container || !svg) return;
+  const container = document.getElementById(`matching-container-${gameId}`);
+  const svg = document.getElementById(`matching-svg-${gameId}`);
+  if (!container || !svg) return;
 
-    const cRect = container.getBoundingClientRect();
-    const dRect = startDot.getBoundingClientRect();
+  const cRect = container.getBoundingClientRect();
+  const dRect = startDot.getBoundingClientRect();
 
-    const x1 = dRect.left + dRect.width / 2 - cRect.left;
-    const y1 = dRect.top + dRect.height / 2 - cRect.top;
+  const x1 = dRect.left + dRect.width / 2 - cRect.left;
+  const y1 = dRect.top + dRect.height / 2 - cRect.top;
 
-    // Hapus garis lama jika ada
-    const existingLine = svg.querySelector(`line[data-left-idx="${leftIdx}"]`);
-    if (existingLine) existingLine.remove();
+  // Hapus garis lama jika ada
+  const existingLine = svg.querySelector(`line[data-left-idx="${leftIdx}"]`);
+  if (existingLine) existingLine.remove();
 
-    const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    tempLine.setAttribute('x1', x1);
-    tempLine.setAttribute('y1', y1);
-    tempLine.setAttribute('x2', x1);
-    tempLine.setAttribute('y2', y1);
-    tempLine.setAttribute('stroke', '#6B38FB');
-    tempLine.setAttribute('stroke-width', '4');
-    tempLine.setAttribute('stroke-linecap', 'round');
-    tempLine.setAttribute('data-left-idx', leftIdx);
-    svg.appendChild(tempLine);
+  const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  tempLine.setAttribute('x1', x1);
+  tempLine.setAttribute('y1', y1);
+  tempLine.setAttribute('x2', x1);
+  tempLine.setAttribute('y2', y1);
+  tempLine.setAttribute('stroke', '#6B38FB');
+  tempLine.setAttribute('stroke-width', '4');
+  tempLine.setAttribute('stroke-linecap', 'round');
+  tempLine.setAttribute('data-left-idx', leftIdx);
+  svg.appendChild(tempLine);
 
-    let isDragging = false;
-    startDot.setPointerCapture(e.pointerId);
+  let isDragging = false;
+  startDot.setPointerCapture(e.pointerId);
 
-    function onPointerMove(ev) {
-        isDragging = true;
-        const curX = ev.clientX - cRect.left;
-        const curY = ev.clientY - cRect.top;
-        tempLine.setAttribute('x2', curX);
-        tempLine.setAttribute('y2', curY);
-    }
+  function onPointerMove(ev) {
+    isDragging = true;
+    const curX = ev.clientX - cRect.left;
+    const curY = ev.clientY - cRect.top;
+    tempLine.setAttribute('x2', curX);
+    tempLine.setAttribute('y2', curY);
+  }
 
-    function onPointerUp(ev) {
-        startDot.removeEventListener('pointermove', onPointerMove);
-        startDot.removeEventListener('pointerup', onPointerUp);
+  function onPointerUp(ev) {
+    startDot.removeEventListener('pointermove', onPointerMove);
+    startDot.removeEventListener('pointerup', onPointerUp);
 
-        if (!isDragging) {
-            // Jika hanya di-tap (bukan di-drag), biarkan garis sementara tetap ada menunggu tap titik kanan
-            return;
-        }
-
-        // Jika di-drag dan dilepas
-        const targetElem = document.elementFromPoint(ev.clientX, ev.clientY);
-        const targetDot = targetElem ? targetElem.closest('.matching-dot.right-dot') : null;
-
-        if (targetDot && targetDot.getAttribute('data-game-id') === gameId) {
-            connectDots(startDot, targetDot, tempLine, gameId, leftIdx);
-        } else {
-            tempLine.remove();
-            if (state.gameAnswers[gameId]) delete state.gameAnswers[gameId][leftIdx];
-        }
+    if (!isDragging) {
+      // Jika hanya di-tap (bukan di-drag), biarkan garis sementara tetap ada menunggu tap titik kanan
+      return;
     }
 
-    startDot.addEventListener('pointermove', onPointerMove);
-    startDot.addEventListener('pointerup', onPointerUp);
+    // Jika di-drag dan dilepas
+    const targetElem = document.elementFromPoint(ev.clientX, ev.clientY);
+    const targetDot = targetElem ? targetElem.closest('.matching-dot.right-dot') : null;
+
+    if (targetDot && targetDot.getAttribute('data-game-id') === gameId) {
+      connectDots(startDot, targetDot, tempLine, gameId, leftIdx);
+    } else {
+      tempLine.remove();
+      if (state.gameAnswers[gameId]) delete state.gameAnswers[gameId][leftIdx];
+    }
+  }
+
+  startDot.addEventListener('pointermove', onPointerMove);
+  startDot.addEventListener('pointerup', onPointerUp);
 }
 
 // 2. Dukungan Mode Tap Titik Kanan
 function handleRightDotClick(e) {
-    if (!activeSelectedLeftDot) return;
+  if (!activeSelectedLeftDot) return;
 
-    const rightDot = e.currentTarget;
-    const gameId = rightDot.getAttribute('data-game-id');
+  const rightDot = e.currentTarget;
+  const gameId = rightDot.getAttribute('data-game-id');
 
-    if (activeSelectedLeftDot.getAttribute('data-game-id') !== gameId) return;
+  if (activeSelectedLeftDot.getAttribute('data-game-id') !== gameId) return;
 
-    const leftIdx = activeSelectedLeftDot.getAttribute('data-left-idx');
-    const svg = document.getElementById(`matching-svg-${gameId}`);
-    const line = svg ? svg.querySelector(`line[data-left-idx="${leftIdx}"]`) : null;
+  const leftIdx = activeSelectedLeftDot.getAttribute('data-left-idx');
+  const svg = document.getElementById(`matching-svg-${gameId}`);
+  const line = svg ? svg.querySelector(`line[data-left-idx="${leftIdx}"]`) : null;
 
-    if (line) {
-        connectDots(activeSelectedLeftDot, rightDot, line, gameId, leftIdx);
-    }
+  if (line) {
+    connectDots(activeSelectedLeftDot, rightDot, line, gameId, leftIdx);
+  }
 }
 
 // Helper Menghubungkan 2 Titik & Mengunci Garis
 function connectDots(leftDot, rightDot, lineElem, gameId, leftIdx) {
-    const container = document.getElementById(`matching-container-${gameId}`);
-    if (!container) return;
+  const container = document.getElementById(`matching-container-${gameId}`);
+  if (!container) return;
 
-    const cRect = container.getBoundingClientRect();
-    const rRect = rightDot.getBoundingClientRect();
+  const cRect = container.getBoundingClientRect();
+  const rRect = rightDot.getBoundingClientRect();
 
-    const x2 = rRect.left + rRect.width / 2 - cRect.left;
-    const y2 = rRect.top + rRect.height / 2 - cRect.top;
+  const x2 = rRect.left + rRect.width / 2 - cRect.left;
+  const y2 = rRect.top + rRect.height / 2 - cRect.top;
 
-    lineElem.setAttribute('x2', x2);
-    lineElem.setAttribute('y2', y2);
-    lineElem.setAttribute('stroke', '#0D6EFD'); // Warna biru aktif
+  lineElem.setAttribute('x2', x2);
+  lineElem.setAttribute('y2', y2);
+  lineElem.setAttribute('stroke', '#0D6EFD'); // Warna biru aktif
 
-    const rightText = rightDot.getAttribute('data-right-text');
-    if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-    state.gameAnswers[gameId][leftIdx] = rightText;
+  const rightText = rightDot.getAttribute('data-right-text');
+  if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+  state.gameAnswers[gameId][leftIdx] = rightText;
 
-    if (activeSelectedLeftDot) {
-        activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
-        activeSelectedLeftDot = null;
-    }
+  if (activeSelectedLeftDot) {
+    activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
+    activeSelectedLeftDot = null;
+  }
 }
 
 function resetMatchingLines(gameId) {
-    const svg = document.getElementById(`matching-svg-${gameId}`);
-    if (svg) svg.innerHTML = '';
-    if (state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-    showToast('info', 'Garis pasangan di-reset!');
+  const svg = document.getElementById(`matching-svg-${gameId}`);
+  if (svg) svg.innerHTML = '';
+  if (state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+  showToast('info', 'Garis pasangan di-reset!');
 }
 
 function redrawAllMatchingLines() {
-    Object.keys(state.gameAnswers).forEach(gameId => {
-        const answers = state.gameAnswers[gameId];
-        const container = document.getElementById(`matching-container-${gameId}`);
-        const svg = document.getElementById(`matching-svg-${gameId}`);
-        if (!container || !svg || !answers) return;
+  Object.keys(state.gameAnswers).forEach((gameId) => {
+    const answers = state.gameAnswers[gameId];
+    const container = document.getElementById(`matching-container-${gameId}`);
+    const svg = document.getElementById(`matching-svg-${gameId}`);
+    if (!container || !svg || !answers) return;
 
-        svg.innerHTML = '';
-        const cRect = container.getBoundingClientRect();
+    svg.innerHTML = '';
+    const cRect = container.getBoundingClientRect();
 
-        Object.keys(answers).forEach(leftIdx => {
-            const rightText = answers[leftIdx];
-            const leftDot = container.querySelector(`.left-dot[data-left-idx="${leftIdx}"]`);
-            const rightDot = container.querySelector(`.right-dot[data-right-text="${CSS.escape(rightText)}"]`);
+    Object.keys(answers).forEach((leftIdx) => {
+      const rightText = answers[leftIdx];
+      const leftDot = container.querySelector(`.left-dot[data-left-idx="${leftIdx}"]`);
+      const rightDot = container.querySelector(`.right-dot[data-right-text="${CSS.escape(rightText)}"]`);
 
-            if (leftDot && rightDot) {
-                const lRect = leftDot.getBoundingClientRect();
-                const rRect = rightDot.getBoundingClientRect();
+      if (leftDot && rightDot) {
+        const lRect = leftDot.getBoundingClientRect();
+        const rRect = rightDot.getBoundingClientRect();
 
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', lRect.left + lRect.width / 2 - cRect.left);
-                line.setAttribute('y1', lRect.top + lRect.height / 2 - cRect.top);
-                line.setAttribute('x2', rRect.left + rRect.width / 2 - cRect.left);
-                line.setAttribute('y2', rRect.top + rRect.height / 2 - cRect.top);
-                line.setAttribute('stroke', '#0D6EFD');
-                line.setAttribute('stroke-width', '4');
-                line.setAttribute('stroke-linecap', 'round');
-                line.setAttribute('data-left-idx', leftIdx);
-                svg.appendChild(line);
-            }
-        });
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', lRect.left + lRect.width / 2 - cRect.left);
+        line.setAttribute('y1', lRect.top + lRect.height / 2 - cRect.top);
+        line.setAttribute('x2', rRect.left + rRect.width / 2 - cRect.left);
+        line.setAttribute('y2', rRect.top + rRect.height / 2 - cRect.top);
+        line.setAttribute('stroke', '#0D6EFD');
+        line.setAttribute('stroke-width', '4');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('data-left-idx', leftIdx);
+        svg.appendChild(line);
+      }
     });
+  });
 }
 
 function setQuizChoice(gameId, idx, choice) {
-    if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-    state.gameAnswers[gameId][idx] = choice;
+  if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+  state.gameAnswers[gameId][idx] = choice;
 
-    const btnA = document.getElementById(`gm-${gameId}-quiz-${idx}-A`);
-    const btnB = document.getElementById(`gm-${gameId}-quiz-${idx}-B`);
-    if (choice === 'A') {
-        btnA.className = 'p-2.5 rounded-xl border-2 border-brand-blue bg-blue-50 font-bold text-brand-blue text-left';
-        btnB.className = 'p-2.5 rounded-xl border bg-white font-bold text-left';
-    } else {
-        btnA.className = 'p-2.5 rounded-xl border bg-white font-bold text-left';
-        btnB.className = 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-600 text-left';
-    }
+  const btnA = document.getElementById(`gm-${gameId}-quiz-${idx}-A`);
+  const btnB = document.getElementById(`gm-${gameId}-quiz-${idx}-B`);
+  if (choice === 'A') {
+    btnA.className = 'p-2.5 rounded-xl border-2 border-brand-blue bg-blue-50 font-bold text-brand-blue text-left';
+    btnB.className = 'p-2.5 rounded-xl border bg-white font-bold text-left';
+  } else {
+    btnA.className = 'p-2.5 rounded-xl border bg-white font-bold text-left';
+    btnB.className = 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-600 text-left';
+  }
 }
 
 function setSimChoice(gameId, idx, choice) {
-    if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
-    state.gameAnswers[gameId][idx] = choice;
+  if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+  state.gameAnswers[gameId][idx] = choice;
 
-    ['A', 'B', 'C'].forEach(ch => {
-        const btn = document.getElementById(`gm-${gameId}-sim-${idx}-${ch}`);
-        if (btn) {
-            btn.className = choice === ch 
-                ? 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-700 text-left text-xs' 
-                : 'p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs';
-        }
-    });
+  ['A', 'B', 'C'].forEach((ch) => {
+    const btn = document.getElementById(`gm-${gameId}-sim-${idx}-${ch}`);
+    if (btn) {
+      btn.className =
+        choice === ch
+          ? 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50 font-bold text-purple-700 text-left text-xs'
+          : 'p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs';
+    }
+  });
 }
 
 function moveSequencerItem(gameId, index, direction, ptmId) {
-    const seqState = state.gameStates[gameId];
-    if (!seqState || !seqState.sequencerItems) return;
+  const seqState = state.gameStates[gameId];
+  if (!seqState || !seqState.sequencerItems) return;
 
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= seqState.sequencerItems.length) return;
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= seqState.sequencerItems.length) return;
 
-    const temp = seqState.sequencerItems[index];
-    seqState.sequencerItems[index] = seqState.sequencerItems[targetIndex];
-    seqState.sequencerItems[targetIndex] = temp;
+  const temp = seqState.sequencerItems[index];
+  seqState.sequencerItems[index] = seqState.sequencerItems[targetIndex];
+  seqState.sequencerItems[targetIndex] = temp;
 
-    const viewport = document.getElementById('content-viewport');
-    viewport.innerHTML = renderGameView(ptmId);
-    setTimeout(() => initPointerDragAndDropEngine(), 100);
+  const viewport = document.getElementById('content-viewport');
+  viewport.innerHTML = renderGameView(ptmId);
+  setTimeout(() => initPointerDragAndDropEngine(), 100);
 }
 
 function checkWordSearchMatch(gameId, ptmId) {
-    const inputElem = document.getElementById(`ws-${gameId}-input-word`);
-    const wsState = state.gameStates[gameId]?.wordSearchState;
-    if (!inputElem || !wsState) return;
+  const inputElem = document.getElementById(`ws-${gameId}-input-word`);
+  const wsState = state.gameStates[gameId]?.wordSearchState;
+  if (!inputElem || !wsState) return;
 
-    const val = inputElem.value.trim().toUpperCase();
-    if (!val) return;
+  const val = inputElem.value.trim().toUpperCase();
+  if (!val) return;
 
-    if (wsState.targetWords.includes(val)) {
-        if (!wsState.foundWords.includes(val)) {
-            wsState.foundWords.push(val);
-            showToast('success', `Hebat! Kata "${val}" ditemukan!`);
-            inputElem.value = '';
-            const viewport = document.getElementById('content-viewport');
-            viewport.innerHTML = renderGameView(ptmId);
-        } else {
-            showToast('info', 'Kata tersebut sudah kamu temukan!');
-        }
+  if (wsState.targetWords.includes(val)) {
+    if (!wsState.foundWords.includes(val)) {
+      wsState.foundWords.push(val);
+      showToast('success', `Hebat! Kata "${val}" ditemukan!`);
+      inputElem.value = '';
+      const viewport = document.getElementById('content-viewport');
+      viewport.innerHTML = renderGameView(ptmId);
     } else {
-        showToast('error', 'Kata tersebut tidak ada dalam daftar!');
+      showToast('info', 'Kata tersebut sudah kamu temukan!');
     }
+  } else {
+    showToast('error', 'Kata tersebut tidak ada dalam daftar!');
+  }
 }
 
 /* ==========================================================
    8. EVALUASI VIEW
    ========================================================== */
 function renderEvaluasiView(ptmId) {
-    const evalObj = (state.cachedData.evaluasi || []).find(e => e.id_pertemuan === ptmId && e.status === 'Publish');
-    if (!evalObj) return `<div class="p-8 text-center text-slate-400">Evaluasi belum tersedia pada pertemuan ini.</div>`;
+  const evalObj = (state.cachedData.evaluasi || []).find((e) => e.id_pertemuan === ptmId && e.status === 'Publish');
+  if (!evalObj) return `<div class="p-8 text-center text-slate-400">Evaluasi belum tersedia pada pertemuan ini.</div>`;
 
-    const soalList = (state.cachedData.soal_evaluasi || []).filter(s => s.id_evaluasi === evalObj.id_evaluasi);
-    if (soalList.length === 0) return `<div class="p-8 text-center text-slate-400">Belum ada soal pada modul evaluasi ini.</div>`;
+  const soalList = (state.cachedData.soal_evaluasi || []).filter((s) => s.id_evaluasi === evalObj.id_evaluasi);
+  if (soalList.length === 0) return `<div class="p-8 text-center text-slate-400">Belum ada soal pada modul evaluasi ini.</div>`;
 
-    return `
+  return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
       <div class="bg-brand-navy text-white p-5 rounded-3xl shadow-md">
         <h3 class="text-base font-black font-heading">${evalObj.judul_evaluasi}</h3>
@@ -1406,20 +1599,28 @@ function renderEvaluasiView(ptmId) {
       </div>
 
       <div class="space-y-4">
-        ${soalList.map((s, idx) => `
+        ${soalList
+          .map(
+            (s, idx) => `
           <div class="bg-white p-5 rounded-3xl border space-y-3">
             <span class="font-black text-brand-navy">Soal #${idx + 1}</span>
             <p class="font-bold text-slate-800">${s.pertanyaan}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              ${['A', 'B', 'C', 'D'].map(o => `
+              ${['A', 'B', 'C', 'D']
+                .map(
+                  (o) => `
                 <button id="eval-opt-${s.id_soal}-${o}" onclick="selectEvalOption('${s.id_soal}', '${o}')" class="w-full p-3 text-left rounded-2xl border bg-white hover:bg-slate-50 font-medium transition flex items-center gap-2">
                   <span class="w-6 h-6 rounded-xl bg-slate-100 font-black text-[10px] flex items-center justify-center border">${o}</span>
                   <span>${s['opsi_' + o.toLowerCase()]}</span>
                 </button>
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <button id="btn-submit-eval-siswa" onclick="requireStudentAuth(() => submitEvaluasiSiswa('${ptmId}', '${evalObj.id_evaluasi}'))" class="w-full py-4 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
@@ -1430,19 +1631,23 @@ function renderEvaluasiView(ptmId) {
 }
 
 function selectEvalOption(soalId, option) {
-    state.evaluasiAnswers[soalId] = option;
-    ['A', 'B', 'C', 'D'].forEach(o => {
-        const btn = document.getElementById(`eval-opt-${soalId}-${o}`);
-        if (btn) btn.className = state.evaluasiAnswers[soalId] === o ? 'w-full p-3 text-left rounded-2xl border-2 border-brand-blue bg-blue-50 font-bold text-brand-blue' : 'w-full p-3 text-left rounded-2xl border bg-white font-medium';
-    });
+  state.evaluasiAnswers[soalId] = option;
+  ['A', 'B', 'C', 'D'].forEach((o) => {
+    const btn = document.getElementById(`eval-opt-${soalId}-${o}`);
+    if (btn)
+      btn.className =
+        state.evaluasiAnswers[soalId] === o
+          ? 'w-full p-3 text-left rounded-2xl border-2 border-brand-blue bg-blue-50 font-bold text-brand-blue'
+          : 'w-full p-3 text-left rounded-2xl border bg-white font-medium';
+  });
 }
 
 /* ==========================================================
    9. ADMIN CMS VIEWS
    ========================================================== */
 function renderAdminUsersView(container) {
-    const usersList = state.cachedData.users || [];
-    container.innerHTML = `
+  const usersList = state.cachedData.users || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Pengguna: <b>${usersList.length}</b></span>
@@ -1460,11 +1665,19 @@ function renderAdminUsersView(container) {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            ${usersList.map(u => `
+            ${usersList
+              .map(
+                (u) => `
               <tr>
                 <td class="p-3 font-bold whitespace-nowrap">${u.nama_lengkap}</td>
                 <td class="p-3 font-mono">${u.username}</td>
-                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin' ? 'bg-red-100 text-red-700' : u.role === 'guru' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${String(u.role).toUpperCase()}</span></td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  u.role === 'admin'
+                    ? 'bg-red-100 text-red-700'
+                    : u.role === 'guru'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-blue-100 text-blue-700'
+                }">${String(u.role).toUpperCase()}</span></td>
                 <td class="p-3 font-bold">${u.kelas || '-'}</td>
                 <td class="p-3 text-center whitespace-nowrap">
                   <div class="flex items-center justify-center gap-1.5">
@@ -1473,7 +1686,9 @@ function renderAdminUsersView(container) {
                   </div>
                 </td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
           </tbody>
         </table>
       </div>
@@ -1482,18 +1697,22 @@ function renderAdminUsersView(container) {
 }
 
 function renderAdminClassesView(container) {
-    const kelasList = state.cachedData.kelas || [];
-    container.innerHTML = `
+  const kelasList = state.cachedData.kelas || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Kelas Registered: <b>${kelasList.length}</b></span>
         <button onclick="openKelasModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Kelas</button>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-        ${kelasList.map(k => `
+        ${kelasList
+          .map(
+            (k) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between gap-2 shadow-xs">
             <div>
-              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${k.tingkat || '-'}</span>
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${
+                k.tingkat || '-'
+              }</span>
               <h4 class="font-black text-brand-navy text-sm mt-1">${k.nama_kelas}</h4>
               <p class="text-slate-500 text-[11px]">${k.keterangan || ''}</p>
             </div>
@@ -1502,7 +1721,9 @@ function renderAdminClassesView(container) {
               <button onclick="deleteKelas('${k.id_kelas}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
@@ -1512,15 +1733,17 @@ function renderAdminClassesView(container) {
    10. GURU CMS VIEWS & EXPORT REKAP CSV
    ========================================================== */
 function renderGuruPertemuanView(container) {
-    const ptmList = state.cachedData.pertemuan || [];
-    container.innerHTML = `
+  const ptmList = state.cachedData.pertemuan || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Modul Pertemuan: <b>${ptmList.length}</b></span>
         <button onclick="openPertemuanModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Pertemuan</button>
       </div>
       <div class="space-y-2">
-        ${ptmList.map(p => `
+        ${ptmList
+          .map(
+            (p) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
             <div>
               <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-black rounded-full text-[10px]">Pertemuan ${p.nomor_pertemuan}</span>
@@ -1532,22 +1755,26 @@ function renderGuruPertemuanView(container) {
               <button onclick="deletePertemuan('${p.id_pertemuan}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 function renderGuruMateriView(container) {
-    const materiList = state.cachedData.materi || [];
-    container.innerHTML = `
+  const materiList = state.cachedData.materi || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Bahan Ajar: <b>${materiList.length}</b></span>
         <button onclick="openMateriModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Bahan Ajar</button>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        ${materiList.map(m => `
+        ${materiList
+          .map(
+            (m) => `
           <div class="bg-white p-4 rounded-3xl border flex flex-col justify-between space-y-2">
             <div>
               <span class="px-2 py-0.5 bg-purple-100 text-purple-800 font-bold text-[10px] rounded-full">${m.tipe_media}</span>
@@ -1558,25 +1785,31 @@ function renderGuruMateriView(container) {
               <button onclick="deleteMateri('${m.id_materi}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 function renderGuruLkpdView(container) {
-    const lkpdList = state.cachedData.lkpd || [];
-    container.innerHTML = `
+  const lkpdList = state.cachedData.lkpd || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total LKPD Aktif: <b>${lkpdList.length}</b></span>
         <button onclick="openLkpdModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Buat LKPD Baru</button>
       </div>
       <div class="space-y-2">
-        ${lkpdList.map(l => `
+        ${lkpdList
+          .map(
+            (l) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
             <div>
-              <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-bold text-[10px] rounded-full uppercase">${l.tipe_lkpd || 'manual'}</span>
+              <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-bold text-[10px] rounded-full uppercase">${
+                l.tipe_lkpd || 'manual'
+              }</span>
               <h4 class="font-black text-brand-navy mt-1">${l.judul_lkpd}</h4>
               <p class="text-slate-500">${l.instruksi}</p>
             </div>
@@ -1585,22 +1818,26 @@ function renderGuruLkpdView(container) {
               <button onclick="deleteLkpd('${l.id_lkpd}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 function renderGuruGameView(container) {
-    const gamesList = state.cachedData.games || [];
-    container.innerHTML = `
+  const gamesList = state.cachedData.games || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Game Aktif: <b>${gamesList.length}</b></span>
         <button onclick="openGameModal()" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-xl shadow">+ Konfigurasi Game</button>
       </div>
       <div class="space-y-2">
-        ${gamesList.map(g => `
+        ${gamesList
+          .map(
+            (g) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
             <div>
               <span class="px-2 py-0.5 bg-purple-100 text-purple-800 font-bold text-[10px] rounded-full uppercase">${g.tipe_game}</span>
@@ -1612,22 +1849,26 @@ function renderGuruGameView(container) {
               <button onclick="deleteGame('${g.id_game}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 function renderGuruSoalView(container) {
-    const soalList = state.cachedData.soal_evaluasi || [];
-    container.innerHTML = `
+  const soalList = state.cachedData.soal_evaluasi || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Bank Soal Evaluasi: <b>${soalList.length} Soal</b></span>
         <button onclick="openSoalModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Soal</button>
       </div>
       <div class="space-y-2">
-        ${soalList.map((s, idx) => `
+        ${soalList
+          .map(
+            (s, idx) => `
           <div class="bg-white p-4 rounded-3xl border space-y-1">
             <div class="flex items-center justify-between border-b pb-1">
               <span class="font-black text-brand-navy">#${idx + 1} Kunci: ${s.kunci_jawaban}</span>
@@ -1638,15 +1879,17 @@ function renderGuruSoalView(container) {
             </div>
             <p class="font-bold text-slate-800">${s.pertanyaan}</p>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 function renderGuruKoreksiView(container) {
-    const subs = state.cachedData.submissions || [];
-    container.innerHTML = `
+  const subs = state.cachedData.submissions || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="bg-white p-5 rounded-3xl border shadow-sm">
         <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">📥 Jawaban Masuk Siswa (${subs.length})</h3>
@@ -1661,9 +1904,15 @@ function renderGuruKoreksiView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.map(s => {
-        const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined) ? s.nilai_esai : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 'Belum');
-        return `
+              ${subs
+                .map((s) => {
+                  const scoreDisplay =
+                    s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+                      ? s.nilai_esai
+                      : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+                      ? s.skor_otomatis
+                      : 'Belum';
+                  return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
                   <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
@@ -1672,7 +1921,9 @@ function renderGuruKoreksiView(container) {
                     <button onclick="openKoreksiModal('${s.id_sub}')" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-lg">Periksa</button>
                   </td>
                 </tr>
-              `}).join('')}
+              `;
+                })
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -1682,8 +1933,8 @@ function renderGuruKoreksiView(container) {
 }
 
 function renderGuruRekapView(container) {
-    const subs = state.cachedData.submissions || [];
-    container.innerHTML = `
+  const subs = state.cachedData.submissions || [];
+  container.innerHTML = `
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Submisi Nilai: <b>${subs.length}</b></span>
@@ -1705,20 +1956,31 @@ function renderGuruRekapView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>` :
-            subs.map(s => {
-                const scoreDisplay = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined)
-                    ? s.nilai_esai
-                    : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
-                return `
+              ${
+                subs.length === 0
+                  ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>`
+                  : subs
+                      .map((s) => {
+                        const scoreDisplay =
+                          s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+                            ? s.nilai_esai
+                            : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+                            ? s.skor_otomatis
+                            : 0;
+                        return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
                   <td class="p-3">${s.kelas || '-'}</td>
                   <td class="p-3 text-center uppercase font-mono">${s.tipe_sub || '-'}</td>
                   <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.status || 'Belum'}</span></td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                  }">${s.status || 'Belum'}</span></td>
                 </tr>
-              `}).join('')}
+              `;
+                      })
+                      .join('')
+              }
             </tbody>
           </table>
         </div>
@@ -1728,45 +1990,49 @@ function renderGuruRekapView(container) {
 }
 
 function exportRekapToCsv() {
-    const subs = state.cachedData.submissions || [];
-    if (subs.length === 0) {
-        showToast('warning', 'Belum ada data submisi untuk diekspor!');
-        return;
-    }
+  const subs = state.cachedData.submissions || [];
+  if (subs.length === 0) {
+    showToast('warning', 'Belum ada data submisi untuk diekspor!');
+    return;
+  }
 
-    let csvContent = "\uFEFF";
-    csvContent += "ID Submisi,Username,Nama Siswa,Kelas,Tipe Modul,Skor Otomatis,Nilai Esai,Nilai Akhir,Status,Waktu Submisi,Catatan Guru\n";
+  let csvContent = '\uFEFF';
+  csvContent +=
+    'ID Submisi,Username,Nama Siswa,Kelas,Tipe Modul,Skor Otomatis,Nilai Esai,Nilai Akhir,Status,Waktu Submisi,Catatan Guru\n';
 
-    subs.forEach(s => {
-        const finalScore = (s.nilai_esai !== "" && s.nilai_esai !== null && s.nilai_esai !== undefined)
-            ? s.nilai_esai
-            : ((s.skor_otomatis !== "" && s.skor_otomatis !== null && s.skor_otomatis !== undefined) ? s.skor_otomatis : 0);
+  subs.forEach((s) => {
+    const finalScore =
+      s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+        ? s.nilai_esai
+        : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+        ? s.skor_otomatis
+        : 0;
 
-        const row = [
-            `"${s.id_sub || ''}"`,
-            `"${s.username_siswa || ''}"`,
-            `"${(s.nama_siswa || '').replace(/"/g, '""')}"`,
-            `"${s.kelas || ''}"`,
-            `"${String(s.tipe_sub || '').toUpperCase()}"`,
-            `"${s.skor_otomatis || 0}"`,
-            `"${s.nilai_esai || ''}"`,
-            `"${finalScore}"`,
-            `"${s.status || ''}"`,
-            `"${s.timestamp || ''}"`,
-            `"${(s.catatan_guru || '').replace(/"/g, '""')}"`
-        ];
-        csvContent += row.join(",") + "\n";
-    });
+    const row = [
+      `"${s.id_sub || ''}"`,
+      `"${s.username_siswa || ''}"`,
+      `"${(s.nama_siswa || '').replace(/"/g, '""')}"`,
+      `"${s.kelas || ''}"`,
+      `"${String(s.tipe_sub || '').toUpperCase()}"`,
+      `"${s.skor_otomatis || 0}"`,
+      `"${s.nilai_esai || ''}"`,
+      `"${finalScore}"`,
+      `"${s.status || ''}"`,
+      `"${s.timestamp || ''}"`,
+      `"${(s.catatan_guru || '').replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(',') + '\n';
+  });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Rekap_Nilai_ELKPD_STEAM_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('success', 'Rekap nilai berhasil diunduh (CSV)!');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Rekap_Nilai_ELKPD_STEAM_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('success', 'Rekap nilai berhasil diunduh (CSV)!');
 }
 
 /* ==========================================================
@@ -1776,82 +2042,358 @@ let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
 let canvasUndoStack = [];
+let currentPdfDocGuru = null; // dokumen PDF aktif saat mode guru menyusun peta field
+let currentPageGuru = 1;
+let totalPagesGuru = 1;
+let fieldsByPageGuru = {}; // { [halaman]: [{id,type,x,y,w,h}] }
+let fieldCounterGuru = 1;
+let renderScaleGuru = 1.5;
+
+async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson) {
+  fieldsByPageGuru = existingFieldMapJson ? JSON.parse(existingFieldMapJson).fields : {};
+  fieldCounterGuru = 1;
+  currentPageGuru = 1;
+
+  // PDF diambil sebagai arrayBuffer lewat fetch, karena url Drive/preview
+  // biasanya butuh mode 'view' file mentah, bukan endpoint 'preview' iframe.
+  const res = await fetch(pdfUrl);
+  const arrayBuffer = await res.arrayBuffer();
+  currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  totalPagesGuru = currentPdfDocGuru.numPages;
+
+  containerEl.innerHTML = `
+        <div style="position:relative; display:inline-block;">
+            <canvas id="guru-pdf-canvas"></canvas>
+            <div id="guru-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:crosshair;"></div>
+        </div>
+    `;
+
+  await renderGuruPage();
+  attachGuruDrawHandlers();
+}
+
+async function renderGuruPage() {
+  const page = await currentPdfDocGuru.getPage(currentPageGuru);
+  const viewport = page.getViewport({ scale: renderScaleGuru });
+  const canvas = document.getElementById('guru-pdf-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+
+  if (!fieldsByPageGuru[currentPageGuru]) fieldsByPageGuru[currentPageGuru] = [];
+  redrawGuruFieldBoxes();
+}
+
+function changeGuruPage(delta) {
+  const next = currentPageGuru + delta;
+  if (next < 1 || next > totalPagesGuru) return;
+  currentPageGuru = next;
+  renderGuruPage();
+}
+
+function attachGuruDrawHandlers() {
+  const overlay = document.getElementById('guru-overlay');
+  let drawing = false,
+    start = null,
+    previewEl = null;
+
+  overlay.onmousedown = (e) => {
+    const rect = overlay.getBoundingClientRect();
+    drawing = true;
+    start = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    previewEl = document.createElement('div');
+    previewEl.style.position = 'absolute';
+    previewEl.style.border = '2px dashed #d97706';
+    previewEl.style.background = 'rgba(217,119,6,0.1)';
+    overlay.appendChild(previewEl);
+  };
+
+  overlay.onmousemove = (e) => {
+    if (!drawing) return;
+    const rect = overlay.getBoundingClientRect();
+    const curX = e.clientX - rect.left;
+    const curY = e.clientY - rect.top;
+    const x = Math.min(start.x, curX),
+      y = Math.min(start.y, curY);
+    const w = Math.abs(curX - start.x),
+      h = Math.abs(curY - start.y);
+    Object.assign(previewEl.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+  };
+
+  overlay.onmouseup = () => {
+    if (!drawing) return;
+    drawing = false;
+    const rect = overlay.getBoundingClientRect();
+    const w = parseFloat(previewEl.style.width);
+    const h = parseFloat(previewEl.style.height);
+    const x = parseFloat(previewEl.style.left);
+    const y = parseFloat(previewEl.style.top);
+    overlay.removeChild(previewEl);
+
+    if (w < 15 || h < 10) return; // kotak terlalu kecil, kemungkinan cuma klik salah
+
+    fieldsByPageGuru[currentPageGuru].push({
+      id: 'field_' + fieldCounterGuru++,
+      type: 'text', // guru bisa ganti ke 'textarea' lewat renameGuruField/changeGuruFieldType di panel daftar field
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100,
+      w: (w / rect.width) * 100,
+      h: (h / rect.height) * 100
+    });
+    redrawGuruFieldBoxes();
+  };
+}
+
+function redrawGuruFieldBoxes() {
+  const overlay = document.getElementById('guru-overlay');
+  overlay.querySelectorAll('.guru-field-box').forEach((el) => el.remove());
+
+  (fieldsByPageGuru[currentPageGuru] || []).forEach((f) => {
+    const box = document.createElement('div');
+    box.className = 'guru-field-box';
+    Object.assign(box.style, {
+      position: 'absolute',
+      left: f.x + '%',
+      top: f.y + '%',
+      width: f.w + '%',
+      height: f.h + '%',
+      border: '2px dashed #2563eb',
+      background: 'rgba(37,99,235,0.08)'
+    });
+    box.title = f.id + ' (' + f.type + ')';
+    overlay.appendChild(box);
+  });
+}
+
+function deleteGuruField(fieldId) {
+  fieldsByPageGuru[currentPageGuru] = (fieldsByPageGuru[currentPageGuru] || []).filter((f) => f.id !== fieldId);
+  redrawGuruFieldBoxes();
+}
+
+// Guru klik "Simpan Peta Field" -> kirim ke backend, disimpan menempel ke record LKPD
+// idLkpd: sesuai field asli di sistem kalian (lkpdObj.id_lkpd), BUKAN 'id' generik
+async function saveFieldMapGuru(idLkpd) {
+  const payload = {
+    totalPages: totalPagesGuru,
+    renderScale: renderScaleGuru,
+    fields: fieldsByPageGuru
+  };
+
+  const res = await apiPost({
+    action: 'save_field_map_lkpd',
+    id_lkpd: idLkpd,
+    peta_field_json: JSON.stringify(payload)
+  });
+
+  if (res.success) {
+    showToast('success', 'Peta isian LKPD berhasil disimpan!');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Peta Field', text: res.message });
+  }
+  return res;
+}
+
+/* ==========================================================
+   B. MODE SISWA — MENGISI LKPD
+   ========================================================== */
+
+// Dipanggil saat siswa membuka sebuah LKPD untuk dikerjakan.
+// containerEl: elemen <div> tempat PDF + input dirender
+// lkpdObj: objek LKPD dari state.cachedData.lkpd (harus punya file_pdf_url & peta_field_json)
+// ptmId: id_pertemuan terkait (dipakai juga di alur submitLkpdSiswa yang lama)
+async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
+  // Identitas siswa diambil dari sesi login, sama seperti submitLkpdSiswa() yang sudah ada
+  const user = state.currentUser;
+
+  if (!lkpdObj.peta_field_json) {
+    // Fallback: LKPD ini belum dipetakan gurunya, tampilkan PDF biasa saja (read-only)
+    containerEl.innerHTML = `<iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0"></iframe>`;
+    return;
+  }
+
+  const fieldMap = JSON.parse(lkpdObj.peta_field_json);
+
+  const pdfRes = await fetch(lkpdObj.file_pdf_url);
+  const arrayBuffer = await pdfRes.arrayBuffer();
+  const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  // Ambil jawaban yang sudah pernah disimpan siswa ini (jika ada), untuk prefill
+  const jawabanRes = await apiPost({
+    action: 'get_jawaban_lkpd_isian',
+    id_lkpd: lkpdObj.id_lkpd,
+    username_siswa: user.username
+  });
+  const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
+
+  containerEl.innerHTML = `<div id="siswa-lkpd-pages"></div>
+        <button id="btn-simpan-jawaban-lkpd" class="mt-3 px-4 py-2 bg-brand-blue text-white font-bold rounded-xl">
+            💾 Simpan Jawaban
+        </button>`;
+
+  const pagesWrap = document.getElementById('siswa-lkpd-pages');
+
+  for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: fieldMap.renderScale || 1.5 });
+
+    const pageWrap = document.createElement('div');
+    pageWrap.style.position = 'relative';
+    pageWrap.style.marginBottom = '16px';
+    pageWrap.style.width = viewport.width + 'px';
+    pageWrap.style.height = viewport.height + 'px';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    pageWrap.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    const fields = fieldMap.fields[pageNum] || [];
+    fields.forEach((f) => {
+      const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
+      if (f.type !== 'textarea') el.type = 'text';
+      el.className = 'lkpd-fill-input';
+      el.dataset.fieldId = f.id;
+      el.value = savedAnswers[f.id] || '';
+      Object.assign(el.style, {
+        position: 'absolute',
+        left: f.x + '%',
+        top: f.y + '%',
+        width: f.w + '%',
+        height: f.h + '%',
+        border: '1px solid rgba(37,99,235,0.4)',
+        background: 'rgba(255,255,255,0.6)',
+        fontFamily: 'inherit',
+        fontSize: '13px',
+        padding: '2px 4px'
+      });
+      pageWrap.appendChild(el);
+    });
+
+    pagesWrap.appendChild(pageWrap);
+  }
+
+  document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, lkpdObj.id_lkpd);
+}
+
+async function submitJawabanLkpdIsian(ptmId, idLkpd) {
+  const user = state.currentUser;
+  const jawaban = {};
+  document.querySelectorAll('.lkpd-fill-input').forEach((el) => {
+    jawaban[el.dataset.fieldId] = el.value;
+  });
+
+  const btn = document.getElementById('btn-simpan-jawaban-lkpd');
+  setButtonLoading(btn, true, '🚀 Mengirim...', '💾 Simpan Jawaban');
+
+  const res = await apiPost({
+    action: 'submit_lkpd_isian',
+    id_pertemuan: ptmId,
+    id_lkpd: idLkpd,
+    username_siswa: user.username,
+    nama_siswa: user.name,
+    kelas: user.kelas,
+    jawaban_json: JSON.stringify(jawaban)
+  });
+
+  setButtonLoading(btn, false, '', '💾 Simpan Jawaban');
+
+  if (res.success) {
+    showToast('success', 'Jawaban LKPD tersimpan!');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Jawaban', text: res.message });
+  }
+}
 
 function initCanvas() {
-    const canvas = document.getElementById('steam-canvas');
-    if (!canvas) return;
+  const canvas = document.getElementById('steam-canvas');
+  if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width || 600;
-    canvas.height = 240;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || 600;
+  canvas.height = 240;
 
-    canvasCtx = canvas.getContext('2d');
-    canvasCtx.fillStyle = '#FFFFFF';
-    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-    canvasCtx.lineWidth = 3;
-    canvasCtx.lineCap = 'round';
-    canvasCtx.lineJoin = 'round';
-    canvasCtx.strokeStyle = currentPenColor;
+  canvasCtx = canvas.getContext('2d');
+  canvasCtx.fillStyle = '#FFFFFF';
+  canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+  canvasCtx.lineWidth = 3;
+  canvasCtx.lineCap = 'round';
+  canvasCtx.lineJoin = 'round';
+  canvasCtx.strokeStyle = currentPenColor;
 
-    canvasUndoStack = [];
-    saveCanvasState();
+  canvasUndoStack = [];
+  saveCanvasState();
 
-    canvas.onmousedown = (e) => startDrawing(e, canvas, canvasCtx);
-    canvas.onmousemove = (e) => draw(e, canvas, canvasCtx);
-    canvas.onmouseup = () => stopDrawing();
-    canvas.onmouseleave = () => stopDrawing();
+  canvas.onmousedown = (e) => startDrawing(e, canvas, canvasCtx);
+  canvas.onmousemove = (e) => draw(e, canvas, canvasCtx);
+  canvas.onmouseup = () => stopDrawing();
+  canvas.onmouseleave = () => stopDrawing();
 
-    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas, canvasCtx); };
-    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas, canvasCtx); };
-    canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
+  canvas.ontouchstart = (e) => {
+    e.preventDefault();
+    startDrawing(e.touches[0], canvas, canvasCtx);
+  };
+  canvas.ontouchmove = (e) => {
+    e.preventDefault();
+    draw(e.touches[0], canvas, canvasCtx);
+  };
+  canvas.ontouchend = (e) => {
+    e.preventDefault();
+    stopDrawing();
+  };
 }
 
 function startDrawing(e, canvas, ctx) {
-    isDrawing = true;
-    ctx.beginPath();
-    const c = getCoords(e, canvas);
-    ctx.moveTo(c.x, c.y);
+  isDrawing = true;
+  ctx.beginPath();
+  const c = getCoords(e, canvas);
+  ctx.moveTo(c.x, c.y);
 }
 
 function draw(e, canvas, ctx) {
-    if (!isDrawing) return;
-    const c = getCoords(e, canvas);
-    ctx.lineTo(c.x, c.y);
-    ctx.stroke();
+  if (!isDrawing) return;
+  const c = getCoords(e, canvas);
+  ctx.lineTo(c.x, c.y);
+  ctx.stroke();
 }
 
 function stopDrawing() {
-    if (isDrawing) {
-        isDrawing = false;
-        saveCanvasState();
-        saveStandaloneCanvasState();
-    }
+  if (isDrawing) {
+    isDrawing = false;
+    saveCanvasState();
+    saveStandaloneCanvasState();
+  }
 }
 
 function saveCanvasState() {
-    const canvas = document.getElementById('steam-canvas');
-    if (canvas && canvasCtx && canvasUndoStack.length < 15) {
-        canvasUndoStack.push(canvasCtx.getImageData(0, 0, canvas.width, canvas.height));
-    }
+  const canvas = document.getElementById('steam-canvas');
+  if (canvas && canvasCtx && canvasUndoStack.length < 15) {
+    canvasUndoStack.push(canvasCtx.getImageData(0, 0, canvas.width, canvas.height));
+  }
 }
 
 function undoCanvas() {
-    const canvas = document.getElementById('steam-canvas');
-    if (canvas && canvasCtx && canvasUndoStack.length > 1) {
-        canvasUndoStack.pop();
-        const prevState = canvasUndoStack[canvasUndoStack.length - 1];
-        canvasCtx.putImageData(prevState, 0, 0);
-    }
+  const canvas = document.getElementById('steam-canvas');
+  if (canvas && canvasCtx && canvasUndoStack.length > 1) {
+    canvasUndoStack.pop();
+    const prevState = canvasUndoStack[canvasUndoStack.length - 1];
+    canvasCtx.putImageData(prevState, 0, 0);
+  }
 }
 
-function setCanvasColor(color) { currentPenColor = color; if (canvasCtx) canvasCtx.strokeStyle = color; }
+function setCanvasColor(color) {
+  currentPenColor = color;
+  if (canvasCtx) canvasCtx.strokeStyle = color;
+}
+
 function clearCanvas() {
-    const canvas = document.getElementById('steam-canvas');
-    if (canvas && canvasCtx) {
-        canvasCtx.fillStyle = '#FFFFFF';
-        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        saveCanvasState();
-    }
+  const canvas = document.getElementById('steam-canvas');
+  if (canvas && canvasCtx) {
+    canvasCtx.fillStyle = '#FFFFFF';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+    saveCanvasState();
+  }
 }
 
 let stCanvasCtx = null;
@@ -1860,909 +2402,964 @@ let stLineWidth = 3;
 let stUndoStack = [];
 
 function initStandaloneSteamCanvas() {
-    const canvas = document.getElementById('ruang-steam-canvas');
-    if (!canvas) return;
+  const canvas = document.getElementById('ruang-steam-canvas');
+  if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width || 700;
-    canvas.height = 380;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || 700;
+  canvas.height = 380;
 
-    stCanvasCtx = canvas.getContext('2d');
-    stCanvasCtx.fillStyle = '#FFFFFF';
-    stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-    stCanvasCtx.lineWidth = stLineWidth;
-    stCanvasCtx.lineCap = 'round';
-    stCanvasCtx.lineJoin = 'round';
-    stCanvasCtx.strokeStyle = stPenColor;
+  stCanvasCtx = canvas.getContext('2d');
+  stCanvasCtx.fillStyle = '#FFFFFF';
+  stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+  stCanvasCtx.lineWidth = stLineWidth;
+  stCanvasCtx.lineCap = 'round';
+  stCanvasCtx.lineJoin = 'round';
+  stCanvasCtx.strokeStyle = stPenColor;
 
-    stUndoStack = [];
-    saveStandaloneCanvasState();
+  stUndoStack = [];
+  saveStandaloneCanvasState();
 
-    canvas.onmousedown = (e) => startDrawing(e, canvas, stCanvasCtx);
-    canvas.onmousemove = (e) => draw(e, canvas, stCanvasCtx);
-    canvas.onmouseup = () => stopDrawing();
-    canvas.onmouseleave = () => stopDrawing();
+  canvas.onmousedown = (e) => startDrawing(e, canvas, stCanvasCtx);
+  canvas.onmousemove = (e) => draw(e, canvas, stCanvasCtx);
+  canvas.onmouseup = () => stopDrawing();
+  canvas.onmouseleave = () => stopDrawing();
 
-    canvas.ontouchstart = (e) => { e.preventDefault(); startDrawing(e.touches[0], canvas, stCanvasCtx); };
-    canvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0], canvas, stCanvasCtx); };
-    canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
+  canvas.ontouchstart = (e) => {
+    e.preventDefault();
+    startDrawing(e.touches[0], canvas, stCanvasCtx);
+  };
+  canvas.ontouchmove = (e) => {
+    e.preventDefault();
+    draw(e.touches[0], canvas, stCanvasCtx);
+  };
+  canvas.ontouchend = (e) => {
+    e.preventDefault();
+    stopDrawing();
+  };
 }
 
 function saveStandaloneCanvasState() {
-    const canvas = document.getElementById('ruang-steam-canvas');
-    if (canvas && stCanvasCtx && stUndoStack.length < 20) {
-        stUndoStack.push(stCanvasCtx.getImageData(0, 0, canvas.width, canvas.height));
-    }
+  const canvas = document.getElementById('ruang-steam-canvas');
+  if (canvas && stCanvasCtx && stUndoStack.length < 20) {
+    stUndoStack.push(stCanvasCtx.getImageData(0, 0, canvas.width, canvas.height));
+  }
 }
 
 function undoStandaloneCanvas() {
-    const canvas = document.getElementById('ruang-steam-canvas');
-    if (canvas && stCanvasCtx && stUndoStack.length > 1) {
-        stUndoStack.pop();
-        const prevState = stUndoStack[stUndoStack.length - 1];
-        stCanvasCtx.putImageData(prevState, 0, 0);
-    }
+  const canvas = document.getElementById('ruang-steam-canvas');
+  if (canvas && stCanvasCtx && stUndoStack.length > 1) {
+    stUndoStack.pop();
+    const prevState = stUndoStack[stUndoStack.length - 1];
+    stCanvasCtx.putImageData(prevState, 0, 0);
+  }
 }
 
 function setStandaloneCanvasColor(color) {
-    stPenColor = color;
-    if (stCanvasCtx) stCanvasCtx.strokeStyle = color;
+  stPenColor = color;
+  if (stCanvasCtx) stCanvasCtx.strokeStyle = color;
 }
 
 function setStandaloneCanvasSize(size) {
-    stLineWidth = size;
-    if (stCanvasCtx) stCanvasCtx.lineWidth = size;
+  stLineWidth = size;
+  if (stCanvasCtx) stCanvasCtx.lineWidth = size;
 }
 
 function clearStandaloneCanvas() {
-    const canvas = document.getElementById('ruang-steam-canvas');
-    if (canvas && stCanvasCtx) {
-        stCanvasCtx.fillStyle = '#FFFFFF';
-        stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        saveStandaloneCanvasState();
-    }
+  const canvas = document.getElementById('ruang-steam-canvas');
+  if (canvas && stCanvasCtx) {
+    stCanvasCtx.fillStyle = '#FFFFFF';
+    stCanvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+    saveStandaloneCanvasState();
+  }
 }
 
 function downloadSteamCanvasImage() {
-    const canvas = document.getElementById('ruang-steam-canvas');
-    if (!canvas) return;
+  const canvas = document.getElementById('ruang-steam-canvas');
+  if (!canvas) return;
 
-    const link = document.createElement('a');
-    link.download = `Sketsa_Eksperimen_STEAM_${new Date().getTime()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showToast('success', 'Sketsa berhasil diunduh ke perangkat!');
+  const link = document.createElement('a');
+  link.download = `Sketsa_Eksperimen_STEAM_${new Date().getTime()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('success', 'Sketsa berhasil diunduh ke perangkat!');
 }
 
 function getCoords(e, canvas) {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
-    };
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
 }
 
 /* ==========================================================
    12. SUBMISSION LOGIC & AUTO-SAVE DRAFT
    ========================================================== */
 function saveLkpdDraft(ptmId, questionCount) {
-    const username = state.currentUser ? state.currentUser.username : 'guest';
-    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
-    const answers = [];
-    for (let i = 0; i < questionCount; i++) {
-        answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
-    }
-    localStorage.setItem(draftKey, JSON.stringify({ answers, timestamp: new Date().toISOString() }));
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+  const answers = [];
+  for (let i = 0; i < questionCount; i++) {
+    answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
+  }
+  localStorage.setItem(draftKey, JSON.stringify({ answers, timestamp: new Date().toISOString() }));
 }
 
 function loadLkpdDraft(ptmId, questionCount) {
-    const username = state.currentUser ? state.currentUser.username : 'guest';
-    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
-    try {
-        const saved = localStorage.getItem(draftKey);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            if (parsed && Array.isArray(parsed.answers)) {
-                parsed.answers.forEach((ans, idx) => {
-                    const elem = document.getElementById(`lkpd-ans-${idx}`);
-                    if (elem) elem.value = ans;
-                });
-                showToast('info', 'Draft pengerjaan dipulihkan!');
-            }
-        }
-    } catch (e) {
-        console.error('Gagal memulihkan draft:', e);
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+  try {
+    const saved = localStorage.getItem(draftKey);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && Array.isArray(parsed.answers)) {
+        parsed.answers.forEach((ans, idx) => {
+          const elem = document.getElementById(`lkpd-ans-${idx}`);
+          if (elem) elem.value = ans;
+        });
+        showToast('info', 'Draft pengerjaan dipulihkan!');
+      }
     }
+  } catch (e) {
+    console.error('Gagal memulihkan draft:', e);
+  }
 }
 
 function clearLkpdDraft(ptmId) {
-    const username = state.currentUser ? state.currentUser.username : 'guest';
-    const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
-    localStorage.removeItem(draftKey);
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
+  localStorage.removeItem(draftKey);
 }
 
 async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
-    const user = state.currentUser;
-    let answers = [];
-    for (let i = 0; i < questionCount; i++) {
-        answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
-    }
+  const user = state.currentUser;
+  let answers = [];
+  for (let i = 0; i < questionCount; i++) {
+    answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
+  }
 
-    const canvas = document.getElementById('steam-canvas');
-    const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
+  const canvas = document.getElementById('steam-canvas');
+  const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
 
-    const btn = document.getElementById('btn-submit-lkpd-siswa');
-    setButtonLoading(btn, true, '🚀 Mengirim LKPD...', '🚀 Kirim Jawaban LKPD');
+  const btn = document.getElementById('btn-submit-lkpd-siswa');
+  setButtonLoading(btn, true, '🚀 Mengirim LKPD...', '🚀 Kirim Jawaban LKPD');
 
-    const res = await apiPost({
-        action: 'submit_lkpd',
-        id_pertemuan: ptmId,
-        id_lkpd: idLkpd,
-        username_siswa: user.username,
-        nama_siswa: user.name,
-        kelas: user.kelas,
-        jawaban_json: answers,
-        canvas_image_base64: canvasBase64
-    });
+  const res = await apiPost({
+    action: 'submit_lkpd',
+    id_pertemuan: ptmId,
+    id_lkpd: idLkpd,
+    username_siswa: user.username,
+    nama_siswa: user.name,
+    kelas: user.kelas,
+    jawaban_json: answers,
+    canvas_image_base64: canvasBase64
+  });
 
-    setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD');
-    if (res.success) {
-        clearLkpdDraft(ptmId);
-        await fetchAllInitialData(true);
-        showToast('success', 'Jawaban LKPD Berhasil Terkirim!');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD');
+  if (res.success) {
+    clearLkpdDraft(ptmId);
+    await fetchAllInitialData(true);
+    showToast('success', 'Jawaban LKPD Berhasil Terkirim!');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
+  }
 }
 
 async function submitGameSiswa(ptmId, idGame, tipe) {
-    const gameObj = (state.cachedData.games || []).find(g => g.id_game === idGame);
-    if (!gameObj) return;
+  const gameObj = (state.cachedData.games || []).find((g) => g.id_game === idGame);
+  if (!gameObj) return;
 
-    let config = { items: [] };
-    try {
-        config = typeof gameObj.konfigurasi_json === 'string' ? JSON.parse(gameObj.konfigurasi_json) : gameObj.konfigurasi_json;
-    } catch (e) { }
+  let config = { items: [] };
+  try {
+    config = typeof gameObj.konfigurasi_json === 'string' ? JSON.parse(gameObj.konfigurasi_json) : gameObj.konfigurasi_json;
+  } catch (e) {}
 
-    const items = config.items || [];
-    const answers = state.gameAnswers[idGame] || {};
-    let correctCount = 0;
+  const items = config.items || [];
+  const answers = state.gameAnswers[idGame] || {};
+  let correctCount = 0;
 
-    if (tipe === 'matching') {
-        items.forEach((item, idx) => {
-            if (String(answers[idx] || '').trim().toLowerCase() === String(item.kunci || '').trim().toLowerCase()) correctCount++;
-        });
-    } else if (tipe === 'drag_drop') {
-        items.forEach((item, idx) => {
-            if (answers[idx] === item.kategori_kunci) correctCount++;
-        });
-    } else if (tipe === 'sequencer') {
-        const seqItems = state.gameStates[idGame]?.sequencerItems || [];
-        seqItems.forEach((it, currentIdx) => {
-            if (it.correctOrder === currentIdx) correctCount++;
-        });
-    } else if (tipe === 'hotspot') {
-        items.forEach((item, idx) => {
-            if (answers[idx] === item.soal) correctCount++;
-        });
-    } else if (tipe === 'simulator') {
-        items.forEach((item, idx) => {
-            if (answers[idx] === item.kunci) correctCount++;
-        });
-    } else if (tipe === 'word_search') {
-        const wsState = state.gameStates[idGame]?.wordSearchState;
-        if (wsState) correctCount = wsState.foundWords.length;
-    } else {
-        items.forEach((item, idx) => {
-            if (answers[idx] === item.kunci) correctCount++;
-        });
-    }
-
-    const score = Math.round((correctCount / Math.max(items.length, 1)) * 100);
-    const btn = document.getElementById(`btn-submit-game-${idGame}`);
-    setButtonLoading(btn, true, '🎮 Menyimpan Skor...', '🎮 Periksa & Simpan Skor Game');
-
-    const res = await apiPost({
-        action: 'submit_game',
-        id_pertemuan: ptmId,
-        id_game: idGame,
-        username_siswa: state.currentUser.username,
-        nama_siswa: state.currentUser.name,
-        kelas: state.currentUser.kelas,
-        jawaban_json: tipe === 'word_search' ? state.gameStates[idGame]?.wordSearchState?.foundWords || [] : answers,
-        skor_game: score
+  if (tipe === 'matching') {
+    items.forEach((item, idx) => {
+      if (String(answers[idx] || '').trim().toLowerCase() === String(item.kunci || '').trim().toLowerCase())
+        correctCount++;
     });
+  } else if (tipe === 'drag_drop') {
+    items.forEach((item, idx) => {
+      if (answers[idx] === item.kategori_kunci) correctCount++;
+    });
+  } else if (tipe === 'sequencer') {
+    const seqItems = state.gameStates[idGame]?.sequencerItems || [];
+    seqItems.forEach((it, currentIdx) => {
+      if (it.correctOrder === currentIdx) correctCount++;
+    });
+  } else if (tipe === 'hotspot') {
+    items.forEach((item, idx) => {
+      if (answers[idx] === item.soal) correctCount++;
+    });
+  } else if (tipe === 'simulator') {
+    items.forEach((item, idx) => {
+      if (answers[idx] === item.kunci) correctCount++;
+    });
+  } else if (tipe === 'word_search') {
+    const wsState = state.gameStates[idGame]?.wordSearchState;
+    if (wsState) correctCount = wsState.foundWords.length;
+  } else {
+    items.forEach((item, idx) => {
+      if (answers[idx] === item.kunci) correctCount++;
+    });
+  }
 
-    setButtonLoading(btn, false, '', '🎮 Periksa & Simpan Skor Game');
-    if (res.success) {
-        await fetchAllInitialData(true);
-        Swal.fire({
-            icon: 'success',
-            title: 'Permainan Selesai!',
-            html: `Skor Kamu untuk <b>${gameObj.judul_game}</b>: <b class="text-2xl text-purple-600 block mt-1">${score} / 100</b>`
-        });
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Skor', text: res.message });
-    }
+  const score = Math.round((correctCount / Math.max(items.length, 1)) * 100);
+  const btn = document.getElementById(`btn-submit-game-${idGame}`);
+  setButtonLoading(btn, true, '🎮 Menyimpan Skor...', '🎮 Periksa & Simpan Skor Game');
+
+  const res = await apiPost({
+    action: 'submit_game',
+    id_pertemuan: ptmId,
+    id_game: idGame,
+    username_siswa: state.currentUser.username,
+    nama_siswa: state.currentUser.name,
+    kelas: state.currentUser.kelas,
+    jawaban_json: tipe === 'word_search' ? state.gameStates[idGame]?.wordSearchState?.foundWords || [] : answers,
+    skor_game: score
+  });
+
+  setButtonLoading(btn, false, '', '🎮 Periksa & Simpan Skor Game');
+  if (res.success) {
+    await fetchAllInitialData(true);
+    Swal.fire({
+      icon: 'success',
+      title: 'Permainan Selesai!',
+      html: `Skor Kamu untuk <b>${gameObj.judul_game}</b>: <b class="text-2xl text-purple-600 block mt-1">${score} / 100</b>`
+    });
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Skor', text: res.message });
+  }
 }
 
 async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
-    const soalList = (state.cachedData.soal_evaluasi || []).filter(s => s.id_evaluasi === idEvaluasi);
-    let benar = 0;
-    soalList.forEach(s => {
-        if (state.evaluasiAnswers[s.id_soal] === s.kunci_jawaban) benar++;
+  const soalList = (state.cachedData.soal_evaluasi || []).filter((s) => s.id_evaluasi === idEvaluasi);
+  let benar = 0;
+  soalList.forEach((s) => {
+    if (state.evaluasiAnswers[s.id_soal] === s.kunci_jawaban) benar++;
+  });
+
+  const score = Math.round((benar / Math.max(soalList.length, 1)) * 100);
+  const btn = document.getElementById('btn-submit-eval-siswa');
+  setButtonLoading(btn, true, '🚀 Mengirim Evaluasi...', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
+
+  const res = await apiPost({
+    action: 'submit_evaluasi',
+    id_pertemuan: ptmId,
+    username_siswa: state.currentUser.username,
+    nama_siswa: state.currentUser.name,
+    kelas: state.currentUser.kelas,
+    jawaban_json: state.evaluasiAnswers,
+    skor_pg: score
+  });
+
+  setButtonLoading(btn, false, '', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
+  if (res.success) {
+    await fetchAllInitialData(true);
+    Swal.fire({
+      icon: 'success',
+      title: 'Evaluasi Selesai!',
+      html: `Skor Kamu: <b class="text-2xl text-brand-blue block mt-1">${score} / 100</b>`
     });
-
-    const score = Math.round((benar / Math.max(soalList.length, 1)) * 100);
-    const btn = document.getElementById('btn-submit-eval-siswa');
-    setButtonLoading(btn, true, '🚀 Mengirim Evaluasi...', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
-
-    const res = await apiPost({
-        action: 'submit_evaluasi',
-        id_pertemuan: ptmId,
-        username_siswa: state.currentUser.username,
-        nama_siswa: state.currentUser.name,
-        kelas: state.currentUser.kelas,
-        jawaban_json: state.evaluasiAnswers,
-        skor_pg: score
-    });
-
-    setButtonLoading(btn, false, '', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
-    if (res.success) {
-        await fetchAllInitialData(true);
-        Swal.fire({ icon: 'success', title: 'Evaluasi Selesai!', html: `Skor Kamu: <b class="text-2xl text-brand-blue block mt-1">${score} / 100</b>` });
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Mengirim Evaluasi', text: res.message });
-    }
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Mengirim Evaluasi', text: res.message });
+  }
 }
 
 /* ==========================================================
    13. CMS ADMIN MODALS & HANDLERS
    ========================================================== */
 function openUserModal(userId = null) {
-    populateKelasSelects();
+  populateKelasSelects();
 
-    const titleElem = document.querySelector('#user-modal h3');
-    const idElem = document.getElementById('user-form-id');
-    const namaElem = document.getElementById('user-form-nama');
-    const usernameElem = document.getElementById('user-form-username');
-    const passElem = document.getElementById('user-form-password');
-    const roleElem = document.getElementById('user-form-role');
-    const kelasElem = document.getElementById('user-form-kelas');
-    const btnEye = document.getElementById('btn-toggle-user-password');
+  const titleElem = document.querySelector('#user-modal h3');
+  const idElem = document.getElementById('user-form-id');
+  const namaElem = document.getElementById('user-form-nama');
+  const usernameElem = document.getElementById('user-form-username');
+  const passElem = document.getElementById('user-form-password');
+  const roleElem = document.getElementById('user-form-role');
+  const kelasElem = document.getElementById('user-form-kelas');
+  const btnEye = document.getElementById('btn-toggle-user-password');
 
-    if (passElem) passElem.type = 'password';
-    if (btnEye) btnEye.innerHTML = '👁️';
+  if (passElem) passElem.type = 'password';
+  if (btnEye) btnEye.innerHTML = '👁️';
 
-    if (userId) {
-        const u = (state.cachedData.users || []).find(x => String(x.user_id) === String(userId));
-        if (u) {
-            if (titleElem) titleElem.textContent = 'Edit Data Pengguna';
-            if (idElem) idElem.value = u.user_id;
-            if (namaElem) namaElem.value = u.nama_lengkap || '';
-            if (usernameElem) usernameElem.value = u.username || '';
-            if (passElem) passElem.value = u.password || '';
-            if (roleElem) roleElem.value = u.role || 'siswa';
-            if (kelasElem) kelasElem.value = u.kelas || '-';
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Tambah Pengguna Baru';
-        if (idElem) idElem.value = '';
-        if (namaElem) namaElem.value = '';
-        if (usernameElem) usernameElem.value = '';
-        if (passElem) passElem.value = '';
-        if (roleElem) roleElem.value = 'siswa';
-        if (kelasElem) kelasElem.value = '-';
+  if (userId) {
+    const u = (state.cachedData.users || []).find((x) => String(x.user_id) === String(userId));
+    if (u) {
+      if (titleElem) titleElem.textContent = 'Edit Data Pengguna';
+      if (idElem) idElem.value = u.user_id;
+      if (namaElem) namaElem.value = u.nama_lengkap || '';
+      if (usernameElem) usernameElem.value = u.username || '';
+      if (passElem) passElem.value = u.password || '';
+      if (roleElem) roleElem.value = u.role || 'siswa';
+      if (kelasElem) kelasElem.value = u.kelas || '-';
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Tambah Pengguna Baru';
+    if (idElem) idElem.value = '';
+    if (namaElem) namaElem.value = '';
+    if (usernameElem) usernameElem.value = '';
+    if (passElem) passElem.value = '';
+    if (roleElem) roleElem.value = 'siswa';
+    if (kelasElem) kelasElem.value = '-';
+  }
 
-    document.getElementById('user-modal').classList.remove('hidden');
-    document.getElementById('user-modal').classList.add('flex');
+  document.getElementById('user-modal').classList.remove('hidden');
+  document.getElementById('user-modal').classList.add('flex');
 }
 
 function closeUserModal() {
-    document.getElementById('user-modal').classList.add('hidden');
-    document.getElementById('user-modal').classList.remove('flex');
+  document.getElementById('user-modal').classList.add('hidden');
+  document.getElementById('user-modal').classList.remove('flex');
 }
 
 async function handleUserSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-user');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Pengguna');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-user');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Pengguna');
 
-    const res = await apiPost({
-        action: 'add_user',
-        user_id: document.getElementById('user-form-id').value,
-        nama_lengkap: document.getElementById('user-form-nama').value,
-        username: document.getElementById('user-form-username').value,
-        password: document.getElementById('user-form-password').value,
-        role: document.getElementById('user-form-role').value,
-        kelas: document.getElementById('user-form-kelas').value
-    });
+  const res = await apiPost({
+    action: 'add_user',
+    user_id: document.getElementById('user-form-id').value,
+    nama_lengkap: document.getElementById('user-form-nama').value,
+    username: document.getElementById('user-form-username').value,
+    password: document.getElementById('user-form-password').value,
+    role: document.getElementById('user-form-role').value,
+    kelas: document.getElementById('user-form-kelas').value
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan Pengguna');
-    if (res.success) {
-        closeUserModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('admin-users');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan Pengguna');
+  if (res.success) {
+    closeUserModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('admin-users');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+  }
 }
 
 function openKelasModal(idKelas = null) {
-    const titleElem = document.querySelector('#kelas-modal h3');
-    const idElem = document.getElementById('kelas-form-id');
-    const namaElem = document.getElementById('kelas-form-nama');
-    const tingkatElem = document.getElementById('kelas-form-tingkat');
-    const ketElem = document.getElementById('kelas-form-keterangan');
+  const titleElem = document.querySelector('#kelas-modal h3');
+  const idElem = document.getElementById('kelas-form-id');
+  const namaElem = document.getElementById('kelas-form-nama');
+  const tingkatElem = document.getElementById('kelas-form-tingkat');
+  const ketElem = document.getElementById('kelas-form-keterangan');
 
-    if (idKelas) {
-        const k = (state.cachedData.kelas || []).find(x => String(x.id_kelas) === String(idKelas));
-        if (k) {
-            if (titleElem) titleElem.textContent = 'Edit Data Kelas';
-            if (idElem) idElem.value = k.id_kelas;
-            if (namaElem) namaElem.value = k.nama_kelas || '';
-            if (tingkatElem) tingkatElem.value = k.tingkat || '';
-            if (ketElem) ketElem.value = k.keterangan || '';
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Tambah Data Kelas Baru';
-        if (idElem) idElem.value = '';
-        if (namaElem) namaElem.value = '';
-        if (tingkatElem) tingkatElem.value = '';
-        if (ketElem) ketElem.value = '';
+  if (idKelas) {
+    const k = (state.cachedData.kelas || []).find((x) => String(x.id_kelas) === String(idKelas));
+    if (k) {
+      if (titleElem) titleElem.textContent = 'Edit Data Kelas';
+      if (idElem) idElem.value = k.id_kelas;
+      if (namaElem) namaElem.value = k.nama_kelas || '';
+      if (tingkatElem) tingkatElem.value = k.tingkat || '';
+      if (ketElem) ketElem.value = k.keterangan || '';
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Tambah Data Kelas Baru';
+    if (idElem) idElem.value = '';
+    if (namaElem) namaElem.value = '';
+    if (tingkatElem) tingkatElem.value = '';
+    if (ketElem) ketElem.value = '';
+  }
 
-    document.getElementById('kelas-modal').classList.remove('hidden');
-    document.getElementById('kelas-modal').classList.add('flex');
+  document.getElementById('kelas-modal').classList.remove('hidden');
+  document.getElementById('kelas-modal').classList.add('flex');
 }
 
 function closeKelasModal() {
-    document.getElementById('kelas-modal').classList.add('hidden');
-    document.getElementById('kelas-modal').classList.remove('flex');
+  document.getElementById('kelas-modal').classList.add('hidden');
+  document.getElementById('kelas-modal').classList.remove('flex');
 }
 
 async function handleKelasSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-kelas');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Kelas');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-kelas');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Kelas');
 
-    const res = await apiPost({
-        action: 'save_kelas',
-        id_kelas: document.getElementById('kelas-form-id').value,
-        nama_kelas: document.getElementById('kelas-form-nama').value,
-        tingkat: document.getElementById('kelas-form-tingkat').value,
-        keterangan: document.getElementById('kelas-form-keterangan').value
-    });
+  const res = await apiPost({
+    action: 'save_kelas',
+    id_kelas: document.getElementById('kelas-form-id').value,
+    nama_kelas: document.getElementById('kelas-form-nama').value,
+    tingkat: document.getElementById('kelas-form-tingkat').value,
+    keterangan: document.getElementById('kelas-form-keterangan').value
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan Kelas');
-    if (res.success) {
-        closeKelasModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('admin-classes');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan Kelas');
+  if (res.success) {
+    closeKelasModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('admin-classes');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+  }
 }
 
 function deleteUser(id) {
-    showConfirm('Hapus Pengguna?', 'Akun pengguna ini akan dihapus permanen!', async () => {
-        showLoading('Menghapus data...');
-        await apiPost({ action: 'delete_user', user_id: id });
-        closeLoading();
-        showToast('success', 'Pengguna berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('admin-users');
-    });
+  showConfirm('Hapus Pengguna?', 'Akun pengguna ini akan dihapus permanen!', async () => {
+    showLoading('Menghapus data...');
+    await apiPost({ action: 'delete_user', user_id: id });
+    closeLoading();
+    showToast('success', 'Pengguna berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('admin-users');
+  });
 }
 
 function deleteKelas(id) {
-    showConfirm('Hapus Data Kelas?', 'Data kelas ini akan dihapus!', async () => {
-        showLoading('Menghapus kelas...');
-        await apiPost({ action: 'delete_kelas', id_kelas: id });
-        closeLoading();
-        showToast('success', 'Kelas berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('admin-classes');
-    });
+  showConfirm('Hapus Data Kelas?', 'Data kelas ini akan dihapus!', async () => {
+    showLoading('Menghapus kelas...');
+    await apiPost({ action: 'delete_kelas', id_kelas: id });
+    closeLoading();
+    showToast('success', 'Kelas berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('admin-classes');
+  });
 }
 
 /* ==========================================================
    14. CMS GURU HANDLERS & MODALS
    ========================================================== */
 function populatePertemuanSelects() {
-    const ptmList = state.cachedData.pertemuan || [];
-    const opts = ptmList.map(p => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`).join('');
+  const ptmList = state.cachedData.pertemuan || [];
+  const opts = ptmList
+    .map((p) => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`)
+    .join('');
 
-    const mSel = document.getElementById('materi-form-pertemuan'); if (mSel) mSel.innerHTML = opts;
-    const lSel = document.getElementById('lkpd-form-pertemuan'); if (lSel) lSel.innerHTML = opts;
-    const gSel = document.getElementById('game-form-pertemuan'); if (gSel) gSel.innerHTML = opts;
-    const sSel = document.getElementById('soal-form-pertemuan'); if (sSel) sSel.innerHTML = opts;
+  const mSel = document.getElementById('materi-form-pertemuan');
+  if (mSel) mSel.innerHTML = opts;
+  const lSel = document.getElementById('lkpd-form-pertemuan');
+  if (lSel) lSel.innerHTML = opts;
+  const gSel = document.getElementById('game-form-pertemuan');
+  if (gSel) gSel.innerHTML = opts;
+  const sSel = document.getElementById('soal-form-pertemuan');
+  if (sSel) sSel.innerHTML = opts;
 }
 
 function openPertemuanModal(idPtm = null) {
-    populateKelasSelects();
+  populateKelasSelects();
 
-    const titleElem = document.getElementById('pertemuan-modal-title');
-    const idElem = document.getElementById('pertemuan-form-id');
-    const nomorElem = document.getElementById('pertemuan-form-nomor');
-    const judulElem = document.getElementById('pertemuan-form-judul');
-    const descElem = document.getElementById('pertemuan-form-deskripsi');
-    const kelasElem = document.getElementById('pertemuan-form-kelas');
-    const statusElem = document.getElementById('pertemuan-form-status');
+  const titleElem = document.getElementById('pertemuan-modal-title');
+  const idElem = document.getElementById('pertemuan-form-id');
+  const nomorElem = document.getElementById('pertemuan-form-nomor');
+  const judulElem = document.getElementById('pertemuan-form-judul');
+  const descElem = document.getElementById('pertemuan-form-deskripsi');
+  const kelasElem = document.getElementById('pertemuan-form-kelas');
+  const statusElem = document.getElementById('pertemuan-form-status');
 
-    if (idPtm) {
-        const p = (state.cachedData.pertemuan || []).find(x => String(x.id_pertemuan) === String(idPtm));
-        if (p) {
-            if (titleElem) titleElem.textContent = 'Edit Pertemuan Pembelajaran';
-            if (idElem) idElem.value = p.id_pertemuan;
-            if (nomorElem) nomorElem.value = p.nomor_pertemuan || '1';
-            if (judulElem) judulElem.value = p.judul_pertemuan || '';
-            if (descElem) descElem.value = p.deskripsi || '';
-            if (kelasElem) kelasElem.value = p.id_kelas || 'ALL';
-            if (statusElem) statusElem.value = p.status || 'Publish';
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Buat Pertemuan Pembelajaran';
-        if (idElem) idElem.value = '';
-        if (nomorElem) nomorElem.value = '1';
-        if (judulElem) judulElem.value = '';
-        if (descElem) descElem.value = '';
-        if (kelasElem) kelasElem.value = 'ALL';
-        if (statusElem) statusElem.value = 'Publish';
+  if (idPtm) {
+    const p = (state.cachedData.pertemuan || []).find((x) => String(x.id_pertemuan) === String(idPtm));
+    if (p) {
+      if (titleElem) titleElem.textContent = 'Edit Pertemuan Pembelajaran';
+      if (idElem) idElem.value = p.id_pertemuan;
+      if (nomorElem) nomorElem.value = p.nomor_pertemuan || '1';
+      if (judulElem) judulElem.value = p.judul_pertemuan || '';
+      if (descElem) descElem.value = p.deskripsi || '';
+      if (kelasElem) kelasElem.value = p.id_kelas || 'ALL';
+      if (statusElem) statusElem.value = p.status || 'Publish';
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Buat Pertemuan Pembelajaran';
+    if (idElem) idElem.value = '';
+    if (nomorElem) nomorElem.value = '1';
+    if (judulElem) judulElem.value = '';
+    if (descElem) descElem.value = '';
+    if (kelasElem) kelasElem.value = 'ALL';
+    if (statusElem) statusElem.value = 'Publish';
+  }
 
-    document.getElementById('pertemuan-modal').classList.remove('hidden');
-    document.getElementById('pertemuan-modal').classList.add('flex');
+  document.getElementById('pertemuan-modal').classList.remove('hidden');
+  document.getElementById('pertemuan-modal').classList.add('flex');
 }
-function closePertemuanModal() { document.getElementById('pertemuan-modal').classList.add('hidden'); document.getElementById('pertemuan-modal').classList.remove('flex'); }
+
+function closePertemuanModal() {
+  document.getElementById('pertemuan-modal').classList.add('hidden');
+  document.getElementById('pertemuan-modal').classList.remove('flex');
+}
 
 async function handlePertemuanSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-pertemuan');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Pertemuan');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-pertemuan');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Pertemuan');
 
-    const res = await apiPost({
-        action: 'save_pertemuan',
-        id_pertemuan: document.getElementById('pertemuan-form-id').value,
-        nomor_pertemuan: document.getElementById('pertemuan-form-nomor').value,
-        judul_pertemuan: document.getElementById('pertemuan-form-judul').value,
-        deskripsi: document.getElementById('pertemuan-form-deskripsi').value,
-        id_kelas: document.getElementById('pertemuan-form-kelas').value,
-        status: document.getElementById('pertemuan-form-status').value
-    });
+  const res = await apiPost({
+    action: 'save_pertemuan',
+    id_pertemuan: document.getElementById('pertemuan-form-id').value,
+    nomor_pertemuan: document.getElementById('pertemuan-form-nomor').value,
+    judul_pertemuan: document.getElementById('pertemuan-form-judul').value,
+    deskripsi: document.getElementById('pertemuan-form-deskripsi').value,
+    id_kelas: document.getElementById('pertemuan-form-kelas').value,
+    status: document.getElementById('pertemuan-form-status').value
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan Pertemuan');
-    if (res.success) {
-        closePertemuanModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-pertemuan');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan Pertemuan');
+  if (res.success) {
+    closePertemuanModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-pertemuan');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.message });
+  }
 }
 
 function openMateriModal(idMateri = null) {
-    populatePertemuanSelects();
+  populatePertemuanSelects();
 
-    const titleElem = document.getElementById('materi-modal-title');
-    const idElem = document.getElementById('materi-form-id');
-    const pdfIdElem = document.getElementById('materi-form-pdf-id');
-    const ptmElem = document.getElementById('materi-form-pertemuan');
-    const tipeElem = document.getElementById('materi-form-tipe');
-    const judulElem = document.getElementById('materi-form-judul');
-    const teksElem = document.getElementById('materi-form-teks');
-    const pdfUrlElem = document.getElementById('materi-form-pdf-url');
+  const titleElem = document.getElementById('materi-modal-title');
+  const idElem = document.getElementById('materi-form-id');
+  const pdfIdElem = document.getElementById('materi-form-pdf-id');
+  const ptmElem = document.getElementById('materi-form-pertemuan');
+  const tipeElem = document.getElementById('materi-form-tipe');
+  const judulElem = document.getElementById('materi-form-judul');
+  const teksElem = document.getElementById('materi-form-teks');
+  const pdfUrlElem = document.getElementById('materi-form-pdf-url');
 
-    if (idMateri) {
-        const m = (state.cachedData.materi || []).find(x => String(x.id_materi) === String(idMateri));
-        if (m) {
-            if (titleElem) titleElem.textContent = 'Edit Bahan Ajar Materi';
-            if (idElem) idElem.value = m.id_materi;
-            if (pdfIdElem) pdfIdElem.value = m.file_drive_id || '';
-            if (ptmElem) ptmElem.value = m.id_pertemuan || '';
-            if (tipeElem) tipeElem.value = m.tipe_media || 'web_text';
-            if (judulElem) judulElem.value = m.judul_materi || '';
-            if (teksElem) teksElem.value = m.isi_teks || '';
-            if (pdfUrlElem) pdfUrlElem.value = m.file_pdf_url || '';
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Tambah Bahan Ajar Materi';
-        if (idElem) idElem.value = '';
-        if (pdfIdElem) pdfIdElem.value = '';
-        if (judulElem) judulElem.value = '';
-        if (teksElem) teksElem.value = '';
-        if (pdfUrlElem) pdfUrlElem.value = '';
+  if (idMateri) {
+    const m = (state.cachedData.materi || []).find((x) => String(x.id_materi) === String(idMateri));
+    if (m) {
+      if (titleElem) titleElem.textContent = 'Edit Bahan Ajar Materi';
+      if (idElem) idElem.value = m.id_materi;
+      if (pdfIdElem) pdfIdElem.value = m.file_drive_id || '';
+      if (ptmElem) ptmElem.value = m.id_pertemuan || '';
+      if (tipeElem) tipeElem.value = m.tipe_media || 'web_text';
+      if (judulElem) judulElem.value = m.judul_materi || '';
+      if (teksElem) teksElem.value = m.isi_teks || '';
+      if (pdfUrlElem) pdfUrlElem.value = m.file_pdf_url || '';
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Tambah Bahan Ajar Materi';
+    if (idElem) idElem.value = '';
+    if (pdfIdElem) pdfIdElem.value = '';
+    if (judulElem) judulElem.value = '';
+    if (teksElem) teksElem.value = '';
+    if (pdfUrlElem) pdfUrlElem.value = '';
+  }
 
-    toggleMateriFormTipe();
-    document.getElementById('materi-modal').classList.remove('hidden');
-    document.getElementById('materi-modal').classList.add('flex');
+  toggleMateriFormTipe();
+  document.getElementById('materi-modal').classList.remove('hidden');
+  document.getElementById('materi-modal').classList.add('flex');
 }
-function closeMateriModal() { document.getElementById('materi-modal').classList.add('hidden'); document.getElementById('materi-modal').classList.remove('flex'); }
+
+function closeMateriModal() {
+  document.getElementById('materi-modal').classList.add('hidden');
+  document.getElementById('materi-modal').classList.remove('flex');
+}
 
 function toggleMateriFormTipe() {
-    const tipe = document.getElementById('materi-form-tipe').value;
-    const pdfCon = document.getElementById('container-materi-pdf');
-    if (tipe === 'pdf_document') pdfCon.classList.remove('hidden');
-    else pdfCon.classList.add('hidden');
+  const tipe = document.getElementById('materi-form-tipe').value;
+  const pdfCon = document.getElementById('container-materi-pdf');
+  if (tipe === 'pdf_document') pdfCon.classList.remove('hidden');
+  else pdfCon.classList.add('hidden');
 }
 
-/* ==========================================================
-   ENHANCED PDF UPLOAD & AUTOMATIC OCR TEXT / QUESTION PARSER
-   ========================================================== */
 /* ==========================================================
    CLIENT-SIDE PDF EXTRACTION ENGINE (PDF.JS) & UPLOAD
    ========================================================== */
 
 // 1. Helper Pembaca Teks PDF Langsung di Browser
 async function extractTextFromPdfClientSide(file) {
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
- 
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
- 
-            // transform[4] = koordinat X, transform[5] = koordinat Y
-            const items = textContent.items.map(it => ({
-                str: it.str,
-                x: it.transform[4],
-                y: it.transform[5]
-            })).filter(it => it.str && it.str.trim() !== '');
- 
-            // Kelompokkan potongan teks jadi "baris" berdasarkan kedekatan Y
-            const lineTolerance = 4; // px — naikkan jika baris masih terpecah, turunkan jika baris tergabung
-            const lines = [];
-            items.forEach(it => {
-                let line = lines.find(l => Math.abs(l.y - it.y) < lineTolerance);
-                if (!line) {
-                    line = { y: it.y, items: [] };
-                    lines.push(line);
-                }
-                line.items.push(it);
-            });
- 
-            // Urutkan baris dari atas ke bawah (nilai Y besar = lebih atas di PDF)
-            lines.sort((a, b) => b.y - a.y);
-            // Dalam tiap baris, urutkan dari kiri ke kanan
-            lines.forEach(l => l.items.sort((a, b) => a.x - b.x));
- 
-            const pageText = lines
-                .map(l => l.items.map(it => it.str).join(' '))
-                .join('\n');
- 
-            fullText += pageText + '\n\n';
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+
+      // transform[4] = koordinat X, transform[5] = koordinat Y
+      const items = textContent.items
+        .map((it) => ({
+          str: it.str,
+          x: it.transform[4],
+          y: it.transform[5]
+        }))
+        .filter((it) => it.str && it.str.trim() !== '');
+
+      // Kelompokkan potongan teks jadi "baris" berdasarkan kedekatan Y
+      const lineTolerance = 4; // px — naikkan jika baris masih terpecah, turunkan jika baris tergabung
+      const lines = [];
+      items.forEach((it) => {
+        let line = lines.find((l) => Math.abs(l.y - it.y) < lineTolerance);
+        if (!line) {
+          line = { y: it.y, items: [] };
+          lines.push(line);
         }
-        return fullText.trim();
-    } catch (err) {
-        console.error('PDF.js Extraction Error:', err);
-        return '';
+        line.items.push(it);
+      });
+
+      // Urutkan baris dari atas ke bawah (nilai Y besar = lebih atas di PDF)
+      lines.sort((a, b) => b.y - a.y);
+      // Dalam tiap baris, urutkan dari kiri ke kanan
+      lines.forEach((l) => l.items.sort((a, b) => a.x - b.x));
+
+      const pageText = lines.map((l) => l.items.map((it) => it.str).join(' ')).join('\n');
+
+      fullText += pageText + '\n\n';
     }
+    return fullText.trim();
+  } catch (err) {
+    console.error('PDF.js Extraction Error:', err);
+    return '';
+  }
 }
- 
+
 // 2. Minta backend melakukan OCR via Google Drive API terhadap file
 //    yang sudah terupload (dipakai saat ekstraksi client-side gagal/kosong,
 //    biasanya karena PDF Canva di-export dengan "Flatten PDF" aktif).
 async function requestOcrFallback(fileId) {
-    try {
-        const res = await apiPost({ action: 'ocr_pdf_drive', fileId });
-        if (res.success && res.text) {
-            return res.text;
-        }
-        console.warn('OCR fallback tidak menghasilkan teks:', res.message);
-        return '';
-    } catch (err) {
-        console.error('OCR Fallback Error:', err);
-        return '';
+  try {
+    const res = await apiPost({ action: 'ocr_pdf_drive', fileId });
+    if (res.success && res.text) {
+      return res.text;
     }
+    console.warn('OCR fallback tidak menghasilkan teks:', res.message);
+    return '';
+  } catch (err) {
+    console.error('OCR Fallback Error:', err);
+    return '';
+  }
 }
- 
+
 // 3. Handler Upload PDF & Auto Fill Form LKPD — versi dengan fallback OCR
 async function uploadPdfToDrive(targetModule = 'materi') {
-    const isLkpd = targetModule === 'lkpd';
-    const fileInput = document.getElementById(isLkpd ? 'lkpd-form-file-pdf' : 'materi-form-file-pdf');
-    const btn = document.getElementById(isLkpd ? 'btn-upload-pdf-lkpd' : 'btn-upload-pdf');
- 
-    if (!fileInput.files || fileInput.files.length === 0) {
-        showToast('warning', 'Pilih file PDF terlebih dahulu!');
-        return;
+  const isLkpd = targetModule === 'lkpd';
+  const fileInput = document.getElementById(isLkpd ? 'lkpd-form-file-pdf' : 'materi-form-file-pdf');
+  const btn = document.getElementById(isLkpd ? 'btn-upload-pdf-lkpd' : 'btn-upload-pdf');
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('warning', 'Pilih file PDF terlebih dahulu!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  setButtonLoading(btn, true, 'Membaca Teks PDF...', 'Unggah & Ekstrak Teks PDF');
+
+  // Ekstraksi teks instan di browser (cepat, tapi gagal jika PDF di-flatten jadi gambar)
+  let extractedText = await extractTextFromPdfClientSide(file);
+  let usedOcr = false;
+
+  // Proses pengunggahan berkas ke Google Drive
+  setButtonLoading(btn, true, 'Mengunggah ke Drive...', 'Unggah & Ekstrak Teks PDF');
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    const res = await apiPost({
+      action: 'upload_pdf',
+      base64Data: e.target.result,
+      fileName: file.name
+    });
+
+    // Jika ekstraksi client-side kosong/terlalu pendek, dan upload berhasil,
+    // coba fallback OCR lewat Google Drive API menggunakan file yang baru diupload.
+    if (res.success && (!extractedText || extractedText.length < OCR_FALLBACK_MIN_CHARS)) {
+      setButtonLoading(btn, true, 'Teks Kosong, Menjalankan OCR...', 'Unggah & Ekstrak Teks PDF');
+      const ocrText = await requestOcrFallback(res.fileId);
+      if (ocrText && ocrText.length > extractedText.length) {
+        extractedText = ocrText;
+        usedOcr = true;
+      }
     }
- 
-    const file = fileInput.files[0];
-    setButtonLoading(btn, true, 'Membaca Teks PDF...', 'Unggah & Ekstrak Teks PDF');
- 
-    // Ekstraksi teks instan di browser (cepat, tapi gagal jika PDF di-flatten jadi gambar)
-    let extractedText = await extractTextFromPdfClientSide(file);
-    let usedOcr = false;
- 
-    // Proses pengunggahan berkas ke Google Drive
-    setButtonLoading(btn, true, 'Mengunggah ke Drive...', 'Unggah & Ekstrak Teks PDF');
-    const reader = new FileReader();
-    reader.onload = async function (e) {
-        const res = await apiPost({
-            action: 'upload_pdf',
-            base64Data: e.target.result,
-            fileName: file.name
-        });
- 
-        // Jika ekstraksi client-side kosong/terlalu pendek, dan upload berhasil,
-        // coba fallback OCR lewat Google Drive API menggunakan file yang baru diupload.
-        if (res.success && (!extractedText || extractedText.length < OCR_FALLBACK_MIN_CHARS)) {
-            setButtonLoading(btn, true, 'Teks Kosong, Menjalankan OCR...', 'Unggah & Ekstrak Teks PDF');
-            const ocrText = await requestOcrFallback(res.fileId);
-            if (ocrText && ocrText.length > extractedText.length) {
-                extractedText = ocrText;
-                usedOcr = true;
-            }
+
+    setButtonLoading(btn, false, '', 'Unggah & Ekstrak Teks PDF');
+
+    if (res.success) {
+      if (isLkpd) {
+        const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
+        const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
+        const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
+        const soalTextElem = document.getElementById('lkpd-form-soal-text');
+
+        if (pdfUrlElem) pdfUrlElem.value = res.url;
+        if (pdfIdElem) pdfIdElem.value = res.fileId;
+
+        let textLength = extractedText ? extractedText.length : 0;
+        let questionCount = 0;
+
+        if (extractedText) {
+          if (isiTeksElem) isiTeksElem.value = extractedText;
+
+          const autoQuestions = parseQuestionsFromText(extractedText);
+          questionCount = autoQuestions.length;
+
+          if (questionCount > 0 && soalTextElem) {
+            soalTextElem.value = autoQuestions.join('\n');
+          }
         }
- 
-        setButtonLoading(btn, false, '', 'Unggah & Ekstrak Teks PDF');
- 
-        if (res.success) {
-            if (isLkpd) {
-                const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
-                const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
-                const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
-                const soalTextElem = document.getElementById('lkpd-form-soal-text');
- 
-                if (pdfUrlElem) pdfUrlElem.value = res.url;
-                if (pdfIdElem) pdfIdElem.value = res.fileId;
- 
-                let textLength = extractedText ? extractedText.length : 0;
-                let questionCount = 0;
- 
-                if (extractedText) {
-                    if (isiTeksElem) isiTeksElem.value = extractedText;
- 
-                    const autoQuestions = parseQuestionsFromText(extractedText);
-                    questionCount = autoQuestions.length;
- 
-                    if (questionCount > 0 && soalTextElem) {
-                        soalTextElem.value = autoQuestions.join('\n');
-                    }
-                }
- 
-                Swal.fire({
-                    icon: textLength > 0 ? 'success' : 'warning',
-                    title: textLength > 0 ? 'Ekstraksi PDF Berhasil!' : 'PDF Terunggah (Teks Kosong)',
-                    html: `
+
+        Swal.fire({
+          icon: textLength > 0 ? 'success' : 'warning',
+          title: textLength > 0 ? 'Ekstraksi PDF Berhasil!' : 'PDF Terunggah (Teks Kosong)',
+          html: `
                         <div class="text-xs text-left space-y-2 mt-2">
                             <p class="font-bold text-slate-700">Hasil Pemrosesan Berkas PDF:</p>
-                            <div class="p-3 ${textLength > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl space-y-1">
+                            <div class="p-3 ${
+                              textLength > 0
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                : 'bg-amber-50 border-amber-200 text-amber-900'
+                            } border rounded-xl space-y-1">
                                 <p>📝 <b>Panjang Teks Ditampilkan:</b> ${textLength} Karakter</p>
                                 <p>❓ <b>Soal Terdeteksi:</b> ${questionCount} Pertanyaan</p>
-                                ${usedOcr ? `<p>🔍 <b>Metode:</b> OCR (teks asli PDF tidak terbaca / kemungkinan hasil Flatten Canva)</p>` : ''}
+                                ${
+                                  usedOcr
+                                    ? `<p>🔍 <b>Metode:</b> OCR (teks asli PDF tidak terbaca / kemungkinan hasil Flatten Canva)</p>`
+                                    : ''
+                                }
                             </div>
                             <p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini.</p>
                         </div>
                     `
-                });
-            } else {
-                const pdfUrlElem = document.getElementById('materi-form-pdf-url');
-                const pdfIdElem = document.getElementById('materi-form-pdf-id');
-                if (pdfUrlElem) pdfUrlElem.value = res.url;
-                if (pdfIdElem) pdfIdElem.value = res.fileId;
-                if (extractedText) {
-                    const teksElem = document.getElementById('materi-form-teks');
-                    if (teksElem) teksElem.value = extractedText;
-                }
-                showToast('success', usedOcr ? 'PDF Diunggah & Diproses via OCR!' : 'PDF Bahan Ajar Berhasil Diunggah!');
-            }
-        } else {
-            Swal.fire({ icon: 'error', title: 'Gagal Unggah PDF', text: res.message });
+        });
+      } else {
+        const pdfUrlElem = document.getElementById('materi-form-pdf-url');
+        const pdfIdElem = document.getElementById('materi-form-pdf-id');
+        if (pdfUrlElem) pdfUrlElem.value = res.url;
+        if (pdfIdElem) pdfIdElem.value = res.fileId;
+        if (extractedText) {
+          const teksElem = document.getElementById('materi-form-teks');
+          if (teksElem) teksElem.value = extractedText;
         }
-    };
-    reader.readAsDataURL(file);
+        showToast('success', usedOcr ? 'PDF Diunggah & Diproses via OCR!' : 'PDF Bahan Ajar Berhasil Diunggah!');
+      }
+    } else {
+      Swal.fire({ icon: 'error', title: 'Gagal Unggah PDF', text: res.message });
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 // 3. Parser Pemisah Soal Fleksibel
 function parseQuestionsFromText(text) {
-    if (!text) return [];
-    
-    const cleanText = text.replace(/\r\n/g, '\n').trim();
-    const lines = cleanText.split('\n');
-    const questions = [];
-    let currentQ = "";
-    
-    const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+)\s*(.+)/i;
+  if (!text) return [];
 
-    lines.forEach(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return;
-        
-        if (trimmed.includes('LEMBAR KERJA PESERTA DIDIK') || trimmed.includes('UNSUR STEAM') || trimmed.includes('PETUNJUK PENGGUNAAN')) {
-            return;
-        }
+  const cleanText = text.replace(/\r\n/g, '\n').trim();
+  const lines = cleanText.split('\n');
+  const questions = [];
+  let currentQ = '';
 
-        if (qRegex.test(trimmed) || trimmed.endsWith('?')) {
-            if (currentQ) questions.push(currentQ.trim());
-            currentQ = trimmed;
-        } else if (currentQ) {
-            currentQ += " " + trimmed;
-        }
-    });
+  const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+)\s*(.+)/i;
 
-    if (currentQ) questions.push(currentQ.trim());
-    return questions;
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    if (
+      trimmed.includes('LEMBAR KERJA PESERTA DIDIK') ||
+      trimmed.includes('UNSUR STEAM') ||
+      trimmed.includes('PETUNJUK PENGGUNAAN')
+    ) {
+      return;
+    }
+
+    if (qRegex.test(trimmed) || trimmed.endsWith('?')) {
+      if (currentQ) questions.push(currentQ.trim());
+      currentQ = trimmed;
+    } else if (currentQ) {
+      currentQ += ' ' + trimmed;
+    }
+  });
+
+  if (currentQ) questions.push(currentQ.trim());
+  return questions;
 }
 
 async function handleMateriSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-materi');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Materi');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-materi');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Materi');
 
-    const res = await apiPost({
-        action: 'save_materi',
-        id_materi: document.getElementById('materi-form-id').value,
-        id_pertemuan: document.getElementById('materi-form-pertemuan').value,
-        judul_materi: document.getElementById('materi-form-judul').value,
-        tipe_media: document.getElementById('materi-form-tipe').value,
-        isi_teks: document.getElementById('materi-form-teks').value,
-        file_pdf_url: document.getElementById('materi-form-pdf-url').value,
-        file_drive_id: document.getElementById('materi-form-pdf-id').value
-    });
+  const res = await apiPost({
+    action: 'save_materi',
+    id_materi: document.getElementById('materi-form-id').value,
+    id_pertemuan: document.getElementById('materi-form-pertemuan').value,
+    judul_materi: document.getElementById('materi-form-judul').value,
+    tipe_media: document.getElementById('materi-form-tipe').value,
+    isi_teks: document.getElementById('materi-form-teks').value,
+    file_pdf_url: document.getElementById('materi-form-pdf-url').value,
+    file_drive_id: document.getElementById('materi-form-pdf-id').value
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan Materi');
-    if (res.success) {
-        closeMateriModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-materi');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Materi', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan Materi');
+  if (res.success) {
+    closeMateriModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-materi');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Materi', text: res.message });
+  }
 }
 
 function openLkpdModal(idLkpd = null) {
-    populatePertemuanSelects();
+  populatePertemuanSelects();
 
-    const titleElem = document.getElementById('lkpd-modal-title');
-    const idElem = document.getElementById('lkpd-form-id');
-    const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
-    const ptmElem = document.getElementById('lkpd-form-pertemuan');
-    const tipeElem = document.getElementById('lkpd-form-tipe');
-    const judulElem = document.getElementById('lkpd-form-judul');
-    const instruksiElem = document.getElementById('lkpd-form-instruksi');
-    const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
-    const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
-    const gambarUrlElem = document.getElementById('lkpd-form-gambar-url');
-    const soalTextElem = document.getElementById('lkpd-form-soal-text');
-    const kanvasElem = document.getElementById('lkpd-form-kanvas');
+  const titleElem = document.getElementById('lkpd-modal-title');
+  const idElem = document.getElementById('lkpd-form-id');
+  const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
+  const ptmElem = document.getElementById('lkpd-form-pertemuan');
+  const tipeElem = document.getElementById('lkpd-form-tipe');
+  const judulElem = document.getElementById('lkpd-form-judul');
+  const instruksiElem = document.getElementById('lkpd-form-instruksi');
+  const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
+  const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
+  const gambarUrlElem = document.getElementById('lkpd-form-gambar-url');
+  const soalTextElem = document.getElementById('lkpd-form-soal-text');
+  const kanvasElem = document.getElementById('lkpd-form-kanvas');
 
-    if (idLkpd) {
-        const l = (state.cachedData.lkpd || []).find(x => String(x.id_lkpd) === String(idLkpd));
-        if (l) {
-            if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
-            if (idElem) idElem.value = l.id_lkpd;
-            if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
-            if (ptmElem) ptmElem.value = l.id_pertemuan || '';
-            if (tipeElem) tipeElem.value = l.tipe_lkpd || 'pdf_interaktif';
-            if (judulElem) judulElem.value = l.judul_lkpd || '';
-            if (instruksiElem) instruksiElem.value = l.instruksi || '';
-            if (pdfUrlElem) pdfUrlElem.value = l.file_pdf_url || '';
-            if (isiTeksElem) isiTeksElem.value = l.isi_teks || '';
-            if (gambarUrlElem) gambarUrlElem.value = l.gambar_url || '';
+  if (idLkpd) {
+    const l = (state.cachedData.lkpd || []).find((x) => String(x.id_lkpd) === String(idLkpd));
+    if (l) {
+      if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
+      if (idElem) idElem.value = l.id_lkpd;
+      if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
+      if (ptmElem) ptmElem.value = l.id_pertemuan || '';
+      if (tipeElem) tipeElem.value = l.tipe_lkpd || 'pdf_interaktif';
+      if (judulElem) judulElem.value = l.judul_lkpd || '';
+      if (instruksiElem) instruksiElem.value = l.instruksi || '';
+      if (pdfUrlElem) pdfUrlElem.value = l.file_pdf_url || '';
+      if (isiTeksElem) isiTeksElem.value = l.isi_teks || '';
+      if (gambarUrlElem) gambarUrlElem.value = l.gambar_url || '';
 
-            let questions = [];
-            try {
-                questions = typeof l.soal_json === 'string' ? JSON.parse(l.soal_json) : (l.soal_json || []);
-            } catch (e) { questions = []; }
-            if (soalTextElem) soalTextElem.value = Array.isArray(questions) ? questions.join('\n') : String(questions);
-            if (kanvasElem) kanvasElem.checked = (l.fitur_kanvas === 'TRUE' || l.fitur_kanvas === true);
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Kelola LKPD Pertemuan';
-        if (idElem) idElem.value = '';
-        if (pdfIdElem) pdfIdElem.value = '';
-        if (judulElem) judulElem.value = '';
-        if (instruksiElem) instruksiElem.value = '';
-        if (pdfUrlElem) pdfUrlElem.value = '';
-        if (isiTeksElem) isiTeksElem.value = '';
-        if (gambarUrlElem) gambarUrlElem.value = '';
-        if (soalTextElem) soalTextElem.value = '';
-        if (kanvasElem) kanvasElem.checked = false;
+      let questions = [];
+      try {
+        questions = typeof l.soal_json === 'string' ? JSON.parse(l.soal_json) : l.soal_json || [];
+      } catch (e) {
+        questions = [];
+      }
+      if (soalTextElem) soalTextElem.value = Array.isArray(questions) ? questions.join('\n') : String(questions);
+      if (kanvasElem) kanvasElem.checked = l.fitur_kanvas === 'TRUE' || l.fitur_kanvas === true;
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Kelola LKPD Pertemuan';
+    if (idElem) idElem.value = '';
+    if (pdfIdElem) pdfIdElem.value = '';
+    if (judulElem) judulElem.value = '';
+    if (instruksiElem) instruksiElem.value = '';
+    if (pdfUrlElem) pdfUrlElem.value = '';
+    if (isiTeksElem) isiTeksElem.value = '';
+    if (gambarUrlElem) gambarUrlElem.value = '';
+    if (soalTextElem) soalTextElem.value = '';
+    if (kanvasElem) kanvasElem.checked = false;
+  }
 
-    document.getElementById('lkpd-modal').classList.remove('hidden');
-    document.getElementById('lkpd-modal').classList.add('flex');
+  document.getElementById('lkpd-modal').classList.remove('hidden');
+  document.getElementById('lkpd-modal').classList.add('flex');
 }
-function closeLkpdModal() { document.getElementById('lkpd-modal').classList.add('hidden'); document.getElementById('lkpd-modal').classList.remove('flex'); }
+
+function closeLkpdModal() {
+  document.getElementById('lkpd-modal').classList.add('hidden');
+  document.getElementById('lkpd-modal').classList.remove('flex');
+}
 
 async function handleLkpdSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-lkpd');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan LKPD');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-lkpd');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan LKPD');
 
-    const soalArr = document.getElementById('lkpd-form-soal-text').value.split('\n').filter(s => s.trim() !== '');
+  const soalArr = document
+    .getElementById('lkpd-form-soal-text')
+    .value.split('\n')
+    .filter((s) => s.trim() !== '');
 
-    const res = await apiPost({
-        action: 'save_lkpd',
-        id_lkpd: document.getElementById('lkpd-form-id').value,
-        id_pertemuan: document.getElementById('lkpd-form-pertemuan').value,
-        judul_lkpd: document.getElementById('lkpd-form-judul').value,
-        tipe_lkpd: document.getElementById('lkpd-form-tipe').value,
-        instruksi: document.getElementById('lkpd-form-instruksi').value,
-        file_pdf_url: document.getElementById('lkpd-form-pdf-url').value,
-        file_drive_id: document.getElementById('lkpd-form-pdf-id').value,
-        isi_teks: document.getElementById('lkpd-form-isi-teks').value,
-        gambar_url: document.getElementById('lkpd-form-gambar-url').value,
-        soal_json: soalArr,
-        fitur_kanvas: document.getElementById('lkpd-form-kanvas').checked
-    });
+  const res = await apiPost({
+    action: 'save_lkpd',
+    id_lkpd: document.getElementById('lkpd-form-id').value,
+    id_pertemuan: document.getElementById('lkpd-form-pertemuan').value,
+    judul_lkpd: document.getElementById('lkpd-form-judul').value,
+    tipe_lkpd: document.getElementById('lkpd-form-tipe').value,
+    instruksi: document.getElementById('lkpd-form-instruksi').value,
+    file_pdf_url: document.getElementById('lkpd-form-pdf-url').value,
+    file_drive_id: document.getElementById('lkpd-form-pdf-id').value,
+    isi_teks: document.getElementById('lkpd-form-isi-teks').value,
+    gambar_url: document.getElementById('lkpd-form-gambar-url').value,
+    soal_json: soalArr,
+    fitur_kanvas: document.getElementById('lkpd-form-kanvas').checked
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan LKPD');
-    if (res.success) {
-        closeLkpdModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-lkpd');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan LKPD', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan LKPD');
+  if (res.success) {
+    closeLkpdModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-lkpd');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan LKPD', text: res.message });
+  }
 }
 
 function openGameModal(idGame = null) {
-    populatePertemuanSelects();
+  populatePertemuanSelects();
 
-    const titleElem = document.getElementById('game-modal-title');
-    const idElem = document.getElementById('game-form-id');
-    const ptmElem = document.getElementById('game-form-pertemuan');
-    const tipeElem = document.getElementById('game-form-tipe');
-    const judulElem = document.getElementById('game-form-judul');
-    const instruksiElem = document.getElementById('game-form-instruksi');
+  const titleElem = document.getElementById('game-modal-title');
+  const idElem = document.getElementById('game-form-id');
+  const ptmElem = document.getElementById('game-form-pertemuan');
+  const tipeElem = document.getElementById('game-form-tipe');
+  const judulElem = document.getElementById('game-form-judul');
+  const instruksiElem = document.getElementById('game-form-instruksi');
 
-    if (idGame) {
-        const g = (state.cachedData.games || []).find(x => String(x.id_game) === String(idGame));
-        if (g) {
-            if (titleElem) titleElem.textContent = 'Edit Game Interaktif';
-            if (idElem) idElem.value = g.id_game;
-            if (ptmElem) ptmElem.value = g.id_pertemuan || '';
-            if (tipeElem) tipeElem.value = g.tipe_game || 'matching';
-            if (judulElem) judulElem.value = g.judul_game || '';
-            if (instruksiElem) instruksiElem.value = g.instruksi || '';
+  if (idGame) {
+    const g = (state.cachedData.games || []).find((x) => String(x.id_game) === String(idGame));
+    if (g) {
+      if (titleElem) titleElem.textContent = 'Edit Game Interaktif';
+      if (idElem) idElem.value = g.id_game;
+      if (ptmElem) ptmElem.value = g.id_pertemuan || '';
+      if (tipeElem) tipeElem.value = g.tipe_game || 'matching';
+      if (judulElem) judulElem.value = g.judul_game || '';
+      if (instruksiElem) instruksiElem.value = g.instruksi || '';
 
-            let config = { items: [] };
-            try { config = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : (g.konfigurasi_json || { items: [] }); } catch (e) { }
+      let config = { items: [] };
+      try {
+        config =
+          typeof g.konfigurasi_json === 'string'
+            ? JSON.parse(g.konfigurasi_json)
+            : g.konfigurasi_json || { items: [] };
+      } catch (e) {}
 
-            renderGameConfigInputs(config.items || []);
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Konfigurasi Game Interaktif';
-        if (idElem) idElem.value = '';
-        if (judulElem) judulElem.value = '';
-        if (instruksiElem) instruksiElem.value = '';
-
-        renderGameConfigInputs();
+      renderGameConfigInputs(config.items || []);
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Konfigurasi Game Interaktif';
+    if (idElem) idElem.value = '';
+    if (judulElem) judulElem.value = '';
+    if (instruksiElem) instruksiElem.value = '';
 
-    document.getElementById('game-modal').classList.remove('hidden');
-    document.getElementById('game-modal').classList.add('flex');
+    renderGameConfigInputs();
+  }
+
+  document.getElementById('game-modal').classList.remove('hidden');
+  document.getElementById('game-modal').classList.add('flex');
 }
-function closeGameModal() { document.getElementById('game-modal').classList.add('hidden'); document.getElementById('game-modal').classList.remove('flex'); }
+
+function closeGameModal() {
+  document.getElementById('game-modal').classList.add('hidden');
+  document.getElementById('game-modal').classList.remove('flex');
+}
 
 function renderGameConfigInputs(existingItems = null) {
-    const tipeElem = document.getElementById('game-form-tipe');
-    const tipe = tipeElem ? tipeElem.value : 'matching';
-    const container = document.getElementById('game-dynamic-builder-container');
-    if (!container) return;
-    container.innerHTML = '';
+  const tipeElem = document.getElementById('game-form-tipe');
+  const tipe = tipeElem ? tipeElem.value : 'matching';
+  const container = document.getElementById('game-dynamic-builder-container');
+  if (!container) return;
+  container.innerHTML = '';
 
-    const firstItem = (existingItems && existingItems.length > 0) ? existingItems[0] : null;
+  const firstItem = existingItems && existingItems.length > 0 ? existingItems[0] : null;
 
-    if (tipe === 'matching') {
-        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan / Teks dan Pasangan Kunci Jawaban:</div>`;
-    } else if (tipe === 'drag_drop') {
-        const catA = firstItem?.kategori_a || 'Energi Potensial';
-        const catB = firstItem?.kategori_b || 'Energi Kinetik';
-        container.innerHTML = `
+  if (tipe === 'matching') {
+    container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan / Teks dan Pasangan Kunci Jawaban:</div>`;
+  } else if (tipe === 'drag_drop') {
+    const catA = firstItem?.kategori_a || 'Energi Potensial';
+    const catB = firstItem?.kategori_b || 'Energi Kinetik';
+    container.innerHTML = `
       <div class="grid grid-cols-2 gap-2 mb-2">
         <div>
           <label class="block font-bold text-slate-700">Nama Kategori A</label>
@@ -2774,11 +3371,11 @@ function renderGameConfigInputs(existingItems = null) {
         </div>
       </div>
     `;
-    } else if (tipe === 'sequencer') {
-        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan tahapan proses berurutan DARI AWAL HINGGA AKHIR:</div>`;
-    } else if (tipe === 'hotspot') {
-        const imgUrl = firstItem?.img_url || '';
-        container.innerHTML = `
+  } else if (tipe === 'sequencer') {
+    container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan tahapan proses berurutan DARI AWAL HINGGA AKHIR:</div>`;
+  } else if (tipe === 'hotspot') {
+    const imgUrl = firstItem?.img_url || '';
+    container.innerHTML = `
       <div class="space-y-2 mb-3">
         <div>
           <label class="block font-bold text-slate-700">URL Gambar Diagram / STEAM</label>
@@ -2787,9 +3384,9 @@ function renderGameConfigInputs(existingItems = null) {
         <div class="text-[10px] text-purple-700 font-bold">Isikan Label Bagian/Pin Gambar:</div>
       </div>
     `;
-    } else if (tipe === 'simulator') {
-        const scenario = firstItem?.soal || '';
-        container.innerHTML = `
+  } else if (tipe === 'simulator') {
+    const scenario = firstItem?.soal || '';
+    container.innerHTML = `
       <div class="space-y-2 mb-3">
         <div>
           <label class="block font-bold text-slate-700">Teks Skenario Studi Kasus Proyek</label>
@@ -2798,43 +3395,43 @@ function renderGameConfigInputs(existingItems = null) {
         <div class="text-[10px] text-purple-700 font-bold">Isikan Parameter & Pilihan Keputusan:</div>
       </div>
     `;
-    } else if (tipe === 'word_search') {
-        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Kata-Kata Kunci Istilah IPA (Satu kata per baris):</div>`;
-    } else {
-        container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan Singkat beserta Kunci Jawabannya:</div>`;
-    }
+  } else if (tipe === 'word_search') {
+    container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Kata-Kata Kunci Istilah IPA (Satu kata per baris):</div>`;
+  } else {
+    container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan Pertanyaan Singkat beserta Kunci Jawabannya:</div>`;
+  }
 
-    if (existingItems && Array.isArray(existingItems) && existingItems.length > 0) {
-        existingItems.forEach(item => addGameItemRow(item));
-    } else {
-        addGameItemRow();
-    }
+  if (existingItems && Array.isArray(existingItems) && existingItems.length > 0) {
+    existingItems.forEach((item) => addGameItemRow(item));
+  } else {
+    addGameItemRow();
+  }
 }
 
 function addGameItemRow(itemData = null) {
-    const tipeElem = document.getElementById('game-form-tipe');
-    const tipe = tipeElem ? tipeElem.value : 'matching';
-    const container = document.getElementById('game-dynamic-builder-container');
-    if (!container) return;
+  const tipeElem = document.getElementById('game-form-tipe');
+  const tipe = tipeElem ? tipeElem.value : 'matching';
+  const container = document.getElementById('game-dynamic-builder-container');
+  if (!container) return;
 
-    const row = document.createElement('div');
-    row.className = 'gm-item-row p-2.5 bg-white border rounded-2xl space-y-1.5 shadow-2xs relative';
-    const removeBtnHtml = `<button type="button" onclick="this.closest('.gm-item-row').remove()" class="text-red-500 font-bold text-[10px] hover:underline float-right">✕ Hapus Item</button>`;
+  const row = document.createElement('div');
+  row.className = 'gm-item-row p-2.5 bg-white border rounded-2xl space-y-1.5 shadow-2xs relative';
+  const removeBtnHtml = `<button type="button" onclick="this.closest('.gm-item-row').remove()" class="text-red-500 font-bold text-[10px] hover:underline float-right">✕ Hapus Item</button>`;
 
-    if (tipe === 'matching') {
-        const soal = itemData?.soal || '';
-        const kunci = itemData?.kunci || '';
-        row.innerHTML = `
+  if (tipe === 'matching') {
+    const soal = itemData?.soal || '';
+    const kunci = itemData?.kunci || '';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="grid grid-cols-2 gap-2 clear-both">
         <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Soal / Teks" />
         <input type="text" class="gm-input-kunci w-full p-2 rounded-xl border text-[11px]" value="${kunci}" placeholder="Pasangan Kunci" />
       </div>
     `;
-    } else if (tipe === 'drag_drop') {
-        const soal = itemData?.soal || '';
-        const catKunci = itemData?.kategori_kunci || 'A';
-        row.innerHTML = `
+  } else if (tipe === 'drag_drop') {
+    const soal = itemData?.soal || '';
+    const catKunci = itemData?.kategori_kunci || 'A';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="grid grid-cols-3 gap-2 clear-both">
         <input type="text" class="gm-input-soal col-span-2 w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Objek / Teks" />
@@ -2844,33 +3441,33 @@ function addGameItemRow(itemData = null) {
         </select>
       </div>
     `;
-    } else if (tipe === 'sequencer') {
-        const count = container.querySelectorAll('.gm-item-row').length + 1;
-        const soal = itemData?.soal || '';
-        row.innerHTML = `
+  } else if (tipe === 'sequencer') {
+    const count = container.querySelectorAll('.gm-item-row').length + 1;
+    const soal = itemData?.soal || '';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="flex items-center gap-2 clear-both">
         <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 font-black text-[10px] flex items-center justify-center shrink-0">${count}</span>
         <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Langkah urutan..." />
       </div>
     `;
-    } else if (tipe === 'hotspot') {
-        const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
-        const soal = itemData?.soal || '';
-        row.innerHTML = `
+  } else if (tipe === 'hotspot') {
+    const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
+    const soal = itemData?.soal || '';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="flex items-center gap-2 clear-both">
         <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-[10px] flex items-center justify-center shrink-0">Pin ${pinNum}</span>
         <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Nama label pin ${pinNum}..." />
       </div>
     `;
-    } else if (tipe === 'simulator') {
-        const param = itemData?.parameter || '';
-        const opsiA = itemData?.opsi_a || '';
-        const opsiB = itemData?.opsi_b || '';
-        const opsiC = itemData?.opsi_c || '';
-        const kunci = itemData?.kunci || 'A';
-        row.innerHTML = `
+  } else if (tipe === 'simulator') {
+    const param = itemData?.parameter || '';
+    const opsiA = itemData?.opsi_a || '';
+    const opsiB = itemData?.opsi_b || '';
+    const opsiC = itemData?.opsi_c || '';
+    const kunci = itemData?.kunci || 'A';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="clear-both space-y-1">
         <input type="text" class="gm-input-param w-full p-2 rounded-xl border text-[11px] font-bold" value="${param}" placeholder="Nama Parameter" />
@@ -2886,20 +3483,20 @@ function addGameItemRow(itemData = null) {
         </select>
       </div>
     `;
-    } else if (tipe === 'word_search') {
-        const soal = itemData?.soal || '';
-        row.innerHTML = `
+  } else if (tipe === 'word_search') {
+    const soal = itemData?.soal || '';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="clear-both">
         <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px] font-mono uppercase" value="${soal}" placeholder="KATA ISTILAH" />
       </div>
     `;
-    } else {
-        const soal = itemData?.soal || '';
-        const opsiA = itemData?.opsi_a || '';
-        const opsiB = itemData?.opsi_b || '';
-        const kunci = itemData?.kunci || 'A';
-        row.innerHTML = `
+  } else {
+    const soal = itemData?.soal || '';
+    const opsiA = itemData?.opsi_a || '';
+    const opsiB = itemData?.opsi_b || '';
+    const kunci = itemData?.kunci || 'A';
+    row.innerHTML = `
       ${removeBtnHtml}
       <div class="clear-both space-y-1">
         <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Pertanyaan Kuis..." />
@@ -2913,404 +3510,473 @@ function addGameItemRow(itemData = null) {
         </div>
       </div>
     `;
-    }
+  }
 
-    container.appendChild(row);
+  container.appendChild(row);
 }
 
 async function handleGameSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-game');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Game');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-game');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Game');
 
-    const tipe = document.getElementById('game-form-tipe').value;
-    const rows = document.querySelectorAll('.gm-item-row');
-    let itemsList = [];
+  const tipe = document.getElementById('game-form-tipe').value;
+  const rows = document.querySelectorAll('.gm-item-row');
+  let itemsList = [];
 
-    const hotspotUrl = document.getElementById('gm-hotspot-img-url')?.value || '';
-    const simScenario = document.getElementById('gm-sim-scenario')?.value || '';
+  const hotspotUrl = document.getElementById('gm-hotspot-img-url')?.value || '';
+  const simScenario = document.getElementById('gm-sim-scenario')?.value || '';
 
-    rows.forEach(r => {
-        const soal = r.querySelector('.gm-input-soal')?.value || '';
+  rows.forEach((r) => {
+    const soal = r.querySelector('.gm-input-soal')?.value || '';
 
-        if (tipe === 'matching') {
-            const kunci = r.querySelector('.gm-input-kunci')?.value || '';
-            if (soal) itemsList.push({ soal, kunci });
-        } else if (tipe === 'drag_drop') {
-            const catA = document.getElementById('gm-cat-name-a')?.value || 'Kategori A';
-            const catB = document.getElementById('gm-cat-name-b')?.value || 'Kategori B';
-            const catKunci = r.querySelector('.gm-input-cat-kunci')?.value || 'A';
-            if (soal) itemsList.push({ soal, kategori_a: catA, kategori_b: catB, kategori_kunci: catKunci });
-        } else if (tipe === 'sequencer') {
-            if (soal) itemsList.push({ soal });
-        } else if (tipe === 'hotspot') {
-            if (soal) itemsList.push({ soal, img_url: hotspotUrl });
-        } else if (tipe === 'simulator') {
-            const param = r.querySelector('.gm-input-param')?.value || '';
-            const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
-            const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
-            const opsiC = r.querySelector('.gm-input-opsi-c')?.value || '';
-            const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
-            if (param) itemsList.push({ soal: simScenario, parameter: param, opsi_a: opsiA, opsi_b: opsiB, opsi_c: opsiC, kunci });
-        } else if (tipe === 'word_search') {
-            if (soal) itemsList.push({ soal: soal.toUpperCase().trim() });
-        } else {
-            const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
-            const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
-            const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
-            if (soal) itemsList.push({ soal, opsi_a: opsiA, opsi_b: opsiB, kunci });
-        }
-    });
-
-    const res = await apiPost({
-        action: 'save_game',
-        id_game: document.getElementById('game-form-id').value,
-        id_pertemuan: document.getElementById('game-form-pertemuan').value,
-        judul_game: document.getElementById('game-form-judul').value,
-        tipe_game: tipe,
-        instruksi: document.getElementById('game-form-instruksi').value,
-        konfigurasi_json: { items: itemsList }
-    });
-
-    setButtonLoading(btn, false, '', '💾 Simpan Game');
-    if (res.success) {
-        closeGameModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-game');
+    if (tipe === 'matching') {
+      const kunci = r.querySelector('.gm-input-kunci')?.value || '';
+      if (soal) itemsList.push({ soal, kunci });
+    } else if (tipe === 'drag_drop') {
+      const catA = document.getElementById('gm-cat-name-a')?.value || 'Kategori A';
+      const catB = document.getElementById('gm-cat-name-b')?.value || 'Kategori B';
+      const catKunci = r.querySelector('.gm-input-cat-kunci')?.value || 'A';
+      if (soal) itemsList.push({ soal, kategori_a: catA, kategori_b: catB, kategori_kunci: catKunci });
+    } else if (tipe === 'sequencer') {
+      if (soal) itemsList.push({ soal });
+    } else if (tipe === 'hotspot') {
+      if (soal) itemsList.push({ soal, img_url: hotspotUrl });
+    } else if (tipe === 'simulator') {
+      const param = r.querySelector('.gm-input-param')?.value || '';
+      const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
+      const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
+      const opsiC = r.querySelector('.gm-input-opsi-c')?.value || '';
+      const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
+      if (param)
+        itemsList.push({
+          soal: simScenario,
+          parameter: param,
+          opsi_a: opsiA,
+          opsi_b: opsiB,
+          opsi_c: opsiC,
+          kunci
+        });
+    } else if (tipe === 'word_search') {
+      if (soal) itemsList.push({ soal: soal.toUpperCase().trim() });
     } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Game', text: res.message });
+      const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';
+      const opsiB = r.querySelector('.gm-input-opsi-b')?.value || '';
+      const kunci = r.querySelector('.gm-input-kunci')?.value || 'A';
+      if (soal) itemsList.push({ soal, opsi_a: opsiA, opsi_b: opsiB, kunci });
     }
+  });
+
+  const res = await apiPost({
+    action: 'save_game',
+    id_game: document.getElementById('game-form-id').value,
+    id_pertemuan: document.getElementById('game-form-pertemuan').value,
+    judul_game: document.getElementById('game-form-judul').value,
+    tipe_game: tipe,
+    instruksi: document.getElementById('game-form-instruksi').value,
+    konfigurasi_json: { items: itemsList }
+  });
+
+  setButtonLoading(btn, false, '', '💾 Simpan Game');
+  if (res.success) {
+    closeGameModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-game');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Game', text: res.message });
+  }
 }
 
 function openSoalModal(idSoal = null) {
-    populatePertemuanSelects();
+  populatePertemuanSelects();
 
-    const titleElem = document.getElementById('soal-modal-title');
-    const idElem = document.getElementById('soal-form-id');
-    const ptmElem = document.getElementById('soal-form-pertemuan');
-    const pertElem = document.getElementById('soal-form-pertanyaan');
-    const opsiAElem = document.getElementById('soal-form-opsi-a');
-    const opsiBElem = document.getElementById('soal-form-opsi-b');
-    const opsiCElem = document.getElementById('soal-form-opsi-c');
-    const opsiDElem = document.getElementById('soal-form-opsi-d');
-    const kunciElem = document.getElementById('soal-form-kunci');
+  const titleElem = document.getElementById('soal-modal-title');
+  const idElem = document.getElementById('soal-form-id');
+  const ptmElem = document.getElementById('soal-form-pertemuan');
+  const pertElem = document.getElementById('soal-form-pertanyaan');
+  const opsiAElem = document.getElementById('soal-form-opsi-a');
+  const opsiBElem = document.getElementById('soal-form-opsi-b');
+  const opsiCElem = document.getElementById('soal-form-opsi-c');
+  const opsiDElem = document.getElementById('soal-form-opsi-d');
+  const kunciElem = document.getElementById('soal-form-kunci');
 
-    if (idSoal) {
-        const s = (state.cachedData.soal_evaluasi || []).find(x => String(x.id_soal) === String(idSoal));
-        if (s) {
-            const evalObj = (state.cachedData.evaluasi || []).find(ev => ev.id_evaluasi === s.id_evaluasi);
+  if (idSoal) {
+    const s = (state.cachedData.soal_evaluasi || []).find((x) => String(x.id_soal) === String(idSoal));
+    if (s) {
+      const evalObj = (state.cachedData.evaluasi || []).find((ev) => ev.id_evaluasi === s.id_evaluasi);
 
-            if (titleElem) titleElem.textContent = 'Edit Soal Evaluasi';
-            if (idElem) idElem.value = s.id_soal;
-            if (ptmElem) ptmElem.value = evalObj ? evalObj.id_pertemuan : '';
-            if (pertElem) pertElem.value = s.pertanyaan || '';
-            if (opsiAElem) opsiAElem.value = s.opsi_a || '';
-            if (opsiBElem) opsiBElem.value = s.opsi_b || '';
-            if (opsiCElem) opsiCElem.value = s.opsi_c || '';
-            if (opsiDElem) opsiDElem.value = s.opsi_d || '';
-            if (kunciElem) kunciElem.value = s.kunci_jawaban || 'A';
-        }
-    } else {
-        if (titleElem) titleElem.textContent = 'Tambah Soal Evaluasi Baru';
-        if (idElem) idElem.value = '';
-        if (pertElem) pertElem.value = '';
-        if (opsiAElem) opsiAElem.value = '';
-        if (opsiBElem) opsiBElem.value = '';
-        if (opsiCElem) opsiCElem.value = '';
-        if (opsiDElem) opsiDElem.value = '';
-        if (kunciElem) kunciElem.value = 'A';
+      if (titleElem) titleElem.textContent = 'Edit Soal Evaluasi';
+      if (idElem) idElem.value = s.id_soal;
+      if (ptmElem) ptmElem.value = evalObj ? evalObj.id_pertemuan : '';
+      if (pertElem) pertElem.value = s.pertanyaan || '';
+      if (opsiAElem) opsiAElem.value = s.opsi_a || '';
+      if (opsiBElem) opsiBElem.value = s.opsi_b || '';
+      if (opsiCElem) opsiCElem.value = s.opsi_c || '';
+      if (opsiDElem) opsiDElem.value = s.opsi_d || '';
+      if (kunciElem) kunciElem.value = s.kunci_jawaban || 'A';
     }
+  } else {
+    if (titleElem) titleElem.textContent = 'Tambah Soal Evaluasi Baru';
+    if (idElem) idElem.value = '';
+    if (pertElem) pertElem.value = '';
+    if (opsiAElem) opsiAElem.value = '';
+    if (opsiBElem) opsiBElem.value = '';
+    if (opsiCElem) opsiCElem.value = '';
+    if (opsiDElem) opsiDElem.value = '';
+    if (kunciElem) kunciElem.value = 'A';
+  }
 
-    document.getElementById('soal-modal').classList.remove('hidden');
-    document.getElementById('soal-modal').classList.add('flex');
+  document.getElementById('soal-modal').classList.remove('hidden');
+  document.getElementById('soal-modal').classList.add('flex');
 }
-function closeSoalModal() { document.getElementById('soal-modal').classList.add('hidden'); document.getElementById('soal-modal').classList.remove('flex'); }
+
+function closeSoalModal() {
+  document.getElementById('soal-modal').classList.add('hidden');
+  document.getElementById('soal-modal').classList.remove('flex');
+}
 
 async function handleSoalSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-soal');
-    setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Soal');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-soal');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Soal');
 
-    const ptmId = document.getElementById('soal-form-pertemuan').value;
-    let evalObj = (state.cachedData.evaluasi || []).find(ev => ev.id_pertemuan === ptmId);
-    let evalId = evalObj ? evalObj.id_evaluasi : '';
+  const ptmId = document.getElementById('soal-form-pertemuan').value;
+  let evalObj = (state.cachedData.evaluasi || []).find((ev) => ev.id_pertemuan === ptmId);
+  let evalId = evalObj ? evalObj.id_evaluasi : '';
 
-    if (!evalId) {
-        const newEvalRes = await apiPost({ action: 'save_evaluasi', id_pertemuan: ptmId, judul_evaluasi: 'Evaluasi Pembelajaran' });
-        evalId = newEvalRes.id_evaluasi || ('EVL_' + new Date().getTime());
-    }
-
-    const res = await apiPost({
-        action: 'save_soal_evaluasi',
-        id_soal: document.getElementById('soal-form-id').value,
-        id_evaluasi: evalId,
-        pertanyaan: document.getElementById('soal-form-pertanyaan').value,
-        opsi_a: document.getElementById('soal-form-opsi-a').value,
-        opsi_b: document.getElementById('soal-form-opsi-b').value,
-        opsi_c: document.getElementById('soal-form-opsi-c').value,
-        opsi_d: document.getElementById('soal-form-opsi-d').value,
-        kunci_jawaban: document.getElementById('soal-form-kunci').value
+  if (!evalId) {
+    const newEvalRes = await apiPost({
+      action: 'save_evaluasi',
+      id_pertemuan: ptmId,
+      judul_evaluasi: 'Evaluasi Pembelajaran'
     });
+    evalId = newEvalRes.id_evaluasi || 'EVL_' + new Date().getTime();
+  }
 
-    setButtonLoading(btn, false, '', '💾 Simpan Soal');
-    if (res.success) {
-        closeSoalModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-soal');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Soal', text: res.message });
-    }
+  const res = await apiPost({
+    action: 'save_soal_evaluasi',
+    id_soal: document.getElementById('soal-form-id').value,
+    id_evaluasi: evalId,
+    pertanyaan: document.getElementById('soal-form-pertanyaan').value,
+    opsi_a: document.getElementById('soal-form-opsi-a').value,
+    opsi_b: document.getElementById('soal-form-opsi-b').value,
+    opsi_c: document.getElementById('soal-form-opsi-c').value,
+    opsi_d: document.getElementById('soal-form-opsi-d').value,
+    kunci_jawaban: document.getElementById('soal-form-kunci').value
+  });
+
+  setButtonLoading(btn, false, '', '💾 Simpan Soal');
+  if (res.success) {
+    closeSoalModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-soal');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Soal', text: res.message });
+  }
 }
 
 function openKoreksiModal(idSub) {
-    const sub = (state.cachedData.submissions || []).find(s => String(s.id_sub) === String(idSub));
-    if (!sub) return;
+  const sub = (state.cachedData.submissions || []).find((s) => String(s.id_sub) === String(idSub));
+  if (!sub) return;
 
-    document.getElementById('koreksi-sub-id').value = sub.id_sub;
-    document.getElementById('koreksi-siswa-info').textContent = `Siswa: ${sub.nama_siswa} (${sub.kelas}) | Modul: ${sub.tipe_sub.toUpperCase()}`;
-    document.getElementById('koreksi-nilai-esai').value = (sub.nilai_esai !== "" && sub.nilai_esai !== null && sub.nilai_esai !== undefined) ? sub.nilai_esai : (sub.skor_otomatis || 80);
-    document.getElementById('koreksi-catatan').value = sub.catatan_guru || '';
+  document.getElementById('koreksi-sub-id').value = sub.id_sub;
+  document.getElementById(
+    'koreksi-siswa-info'
+  ).textContent = `Siswa: ${sub.nama_siswa} (${sub.kelas}) | Modul: ${sub.tipe_sub.toUpperCase()}`;
+  document.getElementById('koreksi-nilai-esai').value =
+    sub.nilai_esai !== '' && sub.nilai_esai !== null && sub.nilai_esai !== undefined
+      ? sub.nilai_esai
+      : sub.skor_otomatis || 80;
+  document.getElementById('koreksi-catatan').value = sub.catatan_guru || '';
 
-    let parsedJawaban = sub.jawaban_json;
-    try {
-        if (typeof sub.jawaban_json === 'string') {
-            parsedJawaban = JSON.parse(sub.jawaban_json);
-        }
-    } catch (e) {
-        parsedJawaban = sub.jawaban_json;
+  let parsedJawaban = sub.jawaban_json;
+  try {
+    if (typeof sub.jawaban_json === 'string') {
+      parsedJawaban = JSON.parse(sub.jawaban_json);
     }
+  } catch (e) {
+    parsedJawaban = sub.jawaban_json;
+  }
 
-    let jawabanHtml = '';
+  let jawabanHtml = '';
 
-    if (sub.tipe_sub === 'lkpd') {
-        if (Array.isArray(parsedJawaban)) {
-            jawabanHtml = parsedJawaban.map((ans, idx) => `
+  if (sub.tipe_sub === 'lkpd') {
+    if (Array.isArray(parsedJawaban)) {
+      jawabanHtml = parsedJawaban
+        .map(
+          (ans, idx) => `
                 <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
                     <span class="font-bold text-slate-700 text-[11px]">Pertanyaan #${idx + 1}</span>
-                    <p class="text-slate-800 font-medium whitespace-pre-wrap bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs">${ans ? ans.trim() : '<i class="text-slate-400">(Tidak diisi)</i>'}</p>
+                    <p class="text-slate-800 font-medium whitespace-pre-wrap bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs">${
+                      ans ? ans.trim() : '<i class="text-slate-400">(Tidak diisi)</i>'
+                    }</p>
                 </div>
-            `).join('');
-        } else {
-            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium whitespace-pre-wrap text-xs">${String(parsedJawaban)}</p>`;
-        }
-    } else if (sub.tipe_sub === 'evaluasi') {
-        if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
-            const soalList = state.cachedData.soal_evaluasi || [];
-            jawabanHtml = `<div class="space-y-2">` + Object.keys(parsedJawaban).map((soalId, idx) => {
-                const soalObj = soalList.find(s => String(s.id_soal) === String(soalId));
-                const userAns = parsedJawaban[soalId];
-                const kunci = soalObj ? String(soalObj.kunci_jawaban).toUpperCase() : '';
-                const isCorrect = userAns === kunci;
-                const qText = soalObj ? soalObj.pertanyaan : `Soal (${soalId})`;
+            `
+        )
+        .join('');
+    } else {
+      jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium whitespace-pre-wrap text-xs">${String(
+        parsedJawaban
+      )}</p>`;
+    }
+  } else if (sub.tipe_sub === 'evaluasi') {
+    if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
+      const soalList = state.cachedData.soal_evaluasi || [];
+      jawabanHtml =
+        `<div class="space-y-2">` +
+        Object.keys(parsedJawaban)
+          .map((soalId, idx) => {
+            const soalObj = soalList.find((s) => String(s.id_soal) === String(soalId));
+            const userAns = parsedJawaban[soalId];
+            const kunci = soalObj ? String(soalObj.kunci_jawaban).toUpperCase() : '';
+            const isCorrect = userAns === kunci;
+            const qText = soalObj ? soalObj.pertanyaan : `Soal (${soalId})`;
 
-                return `
+            return `
                     <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5">
                         <div class="flex items-start justify-between gap-2 border-b pb-1">
                             <span class="font-bold text-slate-800 text-xs">#${idx + 1}. ${qText}</span>
-                            ${kunci ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                            ${
+                              kunci
+                                ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                                    isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                  }">
                                 ${isCorrect ? '✅ Benar' : '❌ Salah'} (Kunci: ${kunci})
-                            </span>` : ''}
+                            </span>`
+                                : ''
+                            }
                         </div>
                         <p class="text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">
-                            Pilihan Jawaban Siswa: <span class="uppercase border px-2 py-0.5 rounded bg-slate-50">${userAns || '-'}</span>
+                            Pilihan Jawaban Siswa: <span class="uppercase border px-2 py-0.5 rounded bg-slate-50">${
+                              userAns || '-'
+                            }</span>
                         </p>
                     </div>
                 `;
-            }).join('') + `</div>`;
-        } else {
-            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(parsedJawaban)}</p>`;
-        }
-    } else if (sub.tipe_sub === 'game') {
-        if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
-            jawabanHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">` + Object.keys(parsedJawaban).map((key, idx) => `
+          })
+          .join('') +
+        `</div>`;
+    } else {
+      jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(
+        parsedJawaban
+      )}</p>`;
+    }
+  } else if (sub.tipe_sub === 'game') {
+    if (typeof parsedJawaban === 'object' && parsedJawaban !== null) {
+      jawabanHtml =
+        `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">` +
+        Object.keys(parsedJawaban)
+          .map(
+            (key, idx) => `
                 <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center">
                     <span class="font-bold text-slate-500">Item #${idx + 1}</span>
-                    <span class="font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">${parsedJawaban[key]}</span>
+                    <span class="font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">${
+                      parsedJawaban[key]
+                    }</span>
                 </div>
-            `).join('') + `</div>`;
-        } else {
-            jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(parsedJawaban)}</p>`;
-        }
+            `
+          )
+          .join('') +
+        `</div>`;
     } else {
-        jawabanHtml = `<pre class="bg-white p-2.5 rounded-xl border text-[11px] font-mono text-slate-700 whitespace-pre-wrap">${sub.jawaban_json}</pre>`;
+      jawabanHtml = `<p class="p-3 bg-white rounded-xl border text-slate-800 font-medium text-xs">${String(
+        parsedJawaban
+      )}</p>`;
     }
+  } else {
+    jawabanHtml = `<pre class="bg-white p-2.5 rounded-xl border text-[11px] font-mono text-slate-700 whitespace-pre-wrap">${sub.jawaban_json}</pre>`;
+  }
 
-    const body = document.getElementById('koreksi-detail-body');
-    body.innerHTML = `
+  const body = document.getElementById('koreksi-detail-body');
+  body.innerHTML = `
     <div class="p-3 bg-slate-50 border rounded-2xl space-y-2">
       <span class="font-black text-brand-navy block">📌 Isi Lembar Jawaban Siswa</span>
       <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
         ${jawabanHtml}
       </div>
     </div>
-    ${sub.canvas_image_base64 ? `<div class="p-3 bg-slate-50 border rounded-2xl"><span class="font-black text-brand-navy block mb-2">🎨 Sketsa Proyek STEAM</span><img src="${sub.canvas_image_base64}" class="max-h-56 rounded-xl border mx-auto bg-white" /></div>` : ''}
+    ${
+      sub.canvas_image_base64
+        ? `<div class="p-3 bg-slate-50 border rounded-2xl"><span class="font-black text-brand-navy block mb-2">🎨 Sketsa Proyek STEAM</span><img src="${sub.canvas_image_base64}" class="max-h-56 rounded-xl border mx-auto bg-white" /></div>`
+        : ''
+    }
   `;
 
-    document.getElementById('koreksi-modal').classList.remove('hidden');
-    document.getElementById('koreksi-modal').classList.add('flex');
+  document.getElementById('koreksi-modal').classList.remove('hidden');
+  document.getElementById('koreksi-modal').classList.add('flex');
 }
 
-function closeKoreksiModal() { document.getElementById('koreksi-modal').classList.add('hidden'); document.getElementById('koreksi-modal').classList.remove('flex'); }
+function closeKoreksiModal() {
+  document.getElementById('koreksi-modal').classList.add('hidden');
+  document.getElementById('koreksi-modal').classList.remove('flex');
+}
 
 async function handleGradeSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-grade');
-    setButtonLoading(btn, true, '💾 Menyimpan Nilai...', '💾 Simpan Penilaian');
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-grade');
+  setButtonLoading(btn, true, '💾 Menyimpan Nilai...', '💾 Simpan Penilaian');
 
-    const res = await apiPost({
-        action: 'grade_submisi',
-        id_sub: document.getElementById('koreksi-sub-id').value,
-        nilai_esai: document.getElementById('koreksi-nilai-esai').value,
-        catatan_guru: document.getElementById('koreksi-catatan').value
-    });
+  const res = await apiPost({
+    action: 'grade_submisi',
+    id_sub: document.getElementById('koreksi-sub-id').value,
+    nilai_esai: document.getElementById('koreksi-nilai-esai').value,
+    catatan_guru: document.getElementById('koreksi-catatan').value
+  });
 
-    setButtonLoading(btn, false, '', '💾 Simpan Penilaian');
-    if (res.success) {
-        closeKoreksiModal();
-        showToast('success', res.message);
-        await fetchAllInitialData(true);
-        switchView('guru-koreksi');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Penilaian', text: res.message });
-    }
+  setButtonLoading(btn, false, '', '💾 Simpan Penilaian');
+  if (res.success) {
+    closeKoreksiModal();
+    showToast('success', res.message);
+    await fetchAllInitialData(true);
+    switchView('guru-koreksi');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Penilaian', text: res.message });
+  }
 }
 
 // DELETE HANDLERS
 function deletePertemuan(id) {
-    showConfirm('Hapus Pertemuan?', 'Data yang dihapus tidak dapat dikembalikan!', async () => {
-        showLoading('Menghapus pertemuan...');
-        await apiPost({ action: 'delete_pertemuan', id_pertemuan: id });
-        closeLoading();
-        showToast('success', 'Pertemuan berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('guru-pertemuan');
-    });
+  showConfirm('Hapus Pertemuan?', 'Data yang dihapus tidak dapat dikembalikan!', async () => {
+    showLoading('Menghapus pertemuan...');
+    await apiPost({ action: 'delete_pertemuan', id_pertemuan: id });
+    closeLoading();
+    showToast('success', 'Pertemuan berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('guru-pertemuan');
+  });
 }
 
 function deleteMateri(id) {
-    showConfirm('Hapus Bahan Ajar?', 'Materi pembelajaran ini akan dihapus dari modul!', async () => {
-        showLoading('Menghapus materi...');
-        await apiPost({ action: 'delete_materi', id_materi: id });
-        closeLoading();
-        showToast('success', 'Bahan ajar berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('guru-materi');
-    });
+  showConfirm('Hapus Bahan Ajar?', 'Materi pembelajaran ini akan dihapus dari modul!', async () => {
+    showLoading('Menghapus materi...');
+    await apiPost({ action: 'delete_materi', id_materi: id });
+    closeLoading();
+    showToast('success', 'Bahan ajar berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('guru-materi');
+  });
 }
 
 function deleteLkpd(id) {
-    showConfirm('Hapus LKPD?', 'LKPD ini akan dihapus!', async () => {
-        showLoading('Menghapus LKPD...');
-        await apiPost({ action: 'delete_lkpd', id_lkpd: id });
-        closeLoading();
-        showToast('success', 'LKPD berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('guru-lkpd');
-    });
+  showConfirm('Hapus LKPD?', 'LKPD ini akan dihapus!', async () => {
+    showLoading('Menghapus LKPD...');
+    await apiPost({ action: 'delete_lkpd', id_lkpd: id });
+    closeLoading();
+    showToast('success', 'LKPD berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('guru-lkpd');
+  });
 }
 
 function deleteGame(id) {
-    showConfirm('Hapus Game Interaktif?', 'Game ini akan dihapus dari modul!', async () => {
-        showLoading('Menghapus game...');
-        await apiPost({ action: 'delete_game', id_game: id });
-        closeLoading();
-        showToast('success', 'Game berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('guru-game');
-    });
+  showConfirm('Hapus Game Interaktif?', 'Game ini akan dihapus dari modul!', async () => {
+    showLoading('Menghapus game...');
+    await apiPost({ action: 'delete_game', id_game: id });
+    closeLoading();
+    showToast('success', 'Game berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('guru-game');
+  });
 }
 
 function deleteSoal(id) {
-    showConfirm('Hapus Soal Evaluasi?', 'Soal ini akan dihapus dari bank soal!', async () => {
-        showLoading('Menghapus soal...');
-        await apiPost({ action: 'delete_soal_evaluasi', id_soal: id });
-        closeLoading();
-        showToast('success', 'Soal berhasil dihapus');
-        await fetchAllInitialData(true);
-        switchView('guru-soal');
-    });
+  showConfirm('Hapus Soal Evaluasi?', 'Soal ini akan dihapus dari bank soal!', async () => {
+    showLoading('Menghapus soal...');
+    await apiPost({ action: 'delete_soal_evaluasi', id_soal: id });
+    closeLoading();
+    showToast('success', 'Soal berhasil dihapus');
+    await fetchAllInitialData(true);
+    switchView('guru-soal');
+  });
 }
 
 /* ==========================================================
    15. AUTHENTICATION HANDLERS
    ========================================================== */
 async function handleLoginSubmit(e) {
-    e.preventDefault();
-    const unElem = document.getElementById('login-username');
-    const pwElem = document.getElementById('login-password');
-    const un = unElem ? unElem.value.trim() : '';
-    const pw = pwElem ? pwElem.value.trim() : '';
-    const btn = document.getElementById('btn-submit-login');
+  e.preventDefault();
+  const unElem = document.getElementById('login-username');
+  const pwElem = document.getElementById('login-password');
+  const un = unElem ? unElem.value.trim() : '';
+  const pw = pwElem ? pwElem.value.trim() : '';
+  const btn = document.getElementById('btn-submit-login');
 
-    setButtonLoading(btn, true, 'Memproses Login...', 'Masuk');
-    const res = await apiPost({ action: 'login', username: un, password: pw });
-    setButtonLoading(btn, false, '', 'Masuk');
+  setButtonLoading(btn, true, 'Memproses Login...', 'Masuk');
+  const res = await apiPost({ action: 'login', username: un, password: pw });
+  setButtonLoading(btn, false, '', 'Masuk');
 
-    if (res.success) {
-        state.currentUser = res.user;
-        closeLoginModal();
-        if (unElem) unElem.value = '';
-        if (pwElem) pwElem.value = '';
-        updateUIForAuthenticatedUser();
-        showToast('success', `Selamat Datang, ${res.user.name}!`);
-        if (res.user.role === 'guru') switchView('guru-pertemuan');
-        else if (res.user.role === 'admin') switchView('admin-users');
-        else switchView('home');
-    } else {
-        Swal.fire({ icon: 'error', title: 'Gagal Login', text: res.message });
-    }
+  if (res.success) {
+    state.currentUser = res.user;
+    closeLoginModal();
+    if (unElem) unElem.value = '';
+    if (pwElem) pwElem.value = '';
+    updateUIForAuthenticatedUser();
+    showToast('success', `Selamat Datang, ${res.user.name}!`);
+    if (res.user.role === 'guru') switchView('guru-pertemuan');
+    else if (res.user.role === 'admin') switchView('admin-users');
+    else switchView('home');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Login', text: res.message });
+  }
 }
 
 function openLoginModal() {
-    document.getElementById('login-modal').classList.remove('hidden');
-    document.getElementById('login-modal').classList.add('flex');
+  document.getElementById('login-modal').classList.remove('hidden');
+  document.getElementById('login-modal').classList.add('flex');
 }
 
 function closeLoginModal() {
-    document.getElementById('login-modal').classList.add('hidden');
-    document.getElementById('login-modal').classList.remove('flex');
+  document.getElementById('login-modal').classList.add('hidden');
+  document.getElementById('login-modal').classList.remove('flex');
 }
 
 function logout() {
-    showConfirm('Keluar Sistem?', 'Kamu akan keluar dari akun saat ini.', () => {
-        state.currentUser = null;
-        updateUIForAuthenticatedUser();
-        switchView('home');
-        showToast('success', 'Berhasil Keluar Akun');
-    }, 'Logout');
+  showConfirm(
+    'Keluar Sistem?',
+    'Kamu akan keluar dari akun saat ini.',
+    () => {
+      state.currentUser = null;
+      updateUIForAuthenticatedUser();
+      switchView('home');
+      showToast('success', 'Berhasil Keluar Akun');
+    },
+    'Logout'
+  );
 }
 
 function updateUIForAuthenticatedUser() {
-    const nameElem = document.getElementById('user-display-name');
-    const roleElem = document.getElementById('user-display-role');
-    const badgeElem = document.getElementById('role-badge');
-    const authBtn = document.getElementById('auth-action-btn');
+  const nameElem = document.getElementById('user-display-name');
+  const roleElem = document.getElementById('user-display-role');
+  const badgeElem = document.getElementById('role-badge');
+  const authBtn = document.getElementById('auth-action-btn');
 
-    if (state.currentUser) {
-        nameElem.textContent = state.currentUser.name;
-        roleElem.textContent = state.currentUser.role.toUpperCase();
-        badgeElem.textContent = `${state.currentUser.role.toUpperCase()}: ${state.currentUser.name}`;
-        badgeElem.className = 'px-3 py-1 bg-blue-100 border border-blue-200 text-brand-blue text-xs font-black rounded-xl';
+  if (state.currentUser) {
+    nameElem.textContent = state.currentUser.name;
+    roleElem.textContent = state.currentUser.role.toUpperCase();
+    badgeElem.textContent = `${state.currentUser.role.toUpperCase()}: ${state.currentUser.name}`;
+    badgeElem.className = 'px-3 py-1 bg-blue-100 border border-blue-200 text-brand-blue text-xs font-black rounded-xl';
 
-        authBtn.className = 'w-full py-2.5 bg-red-900/80 text-red-200 font-black rounded-2xl text-xs flex items-center justify-center gap-2 border border-red-800 hover:bg-red-900 transition';
-        authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
-        authBtn.onclick = logout;
-    } else {
-        nameElem.textContent = 'Mode Tamu / Guest';
-        roleElem.textContent = 'GUEST';
-        badgeElem.textContent = 'Mode Tamu';
-        badgeElem.className = 'px-3 py-1 bg-slate-100 border text-slate-700 text-xs font-black rounded-xl';
+    authBtn.className =
+      'w-full py-2.5 bg-red-900/80 text-red-200 font-black rounded-2xl text-xs flex items-center justify-center gap-2 border border-red-800 hover:bg-red-900 transition';
+    authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
+    authBtn.onclick = logout;
+  } else {
+    nameElem.textContent = 'Mode Tamu / Guest';
+    roleElem.textContent = 'GUEST';
+    badgeElem.textContent = 'Mode Tamu';
+    badgeElem.className = 'px-3 py-1 bg-slate-100 border text-slate-700 text-xs font-black rounded-xl';
 
-        authBtn.className = 'w-full py-2.5 bg-brand-blue text-white font-black rounded-2xl text-xs shadow flex items-center justify-center gap-2 hover:bg-blue-600 transition';
-        authBtn.innerHTML = '<span>🔑 Login Pengguna</span>';
-        authBtn.onclick = openLoginModal;
-    }
-    renderSidebarNav();
+    authBtn.className =
+      'w-full py-2.5 bg-brand-blue text-white font-black rounded-2xl text-xs shadow flex items-center justify-center gap-2 hover:bg-blue-600 transition';
+    authBtn.innerHTML = '<span>🔑 Login Pengguna</span>';
+    authBtn.onclick = openLoginModal;
+  }
+  renderSidebarNav();
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    updateUIForAuthenticatedUser();
-    await switchView('home');
+  updateUIForAuthenticatedUser();
+  await switchView('home');
 });

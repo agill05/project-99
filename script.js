@@ -2,7 +2,7 @@
    E-LKPD INTERAKTIF STEAM (V3.0 FULL COMPLETE ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyiDzR-DoGGtnXnIUBv2Cxdfc5Wss55dudxr4Tki1-YCtX50B15cW24E6Q4e6vvIZu6fA/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzumHwER92oj4pBHyhZNsY0YvmkdgaC8A7vzFv8nA37-qSnRWgAnWMbv0TmUqKQN9U6nA/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 
 const state = {
@@ -2442,16 +2442,16 @@ async function uploadPdfToDrive(targetModule = 'materi') {
                 }
 
                 Swal.fire({
-                    icon: 'success',
-                    title: 'PDF & Ekstraksi Berhasil!',
+                    icon: textLength > 0 ? 'success' : 'warning',
+                    title: textLength > 0 ? 'PDF & Ekstraksi Berhasil!' : 'PDF Terunggah (Teks Kosong)',
                     html: `
                         <div class="text-xs text-left space-y-2 mt-2">
-                            <p class="font-bold text-slate-700">Berkas PDF berhasil diunggah ke Google Drive.</p>
-                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-emerald-900">
+                            <p class="font-bold text-slate-700">Status Pengunggahan Berkas PDF:</p>
+                            <div class="p-3 ${textLength > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl space-y-1">
                                 <p>📝 <b>Panjang Teks Ditampilkan:</b> ${textLength} Karakter</p>
                                 <p>❓ <b>Soal Terdeteksi:</b> ${questionCount} Pertanyaan</p>
                             </div>
-                            <p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini. Silakan periksa atau sesuaikan sebelum menekan tombol Simpan LKPD.</p>
+                            ${textLength === 0 ? '<p class="text-red-600 font-bold">Pastikan kamu sudah memperbarui izin appsscript.json dan Melakukan Deploy Ulang Web App!</p>' : '<p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini.</p>'}
                         </div>
                     `
                 });
@@ -2481,14 +2481,19 @@ function parseQuestionsFromText(text) {
     const questions = [];
     let currentQ = "";
     
-    // Pattern fleksibel: 1., 1), (1), Soal 1, Pertanyaan 1, A., a), dll.
-    const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Za-z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+|Task\s*\d+|Question\s*\d+)\s*(.+)/i;
+    // Pattern untuk mendeteksi nomor soal, pertanyaan bertingkat, dan bagian LKPD
+    const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+)\s*(.+)/i;
 
     lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
         
-        if (qRegex.test(trimmed)) {
+        // Mengabaikan baris judul dokumen/header berulang
+        if (trimmed.includes('LEMBAR KERJA PESERTA DIDIK') || trimmed.includes('PERTEMUAN') || trimmed.includes('UNSUR STEAM')) {
+            return;
+        }
+
+        if (qRegex.test(trimmed) || trimmed.endsWith('?')) {
             if (currentQ) questions.push(currentQ.trim());
             currentQ = trimmed;
         } else if (currentQ) {
@@ -2497,17 +2502,6 @@ function parseQuestionsFromText(text) {
     });
 
     if (currentQ) questions.push(currentQ.trim());
-
-    // Fallback: Jika tidak terdeteksi angka penomoran baku, cari kalimat yang berakhiran tanda tanya (?)
-    if (questions.length === 0) {
-        const sentences = cleanText.split(/(?<=\?)\s+/);
-        sentences.forEach((s, idx) => {
-            const st = s.trim();
-            if (st.length > 5 && st.includes('?')) {
-                questions.push(`${idx + 1}. ${st}`);
-            }
-        });
-    }
 
     return questions;
 }

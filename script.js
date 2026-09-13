@@ -385,7 +385,11 @@ async function switchView(viewId, paramId = null) {
         case 'game-ptm':
             titleElem.textContent = 'GAME INTERAKTIF PEMBELAJARAN';
             viewport.innerHTML = renderGameView(paramId);
-            setTimeout(() => initPointerDragAndDropEngine(), 100);
+            setTimeout(() => {
+                initPointerDragAndDropEngine();
+                initMatchingLineEngine();
+                redrawAllMatchingLines();
+            }, 100);
             break;
 
         case 'evaluasi-ptm':
@@ -819,18 +823,57 @@ function renderSingleGameCard(g, gameIdx, ptmId) {
 
 function renderGameTypeBody(gameId, tipe, items, ptmId) {
     if (tipe === 'matching') {
+        // Mengacak urutan opsi jawaban di kolom kanan (sekali buat)
+        let rightAnswers = state.gameStates[gameId]?.shuffledRight;
+        if (!rightAnswers) {
+            rightAnswers = items.map((item) => ({ text: item.kunci }))
+                                 .sort(() => Math.random() - 0.5);
+            if (!state.gameStates[gameId]) state.gameStates[gameId] = {};
+            state.gameStates[gameId].shuffledRight = rightAnswers;
+        }
+
         return `
-      <div class="space-y-3">
-        ${items.map((item, idx) => `
-          <div class="bg-slate-50 p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p class="font-bold text-slate-800">${idx + 1}. ${item.soal}</p>
-            <div class="flex items-center gap-2 w-full sm:w-64">
-              <input type="text" id="gm-${gameId}-input-${idx}" onchange="state.gameAnswers['${gameId}'][${idx}] = this.value" placeholder="Pasangan..." class="w-full p-2.5 rounded-xl border font-bold text-brand-blue bg-white text-xs" />
-            </div>
+      <div id="matching-container-${gameId}" class="relative select-none my-4 p-2">
+        <!-- SVG Layer untuk Garis Interaktif -->
+        <svg id="matching-svg-${gameId}" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
+        
+        <div class="grid grid-cols-2 gap-8 sm:gap-16">
+          <!-- Kolom Kiri: Pertanyaan -->
+          <div class="space-y-4">
+            <span class="font-black text-brand-navy block text-[11px] uppercase tracking-wider mb-2">Soal / Pertanyaan</span>
+            ${items.map((item, leftIdx) => `
+              <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[56px] shadow-xs">
+                <span class="font-bold text-slate-800 text-xs">${leftIdx + 1}. ${item.soal}</span>
+                <div class="matching-dot left-dot absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-brand-blue text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition z-20"
+                     data-game-id="${gameId}" data-left-idx="${leftIdx}">
+                  <span class="w-2 h-2 rounded-full bg-white pointer-events-none"></span>
+                </div>
+              </div>
+            `).join('')}
           </div>
-        `).join('')}
-        <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'matching'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
-          🎮 Periksa & Simpan Skor Game
+
+          <!-- Kolom Kanan: Jawaban (Acak) -->
+          <div class="space-y-4">
+            <span class="font-black text-purple-700 block text-[11px] uppercase tracking-wider mb-2">Pilihan Pasangan</span>
+            ${rightAnswers.map((rightItem) => `
+              <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[56px] shadow-xs">
+                <div class="matching-dot right-dot absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition z-20"
+                    data-game-id="${gameId}" data-right-text="${rightItem.text}">
+                  <span class="w-2 h-2 rounded-full bg-white pointer-events-none"></span>
+                </div>
+                <span class="font-bold text-purple-950 text-xs pl-3">${rightItem.text}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <button onclick="resetMatchingLines('${gameId}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs flex items-center gap-1">
+          <span>🔄</span> Reset Garis
+        </button>
+        <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'matching'))" class="px-5 py-2.5 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition text-xs">
+          🎮 Periksa & Simpan Hasil Garis
         </button>
       </div>
     `;
@@ -1088,6 +1131,136 @@ function initPointerDragAndDropEngine() {
         activeItem.removeEventListener('pointercancel', handlePointerUp);
         activeItem = null;
     }
+}
+
+/* ==========================================================
+   SVG LINE CONNECTOR ENGINE (MATCHING GAME)
+   ========================================================== */
+function initMatchingLineEngine() {
+    const leftDots = document.querySelectorAll('.matching-dot.left-dot');
+    leftDots.forEach(dot => {
+        dot.removeEventListener('pointerdown', handleDotPointerDown);
+        dot.addEventListener('pointerdown', handleDotPointerDown);
+    });
+
+    window.removeEventListener('resize', redrawAllMatchingLines);
+    window.addEventListener('resize', redrawAllMatchingLines);
+}
+
+function handleDotPointerDown(e) {
+    e.preventDefault();
+    const startDot = e.currentTarget;
+    const gameId = startDot.getAttribute('data-game-id');
+    const leftIdx = startDot.getAttribute('data-left-idx');
+
+    const container = document.getElementById(`matching-container-${gameId}`);
+    const svg = document.getElementById(`matching-svg-${gameId}`);
+    if (!container || !svg) return;
+
+    const cRect = container.getBoundingClientRect();
+    const dRect = startDot.getBoundingClientRect();
+
+    const x1 = dRect.left + dRect.width / 2 - cRect.left;
+    const y1 = dRect.top + dRect.height / 2 - cRect.top;
+
+    // Hapus garis terdahulu untuk soal ini jika ada
+    const existingLine = svg.querySelector(`line[data-left-idx="${leftIdx}"]`);
+    if (existingLine) existingLine.remove();
+
+    // Buat element garis SVG baru
+    const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    tempLine.setAttribute('x1', x1);
+    tempLine.setAttribute('y1', y1);
+    tempLine.setAttribute('x2', x1);
+    tempLine.setAttribute('y2', y1);
+    tempLine.setAttribute('stroke', '#6B38FB');
+    tempLine.setAttribute('stroke-width', '4');
+    tempLine.setAttribute('stroke-linecap', 'round');
+    tempLine.setAttribute('data-left-idx', leftIdx);
+    svg.appendChild(tempLine);
+
+    startDot.setPointerCapture(e.pointerId);
+
+    function onPointerMove(ev) {
+        const curX = ev.clientX - cRect.left;
+        const curY = ev.clientY - cRect.top;
+        tempLine.setAttribute('x2', curX);
+        tempLine.setAttribute('y2', curY);
+    }
+
+    function onPointerUp(ev) {
+        startDot.removeEventListener('pointermove', onPointerMove);
+        startDot.removeEventListener('pointerup', onPointerUp);
+
+        // Deteksi elemen target di bawah penunjuk saat dilepas
+        const targetElem = document.elementFromPoint(ev.clientX, ev.clientY);
+        const targetDot = targetElem ? targetElem.closest('.matching-dot.right-dot') : null;
+
+        if (targetDot && targetDot.getAttribute('data-game-id') === gameId) {
+            const rRect = targetDot.getBoundingClientRect();
+            const x2 = rRect.left + rRect.width / 2 - cRect.left;
+            const y2 = rRect.top + rRect.height / 2 - cRect.top;
+
+            tempLine.setAttribute('x2', x2);
+            tempLine.setAttribute('y2', y2);
+            tempLine.setAttribute('stroke', '#0D6EFD'); // Garis berubah jadi biru saat terhubung
+
+            const rightText = targetDot.getAttribute('data-right-text');
+
+            if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+            state.gameAnswers[gameId][leftIdx] = rightText;
+        } else {
+            // Garis dibatalkan jika dilepas di luar titik target
+            tempLine.remove();
+            if (state.gameAnswers[gameId]) {
+                delete state.gameAnswers[gameId][leftIdx];
+            }
+        }
+    }
+
+    startDot.addEventListener('pointermove', onPointerMove);
+    startDot.addEventListener('pointerup', onPointerUp);
+}
+
+function resetMatchingLines(gameId) {
+    const svg = document.getElementById(`matching-svg-${gameId}`);
+    if (svg) svg.innerHTML = '';
+    if (state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
+    showToast('info', 'Garis pasangan di-reset!');
+}
+
+function redrawAllMatchingLines() {
+    Object.keys(state.gameAnswers).forEach(gameId => {
+        const answers = state.gameAnswers[gameId];
+        const container = document.getElementById(`matching-container-${gameId}`);
+        const svg = document.getElementById(`matching-svg-${gameId}`);
+        if (!container || !svg || !answers) return;
+
+        svg.innerHTML = '';
+        const cRect = container.getBoundingClientRect();
+
+        Object.keys(answers).forEach(leftIdx => {
+            const rightText = answers[leftIdx];
+            const leftDot = container.querySelector(`.left-dot[data-left-idx="${leftIdx}"]`);
+            const rightDot = container.querySelector(`.right-dot[data-right-text="${CSS.escape(rightText)}"]`);
+
+            if (leftDot && rightDot) {
+                const lRect = leftDot.getBoundingClientRect();
+                const rRect = rightDot.getBoundingClientRect();
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', lRect.left + lRect.width / 2 - cRect.left);
+                line.setAttribute('y1', lRect.top + lRect.height / 2 - cRect.top);
+                line.setAttribute('x2', rRect.left + rRect.width / 2 - cRect.left);
+                line.setAttribute('y2', rRect.top + rRect.height / 2 - cRect.top);
+                line.setAttribute('stroke', '#0D6EFD');
+                line.setAttribute('stroke-width', '4');
+                line.setAttribute('stroke-linecap', 'round');
+                line.setAttribute('data-left-idx', leftIdx);
+                svg.appendChild(line);
+            }
+        });
+    });
 }
 
 function setQuizChoice(gameId, idx, choice) {

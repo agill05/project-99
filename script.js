@@ -2,7 +2,7 @@
    E-LKPD INTERAKTIF STEAM (V3.0 FULL COMPLETE ENGINE)
    ========================================================== */
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxk1dRRnmkaTHWdZjO-oLoKNWWiqhfx6V95J8QlXiyhOnBCK9Z-rBdZiVbZHen4AptxIQ/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyiDzR-DoGGtnXnIUBv2Cxdfc5Wss55dudxr4Tki1-YCtX50B15cW24E6Q4e6vvIZu6fA/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 
 const state = {
@@ -2392,10 +2392,14 @@ function toggleMateriFormTipe() {
     else pdfCon.classList.add('hidden');
 }
 
+/* ==========================================================
+   ENHANCED PDF UPLOAD & AUTOMATIC OCR TEXT / QUESTION PARSER
+   ========================================================== */
 async function uploadPdfToDrive(targetModule = 'materi') {
     const isLkpd = targetModule === 'lkpd';
     const fileInput = document.getElementById(isLkpd ? 'lkpd-form-file-pdf' : 'materi-form-file-pdf');
     const btn = document.getElementById(isLkpd ? 'btn-upload-pdf-lkpd' : 'btn-upload-pdf');
+    
     if (!fileInput.files || fileInput.files.length === 0) {
         showToast('warning', 'Pilih file PDF terlebih dahulu!');
         return;
@@ -2404,23 +2408,63 @@ async function uploadPdfToDrive(targetModule = 'materi') {
     setButtonLoading(btn, true, 'Unggah & OCR...', 'Unggah & Ekstrak Teks PDF');
     const reader = new FileReader();
     reader.onload = async function (e) {
-        const res = await apiPost({ action: 'upload_pdf', base64Data: e.target.result, fileName: fileInput.files[0].name });
+        const res = await apiPost({ 
+            action: 'upload_pdf', 
+            base64Data: e.target.result, 
+            fileName: fileInput.files[0].name 
+        });
+
         setButtonLoading(btn, false, '', 'Unggah & Ekstrak Teks PDF');
+        
         if (res.success) {
-            showToast('success', 'PDF Berhasil Unggah & Diekstraksi!');
             if (isLkpd) {
-                document.getElementById('lkpd-form-pdf-url').value = res.url;
-                document.getElementById('lkpd-form-pdf-id').value = res.fileId;
+                const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
+                const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
+                const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
+                const soalTextElem = document.getElementById('lkpd-form-soal-text');
+
+                if (pdfUrlElem) pdfUrlElem.value = res.url;
+                if (pdfIdElem) pdfIdElem.value = res.fileId;
+                
+                let textLength = 0;
+                let questionCount = 0;
+
                 if (res.extractedText) {
-                    document.getElementById('lkpd-form-isi-teks').value = res.extractedText;
+                    textLength = res.extractedText.length;
+                    if (isiTeksElem) isiTeksElem.value = res.extractedText;
+                    
                     const autoQuestions = parseQuestionsFromText(res.extractedText);
-                    if (autoQuestions.length > 0) {
-                        document.getElementById('lkpd-form-soal-text').value = autoQuestions.join('\n');
+                    questionCount = autoQuestions.length;
+                    
+                    if (questionCount > 0 && soalTextElem) {
+                        soalTextElem.value = autoQuestions.join('\n');
                     }
                 }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'PDF & Ekstraksi Berhasil!',
+                    html: `
+                        <div class="text-xs text-left space-y-2 mt-2">
+                            <p class="font-bold text-slate-700">Berkas PDF berhasil diunggah ke Google Drive.</p>
+                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-emerald-900">
+                                <p>📝 <b>Panjang Teks Ditampilkan:</b> ${textLength} Karakter</p>
+                                <p>❓ <b>Soal Terdeteksi:</b> ${questionCount} Pertanyaan</p>
+                            </div>
+                            <p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini. Silakan periksa atau sesuaikan sebelum menekan tombol Simpan LKPD.</p>
+                        </div>
+                    `
+                });
             } else {
-                document.getElementById('materi-form-pdf-url').value = res.url;
-                document.getElementById('materi-form-pdf-id').value = res.fileId;
+                const pdfUrlElem = document.getElementById('materi-form-pdf-url');
+                const pdfIdElem = document.getElementById('materi-form-pdf-id');
+                if (pdfUrlElem) pdfUrlElem.value = res.url;
+                if (pdfIdElem) pdfIdElem.value = res.fileId;
+                if (res.extractedText) {
+                    const teksElem = document.getElementById('materi-form-teks');
+                    if (teksElem) teksElem.value = res.extractedText;
+                }
+                showToast('success', 'PDF Bahan Ajar Berhasil Diunggah!');
             }
         } else {
             Swal.fire({ icon: 'error', title: 'Gagal Unggah PDF', text: res.message });
@@ -2431,14 +2475,19 @@ async function uploadPdfToDrive(targetModule = 'materi') {
 
 function parseQuestionsFromText(text) {
     if (!text) return [];
-    const lines = text.split(/\r?\n/);
+    
+    const cleanText = text.replace(/\r\n/g, '\n').trim();
+    const lines = cleanText.split('\n');
     const questions = [];
     let currentQ = "";
-    const qRegex = /^(\d+[\.\)]|Soal\s+\d+|Pertanyaan\s+\d+)\s*(.+)/i;
+    
+    // Pattern fleksibel: 1., 1), (1), Soal 1, Pertanyaan 1, A., a), dll.
+    const qRegex = /^(\d+[\.\)]|\(\d+\)|[A-Za-z][\.\)]|Soal\s*\d+|Pertanyaan\s*\d+|Task\s*\d+|Question\s*\d+)\s*(.+)/i;
 
     lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
+        
         if (qRegex.test(trimmed)) {
             if (currentQ) questions.push(currentQ.trim());
             currentQ = trimmed;
@@ -2446,7 +2495,20 @@ function parseQuestionsFromText(text) {
             currentQ += " " + trimmed;
         }
     });
+
     if (currentQ) questions.push(currentQ.trim());
+
+    // Fallback: Jika tidak terdeteksi angka penomoran baku, cari kalimat yang berakhiran tanda tanya (?)
+    if (questions.length === 0) {
+        const sentences = cleanText.split(/(?<=\?)\s+/);
+        sentences.forEach((s, idx) => {
+            const st = s.trim();
+            if (st.length > 5 && st.includes('?')) {
+                questions.push(`${idx + 1}. ${st}`);
+            }
+        });
+    }
+
     return questions;
 }
 

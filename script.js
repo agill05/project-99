@@ -455,9 +455,15 @@ async function switchView(viewId, paramId = null) {
       titleElem.textContent = 'LEMBAR KERJA PESERTA DIDIK (LKPD)';
       viewport.innerHTML = renderLkpdView(paramId);
       setTimeout(() => {
-        initCanvas();
-        const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
-        loadLkpdDraft(paramId, qCount);
+        const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === paramId && l.status === 'Publish');
+        const overlayContainer = document.getElementById('siswa-lkpd-overlay-container');
+        if (lkpdObj && lkpdObj.peta_field_json && overlayContainer) {
+          renderLkpdUntukSiswa(overlayContainer, lkpdObj, paramId);
+        } else {
+          initCanvas();
+          const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
+          loadLkpdDraft(paramId, qCount);
+        }
       }, 150);
       break;
 
@@ -778,6 +784,34 @@ function renderLkpdView(ptmId) {
   const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
   if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
 
+  // Jika LKPD sudah dipetakan kotaknya oleh guru (Form PDF Interaktif Overlay)
+  if (lkpdObj.peta_field_json && lkpdObj.file_pdf_url) {
+    return `
+      <div class="max-w-4xl mx-auto space-y-4 text-xs">
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
+            <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+              📄 Form PDF Interaktif Overlay
+            </span>
+          </div>
+          <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h4 class="font-black text-brand-navy">✍️ Form Jawaban PDF Interaktif</h4>
+            <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
+              Ketik jawaban di atas kotak dokumen PDF
+            </span>
+          </div>
+          <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Tampilan LKPD Berbasis Teks / Soal Standar
   let questions = [];
   try {
     questions = typeof lkpdObj.soal_json === 'string' ? JSON.parse(lkpdObj.soal_json) : lkpdObj.soal_json || [];
@@ -952,11 +986,9 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
 
     return `
       <div id="matching-container-${gameId}" class="relative select-none my-4 p-2 touch-none">
-        <!-- SVG Layer untuk Garis Interaktif -->
         <svg id="matching-svg-${gameId}" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
         
         <div class="grid grid-cols-2 gap-6 sm:gap-16">
-          <!-- Kolom Kiri: Pertanyaan -->
           <div class="space-y-4">
             <span class="font-black text-brand-navy block text-[11px] uppercase tracking-wider mb-2">Soal / Pertanyaan</span>
             ${items
@@ -964,7 +996,6 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
                 (item, leftIdx) => `
               <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[60px] shadow-xs">
                 <span class="font-bold text-slate-800 text-xs pr-2">${leftIdx + 1}. ${item.soal}</span>
-                <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
                 <div class="matching-dot left-dot absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-brand-blue text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
                      data-game-id="${gameId}" data-left-idx="${leftIdx}">
                   <span class="w-2.5 h-2.5 rounded-full bg-white pointer-events-none"></span>
@@ -975,14 +1006,12 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
               .join('')}
           </div>
 
-          <!-- Kolom Kanan: Jawaban (Acak) -->
           <div class="space-y-4">
             <span class="font-black text-purple-700 block text-[11px] uppercase tracking-wider mb-2">Pilihan Pasangan</span>
             ${rightAnswers
               .map(
                 (rightItem) => `
               <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[60px] shadow-xs">
-                <!-- Perbesar touch target di mobile (w-9 h-9) & tambahkan touch-none -->
                 <div class="matching-dot right-dot absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
                      data-game-id="${gameId}" data-right-text="${rightItem.text}">
                   <span class="w-2.5 h-2.5 rounded-full bg-white pointer-events-none"></span>
@@ -1333,7 +1362,7 @@ function initPointerDragAndDropEngine() {
 /* ==========================================================
    SVG LINE CONNECTOR ENGINE (MATCHING GAME & MOBILE DRAG + TAP)
    ========================================================== */
-let activeSelectedLeftDot = null; // Menyimpan state titik kiri yang sedang di-tap
+let activeSelectedLeftDot = null;
 
 function initMatchingLineEngine() {
   const leftDots = document.querySelectorAll('.matching-dot.left-dot');
@@ -1353,19 +1382,17 @@ function initMatchingLineEngine() {
   window.addEventListener('resize', redrawAllMatchingLines);
 }
 
-// 1. Dukungan Mode Drag & Tap Titik Kiri
 function handleDotPointerDown(e) {
   e.preventDefault();
   const startDot = e.currentTarget;
   const gameId = startDot.getAttribute('data-game-id');
   const leftIdx = startDot.getAttribute('data-left-idx');
 
-  // Aktifkan mode Tap-to-Connect jika user mengetuk titik kiri
   if (activeSelectedLeftDot && activeSelectedLeftDot !== startDot) {
     activeSelectedLeftDot.classList.remove('ring-4', 'ring-amber-400');
   }
   activeSelectedLeftDot = startDot;
-  startDot.classList.add('ring-4', 'ring-amber-400'); // Indikator visual titik terpilih
+  startDot.classList.add('ring-4', 'ring-amber-400');
 
   const container = document.getElementById(`matching-container-${gameId}`);
   const svg = document.getElementById(`matching-svg-${gameId}`);
@@ -1377,7 +1404,6 @@ function handleDotPointerDown(e) {
   const x1 = dRect.left + dRect.width / 2 - cRect.left;
   const y1 = dRect.top + dRect.height / 2 - cRect.top;
 
-  // Hapus garis lama jika ada
   const existingLine = svg.querySelector(`line[data-left-idx="${leftIdx}"]`);
   if (existingLine) existingLine.remove();
 
@@ -1407,12 +1433,8 @@ function handleDotPointerDown(e) {
     startDot.removeEventListener('pointermove', onPointerMove);
     startDot.removeEventListener('pointerup', onPointerUp);
 
-    if (!isDragging) {
-      // Jika hanya di-tap (bukan di-drag), biarkan garis sementara tetap ada menunggu tap titik kanan
-      return;
-    }
+    if (!isDragging) return;
 
-    // Jika di-drag dan dilepas
     const targetElem = document.elementFromPoint(ev.clientX, ev.clientY);
     const targetDot = targetElem ? targetElem.closest('.matching-dot.right-dot') : null;
 
@@ -1428,7 +1450,6 @@ function handleDotPointerDown(e) {
   startDot.addEventListener('pointerup', onPointerUp);
 }
 
-// 2. Dukungan Mode Tap Titik Kanan
 function handleRightDotClick(e) {
   if (!activeSelectedLeftDot) return;
 
@@ -1446,7 +1467,6 @@ function handleRightDotClick(e) {
   }
 }
 
-// Helper Menghubungkan 2 Titik & Mengunci Garis
 function connectDots(leftDot, rightDot, lineElem, gameId, leftIdx) {
   const container = document.getElementById(`matching-container-${gameId}`);
   if (!container) return;
@@ -1459,7 +1479,7 @@ function connectDots(leftDot, rightDot, lineElem, gameId, leftIdx) {
 
   lineElem.setAttribute('x2', x2);
   lineElem.setAttribute('y2', y2);
-  lineElem.setAttribute('stroke', '#0D6EFD'); // Warna biru aktif
+  lineElem.setAttribute('stroke', '#0D6EFD');
 
   const rightText = rightDot.getAttribute('data-right-text');
   if (!state.gameAnswers[gameId]) state.gameAnswers[gameId] = {};
@@ -1805,7 +1825,7 @@ function renderGuruLkpdView(container) {
         ${lkpdList
           .map(
             (l) => `
-          <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
+          <div class="bg-white p-4 rounded-3xl border flex items-center justify-between gap-3">
             <div>
               <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-bold text-[10px] rounded-full uppercase">${
                 l.tipe_lkpd || 'manual'
@@ -1813,7 +1833,12 @@ function renderGuruLkpdView(container) {
               <h4 class="font-black text-brand-navy mt-1">${l.judul_lkpd}</h4>
               <p class="text-slate-500">${l.instruksi}</p>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+              ${
+                l.file_pdf_url
+                  ? `<button onclick="openModalPetakanFieldGuru('${l.id_lkpd}')" class="px-3 py-1 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow">🗺️ Petakan Field</button>`
+                  : ''
+              }
               <button onclick="openLkpdModal('${l.id_lkpd}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
               <button onclick="deleteLkpd('${l.id_lkpd}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
@@ -2036,50 +2061,144 @@ function exportRekapToCsv() {
 }
 
 /* ==========================================================
-   11. CANVAS DRAWING LOGIC (LKPD + STANDALONE LAB)
+   11. CANVAS DRAWING LOGIC & PDF FORM OVERLAY MAPPING ENGINE
    ========================================================== */
 let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
 let canvasUndoStack = [];
-let currentPdfDocGuru = null; // dokumen PDF aktif saat mode guru menyusun peta field
+
+/* --- PDF FIELD MAPPING (SISI GURU) --- */
+let currentPdfDocGuru = null;
 let currentPageGuru = 1;
 let totalPagesGuru = 1;
 let fieldsByPageGuru = {}; // { [halaman]: [{id,type,x,y,w,h}] }
 let fieldCounterGuru = 1;
 let renderScaleGuru = 1.5;
 
+function openModalPetakanFieldGuru(idLkpd) {
+  const lkpdObj = (state.cachedData.lkpd || []).find((l) => String(l.id_lkpd) === String(idLkpd));
+  if (!lkpdObj) {
+    showToast('error', 'Data LKPD tidak ditemukan!');
+    return;
+  }
+  if (!lkpdObj.file_pdf_url) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'PDF Belum Diunggah',
+      text: 'Unggah berkas PDF LKPD terlebih dahulu melalui tombol Edit LKPD sebelum memetakan area isian.'
+    });
+    return;
+  }
+
+  let modal = document.getElementById('lkpd-field-map-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'lkpd-field-map-modal';
+    modal.className = 'fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+      <div class="bg-white w-full max-w-5xl h-[90vh] rounded-3xl p-5 flex flex-col space-y-3 shadow-2xl border overflow-hidden">
+        <div class="flex items-center justify-between border-b pb-3">
+          <div>
+            <span class="text-[10px] font-mono font-bold uppercase bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">Editor Field Mapping PDF</span>
+            <h3 id="field-map-modal-title" class="font-black text-brand-navy text-sm font-heading mt-0.5">Pemetaan Area Isian LKPD</h3>
+          </div>
+          <button onclick="closeModalPetakanFieldGuru()" class="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-xl">Tutup ✖</button>
+        </div>
+        
+        <div class="flex items-center justify-between bg-slate-100 p-2.5 rounded-2xl text-xs">
+          <div class="flex items-center gap-2">
+            <button onclick="changeGuruPage(-1)" class="px-3 py-1 bg-white border font-bold rounded-xl hover:bg-slate-200 transition">◀ Prev</button>
+            <span id="guru-pdf-page-num" class="font-bold text-slate-700">Halaman 1 / 1</span>
+            <button onclick="changeGuruPage(1)" class="px-3 py-1 bg-white border font-bold rounded-xl hover:bg-slate-200 transition">Next ▶</button>
+          </div>
+          <div class="text-[11px] text-slate-500 font-medium hidden sm:block">
+            💡 <b>Tips:</b> Klik dan tahan (drag) mouse di atas gambar PDF untuk membuat kotak isian baru.
+          </div>
+          <button id="btn-save-field-map-guru" class="px-4 py-2 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-700 transition">
+            💾 Simpan Peta Field
+          </button>
+        </div>
+
+        <div class="flex-1 flex gap-4 overflow-hidden">
+          <div id="guru-editor-container" class="flex-1 bg-slate-200 rounded-2xl p-4 overflow-auto flex justify-center items-start border"></div>
+          <div class="w-64 bg-slate-50 border rounded-2xl p-3 flex flex-col space-y-2 overflow-y-auto text-xs shrink-0">
+            <h4 class="font-black text-brand-navy border-b pb-1">Daftar Field Halaman Ini</h4>
+            <div id="guru-field-list" class="space-y-2 flex-1"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('field-map-modal-title').textContent = `Pemetaan Area Isian: ${lkpdObj.judul_lkpd}`;
+  document.getElementById('btn-save-field-map-guru').onclick = async () => {
+    const btn = document.getElementById('btn-save-field-map-guru');
+    setButtonLoading(btn, true, 'Menyimpan...', '💾 Simpan Peta Field');
+    await saveFieldMapGuru(lkpdObj.id_lkpd);
+    setButtonLoading(btn, false, '', '💾 Simpan Peta Field');
+    await fetchAllInitialData(true);
+  };
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  const container = document.getElementById('guru-editor-container');
+  openFieldMapEditorGuru(container, lkpdObj.file_pdf_url, lkpdObj.peta_field_json);
+}
+
+function closeModalPetakanFieldGuru() {
+  const modal = document.getElementById('lkpd-field-map-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
 async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson) {
-  fieldsByPageGuru = existingFieldMapJson ? JSON.parse(existingFieldMapJson).fields : {};
+  try {
+    fieldsByPageGuru = existingFieldMapJson ? JSON.parse(existingFieldMapJson).fields || {} : {};
+  } catch (e) {
+    fieldsByPageGuru = {};
+  }
   fieldCounterGuru = 1;
   currentPageGuru = 1;
 
-  // PDF diambil sebagai arrayBuffer lewat fetch, karena url Drive/preview
-  // biasanya butuh mode 'view' file mentah, bukan endpoint 'preview' iframe.
+  containerEl.innerHTML = `<div class="p-8 text-slate-500 font-bold text-xs">Memuat PDF untuk pemetaan...</div>`;
+
   const res = await fetch(pdfUrl);
   const arrayBuffer = await res.arrayBuffer();
   currentPdfDocGuru = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   totalPagesGuru = currentPdfDocGuru.numPages;
 
   containerEl.innerHTML = `
-        <div style="position:relative; display:inline-block;">
-            <canvas id="guru-pdf-canvas"></canvas>
-            <div id="guru-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:crosshair;"></div>
-        </div>
-    `;
+    <div style="position:relative; display:inline-block;" class="shadow-lg border rounded-xl overflow-hidden bg-white">
+      <canvas id="guru-pdf-canvas"></canvas>
+      <div id="guru-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; cursor:crosshair;"></div>
+    </div>
+  `;
 
   await renderGuruPage();
   attachGuruDrawHandlers();
 }
 
 async function renderGuruPage() {
+  if (!currentPdfDocGuru) return;
   const page = await currentPdfDocGuru.getPage(currentPageGuru);
   const viewport = page.getViewport({ scale: renderScaleGuru });
   const canvas = document.getElementById('guru-pdf-canvas');
+  if (!canvas) return;
+
   const ctx = canvas.getContext('2d');
   canvas.width = viewport.width;
   canvas.height = viewport.height;
   await page.render({ canvasContext: ctx, viewport }).promise;
+
+  const pageNumElem = document.getElementById('guru-pdf-page-num');
+  if (pageNumElem) {
+    pageNumElem.textContent = `Halaman ${currentPageGuru} / ${totalPagesGuru}`;
+  }
 
   if (!fieldsByPageGuru[currentPageGuru]) fieldsByPageGuru[currentPageGuru] = [];
   redrawGuruFieldBoxes();
@@ -2094,6 +2213,7 @@ function changeGuruPage(delta) {
 
 function attachGuruDrawHandlers() {
   const overlay = document.getElementById('guru-overlay');
+  if (!overlay) return;
   let drawing = false,
     start = null,
     previewEl = null;
@@ -2105,7 +2225,7 @@ function attachGuruDrawHandlers() {
     previewEl = document.createElement('div');
     previewEl.style.position = 'absolute';
     previewEl.style.border = '2px dashed #d97706';
-    previewEl.style.background = 'rgba(217,119,6,0.1)';
+    previewEl.style.background = 'rgba(217,119,6,0.15)';
     overlay.appendChild(previewEl);
   };
 
@@ -2129,13 +2249,13 @@ function attachGuruDrawHandlers() {
     const h = parseFloat(previewEl.style.height);
     const x = parseFloat(previewEl.style.left);
     const y = parseFloat(previewEl.style.top);
-    overlay.removeChild(previewEl);
+    if (previewEl.parentNode) overlay.removeChild(previewEl);
 
-    if (w < 15 || h < 10) return; // kotak terlalu kecil, kemungkinan cuma klik salah
+    if (w < 15 || h < 10) return;
 
     fieldsByPageGuru[currentPageGuru].push({
       id: 'field_' + fieldCounterGuru++,
-      type: 'text', // guru bisa ganti ke 'textarea' lewat renameGuruField/changeGuruFieldType di panel daftar field
+      type: 'text',
       x: (x / rect.width) * 100,
       y: (y / rect.height) * 100,
       w: (w / rect.width) * 100,
@@ -2147,9 +2267,11 @@ function attachGuruDrawHandlers() {
 
 function redrawGuruFieldBoxes() {
   const overlay = document.getElementById('guru-overlay');
+  if (!overlay) return;
   overlay.querySelectorAll('.guru-field-box').forEach((el) => el.remove());
 
-  (fieldsByPageGuru[currentPageGuru] || []).forEach((f) => {
+  const currentFields = fieldsByPageGuru[currentPageGuru] || [];
+  currentFields.forEach((f) => {
     const box = document.createElement('div');
     box.className = 'guru-field-box';
     Object.assign(box.style, {
@@ -2159,11 +2281,52 @@ function redrawGuruFieldBoxes() {
       width: f.w + '%',
       height: f.h + '%',
       border: '2px dashed #2563eb',
-      background: 'rgba(37,99,235,0.08)'
+      background: 'rgba(37,99,235,0.12)'
     });
-    box.title = f.id + ' (' + f.type + ')';
+    box.title = `${f.id} (${f.type})`;
     overlay.appendChild(box);
   });
+
+  renderGuruFieldListPanel();
+}
+
+function renderGuruFieldListPanel() {
+  const listContainer = document.getElementById('guru-field-list');
+  if (!listContainer) return;
+  listContainer.innerHTML = '';
+
+  const currentFields = fieldsByPageGuru[currentPageGuru] || [];
+  if (currentFields.length === 0) {
+    listContainer.innerHTML = `<p class="text-slate-400 italic text-[11px]">Belum ada kotak isian di halaman ini.</p>`;
+    return;
+  }
+
+  currentFields.forEach((f) => {
+    const item = document.createElement('div');
+    item.className = 'p-2 bg-white rounded-xl border space-y-1 shadow-2xs';
+    item.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-slate-800 text-[11px]">${f.id}</span>
+        <button onclick="deleteGuruField('${f.id}')" class="text-red-500 font-bold text-[10px] hover:underline">Hapus</button>
+      </div>
+      <div class="flex items-center gap-1">
+        <label class="text-[10px] text-slate-500 font-medium">Tipe:</label>
+        <select onchange="changeGuruFieldType('${f.id}', this.value)" class="p-1 text-[10px] border rounded-lg font-bold bg-slate-50">
+          <option value="text" ${f.type === 'text' ? 'selected' : ''}>Input Teks Singkat</option>
+          <option value="textarea" ${f.type === 'textarea' ? 'selected' : ''}>Textarea Paragraf</option>
+        </select>
+      </div>
+    `;
+    listContainer.appendChild(item);
+  });
+}
+
+function changeGuruFieldType(fieldId, newType) {
+  const f = (fieldsByPageGuru[currentPageGuru] || []).find((x) => x.id === fieldId);
+  if (f) {
+    f.type = newType;
+    redrawGuruFieldBoxes();
+  }
 }
 
 function deleteGuruField(fieldId) {
@@ -2171,8 +2334,6 @@ function deleteGuruField(fieldId) {
   redrawGuruFieldBoxes();
 }
 
-// Guru klik "Simpan Peta Field" -> kirim ke backend, disimpan menempel ke record LKPD
-// idLkpd: sesuai field asli di sistem kalian (lkpdObj.id_lkpd), BUKAN 'id' generik
 async function saveFieldMapGuru(idLkpd) {
   const payload = {
     totalPages: totalPagesGuru,
@@ -2194,31 +2355,22 @@ async function saveFieldMapGuru(idLkpd) {
   return res;
 }
 
-/* ==========================================================
-   B. MODE SISWA — MENGISI LKPD
-   ========================================================== */
-
-// Dipanggil saat siswa membuka sebuah LKPD untuk dikerjakan.
-// containerEl: elemen <div> tempat PDF + input dirender
-// lkpdObj: objek LKPD dari state.cachedData.lkpd (harus punya file_pdf_url & peta_field_json)
-// ptmId: id_pertemuan terkait (dipakai juga di alur submitLkpdSiswa yang lama)
+/* --- RENDERING LKPD OVERLAY (SISI SISWA) --- */
 async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
-  // Identitas siswa diambil dari sesi login, sama seperti submitLkpdSiswa() yang sudah ada
-  const user = state.currentUser;
+  const user = state.currentUser || { username: 'guest' };
 
   if (!lkpdObj.peta_field_json) {
-    // Fallback: LKPD ini belum dipetakan gurunya, tampilkan PDF biasa saja (read-only)
-    containerEl.innerHTML = `<iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0"></iframe>`;
+    containerEl.innerHTML = `<iframe src="${lkpdObj.file_pdf_url}" class="w-full h-[600px] border-0 rounded-2xl"></iframe>`;
     return;
   }
 
-  const fieldMap = JSON.parse(lkpdObj.peta_field_json);
+  containerEl.innerHTML = `<div class="p-4 text-center text-slate-500 font-bold text-xs">Memuat Lembar Isian LKPD...</div>`;
 
+  const fieldMap = JSON.parse(lkpdObj.peta_field_json);
   const pdfRes = await fetch(lkpdObj.file_pdf_url);
   const arrayBuffer = await pdfRes.arrayBuffer();
   const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-  // Ambil jawaban yang sudah pernah disimpan siswa ini (jika ada), untuk prefill
   const jawabanRes = await apiPost({
     action: 'get_jawaban_lkpd_isian',
     id_lkpd: lkpdObj.id_lkpd,
@@ -2226,10 +2378,14 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
   });
   const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
 
-  containerEl.innerHTML = `<div id="siswa-lkpd-pages"></div>
-        <button id="btn-simpan-jawaban-lkpd" class="mt-3 px-4 py-2 bg-brand-blue text-white font-bold rounded-xl">
-            💾 Simpan Jawaban
-        </button>`;
+  containerEl.innerHTML = `
+    <div class="space-y-4">
+      <div id="siswa-lkpd-pages" class="space-y-4"></div>
+      <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
+        💾 Simpan Jawaban LKPD
+      </button>
+    </div>
+  `;
 
   const pagesWrap = document.getElementById('siswa-lkpd-pages');
 
@@ -2239,9 +2395,9 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
     const pageWrap = document.createElement('div');
     pageWrap.style.position = 'relative';
-    pageWrap.style.marginBottom = '16px';
     pageWrap.style.width = viewport.width + 'px';
     pageWrap.style.height = viewport.height + 'px';
+    pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
 
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
@@ -2262,11 +2418,13 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
         top: f.y + '%',
         width: f.w + '%',
         height: f.h + '%',
-        border: '1px solid rgba(37,99,235,0.4)',
-        background: 'rgba(255,255,255,0.6)',
+        border: '1.5px solid #2563eb',
+        background: 'rgba(255, 255, 255, 0.85)',
         fontFamily: 'inherit',
-        fontSize: '13px',
-        padding: '2px 4px'
+        fontSize: '12px',
+        padding: '3px 6px',
+        borderRadius: '6px',
+        boxSizing: 'border-box'
       });
       pageWrap.appendChild(el);
     });
@@ -2279,13 +2437,18 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
 async function submitJawabanLkpdIsian(ptmId, idLkpd) {
   const user = state.currentUser;
+  if (!user) {
+    requireStudentAuth();
+    return;
+  }
+
   const jawaban = {};
   document.querySelectorAll('.lkpd-fill-input').forEach((el) => {
     jawaban[el.dataset.fieldId] = el.value;
   });
 
   const btn = document.getElementById('btn-simpan-jawaban-lkpd');
-  setButtonLoading(btn, true, '🚀 Mengirim...', '💾 Simpan Jawaban');
+  setButtonLoading(btn, true, '🚀 Mengirim...', '💾 Simpan Jawaban LKPD');
 
   const res = await apiPost({
     action: 'submit_lkpd_isian',
@@ -2297,7 +2460,7 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
     jawaban_json: JSON.stringify(jawaban)
   });
 
-  setButtonLoading(btn, false, '', '💾 Simpan Jawaban');
+  setButtonLoading(btn, false, '', '💾 Simpan Jawaban LKPD');
 
   if (res.success) {
     showToast('success', 'Jawaban LKPD tersimpan!');
@@ -2963,11 +3126,7 @@ function toggleMateriFormTipe() {
   else pdfCon.classList.add('hidden');
 }
 
-/* ==========================================================
-   CLIENT-SIDE PDF EXTRACTION ENGINE (PDF.JS) & UPLOAD
-   ========================================================== */
-
-// 1. Helper Pembaca Teks PDF Langsung di Browser
+/* CLIENT-SIDE PDF EXTRACTION ENGINE (PDF.JS) & UPLOAD */
 async function extractTextFromPdfClientSide(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -2978,7 +3137,6 @@ async function extractTextFromPdfClientSide(file) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
 
-      // transform[4] = koordinat X, transform[5] = koordinat Y
       const items = textContent.items
         .map((it) => ({
           str: it.str,
@@ -2987,8 +3145,7 @@ async function extractTextFromPdfClientSide(file) {
         }))
         .filter((it) => it.str && it.str.trim() !== '');
 
-      // Kelompokkan potongan teks jadi "baris" berdasarkan kedekatan Y
-      const lineTolerance = 4; // px — naikkan jika baris masih terpecah, turunkan jika baris tergabung
+      const lineTolerance = 4;
       const lines = [];
       items.forEach((it) => {
         let line = lines.find((l) => Math.abs(l.y - it.y) < lineTolerance);
@@ -2999,9 +3156,7 @@ async function extractTextFromPdfClientSide(file) {
         line.items.push(it);
       });
 
-      // Urutkan baris dari atas ke bawah (nilai Y besar = lebih atas di PDF)
       lines.sort((a, b) => b.y - a.y);
-      // Dalam tiap baris, urutkan dari kiri ke kanan
       lines.forEach((l) => l.items.sort((a, b) => a.x - b.x));
 
       const pageText = lines.map((l) => l.items.map((it) => it.str).join(' ')).join('\n');
@@ -3015,9 +3170,6 @@ async function extractTextFromPdfClientSide(file) {
   }
 }
 
-// 2. Minta backend melakukan OCR via Google Drive API terhadap file
-//    yang sudah terupload (dipakai saat ekstraksi client-side gagal/kosong,
-//    biasanya karena PDF Canva di-export dengan "Flatten PDF" aktif).
 async function requestOcrFallback(fileId) {
   try {
     const res = await apiPost({ action: 'ocr_pdf_drive', fileId });
@@ -3032,7 +3184,6 @@ async function requestOcrFallback(fileId) {
   }
 }
 
-// 3. Handler Upload PDF & Auto Fill Form LKPD — versi dengan fallback OCR
 async function uploadPdfToDrive(targetModule = 'materi') {
   const isLkpd = targetModule === 'lkpd';
   const fileInput = document.getElementById(isLkpd ? 'lkpd-form-file-pdf' : 'materi-form-file-pdf');
@@ -3046,11 +3197,9 @@ async function uploadPdfToDrive(targetModule = 'materi') {
   const file = fileInput.files[0];
   setButtonLoading(btn, true, 'Membaca Teks PDF...', 'Unggah & Ekstrak Teks PDF');
 
-  // Ekstraksi teks instan di browser (cepat, tapi gagal jika PDF di-flatten jadi gambar)
   let extractedText = await extractTextFromPdfClientSide(file);
   let usedOcr = false;
 
-  // Proses pengunggahan berkas ke Google Drive
   setButtonLoading(btn, true, 'Mengunggah ke Drive...', 'Unggah & Ekstrak Teks PDF');
   const reader = new FileReader();
   reader.onload = async function (e) {
@@ -3060,8 +3209,6 @@ async function uploadPdfToDrive(targetModule = 'materi') {
       fileName: file.name
     });
 
-    // Jika ekstraksi client-side kosong/terlalu pendek, dan upload berhasil,
-    // coba fallback OCR lewat Google Drive API menggunakan file yang baru diupload.
     if (res.success && (!extractedText || extractedText.length < OCR_FALLBACK_MIN_CHARS)) {
       setButtonLoading(btn, true, 'Teks Kosong, Menjalankan OCR...', 'Unggah & Ekstrak Teks PDF');
       const ocrText = await requestOcrFallback(res.fileId);
@@ -3138,7 +3285,6 @@ async function uploadPdfToDrive(targetModule = 'materi') {
   reader.readAsDataURL(file);
 }
 
-// 3. Parser Pemisah Soal Fleksibel
 function parseQuestionsFromText(text) {
   if (!text) return [];
 
@@ -3702,8 +3848,19 @@ function openKoreksiModal(idSub) {
 
   let jawabanHtml = '';
 
-  if (sub.tipe_sub === 'lkpd') {
-    if (Array.isArray(parsedJawaban)) {
+  if (sub.tipe_sub === 'lkpd' || sub.tipe_sub === 'lkpd_isian') {
+    if (typeof parsedJawaban === 'object' && parsedJawaban !== null && !Array.isArray(parsedJawaban)) {
+      jawabanHtml = Object.keys(parsedJawaban)
+        .map(
+          (key) => `
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center">
+              <span class="font-bold text-slate-600">${key}:</span>
+              <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${parsedJawaban[key]}</span>
+            </div>
+          `
+        )
+        .join('');
+    } else if (Array.isArray(parsedJawaban)) {
       jawabanHtml = parsedJawaban
         .map(
           (ans, idx) => `

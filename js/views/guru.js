@@ -549,7 +549,13 @@ export function openLkpdModal(idLkpd = null) {
       if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
       if (idElem) idElem.value = l.id_lkpd || l.id || '';
       if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
-      if (petaFieldElem) petaFieldElem.value = l.peta_field_json || '';
+
+      let rawPeta = l.peta_field_json || '';
+      if (typeof rawPeta === 'object' && rawPeta !== null) {
+        rawPeta = JSON.stringify(rawPeta);
+      }
+      if (petaFieldElem) petaFieldElem.value = rawPeta;
+
       if (ptmElem) ptmElem.value = l.id_pertemuan || '';
       if (tipeElem) tipeElem.value = l.tipe_lkpd || 'pdf_interaktif';
       if (judulElem) judulElem.value = l.judul_lkpd || '';
@@ -614,21 +620,39 @@ export async function handleLkpdSubmit(e) {
   const btn = document.getElementById('btn-save-lkpd');
   setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan LKPD');
 
+  const idLkpd = document.getElementById('lkpd-form-id').value;
   const soalArr = document
     .getElementById('lkpd-form-soal-text')
     .value.split('\n')
     .filter((s) => s.trim() !== '');
 
+  let petaFieldVal = document.getElementById('lkpd-form-peta-field')?.value || '';
+
+  if (!petaFieldVal && idLkpd) {
+    const existingLkpd = (state.cachedData.lkpd || []).find(
+      (x) => String(x.id_lkpd || x.id || '').trim() === String(idLkpd).trim()
+    );
+    if (existingLkpd && existingLkpd.peta_field_json) {
+      petaFieldVal = typeof existingLkpd.peta_field_json === 'object'
+        ? JSON.stringify(existingLkpd.peta_field_json)
+        : existingLkpd.peta_field_json;
+    }
+  }
+
+  if (typeof petaFieldVal === 'object' && petaFieldVal !== null) {
+    petaFieldVal = JSON.stringify(petaFieldVal);
+  }
+
   const res = await apiPost({
     action: 'save_lkpd',
-    id_lkpd: document.getElementById('lkpd-form-id').value,
+    id_lkpd: idLkpd,
     id_pertemuan: document.getElementById('lkpd-form-pertemuan').value,
     judul_lkpd: document.getElementById('lkpd-form-judul').value,
     tipe_lkpd: document.getElementById('lkpd-form-tipe').value,
     instruksi: document.getElementById('lkpd-form-instruksi').value,
     file_pdf_url: document.getElementById('lkpd-form-pdf-url').value,
     file_drive_id: document.getElementById('lkpd-form-pdf-id').value,
-    peta_field_json: document.getElementById('lkpd-form-peta-field').value,
+    peta_field_json: petaFieldVal,
     isi_teks: document.getElementById('lkpd-form-isi-teks').value,
     gambar_url: document.getElementById('lkpd-form-gambar-url').value,
     soal_json: soalArr,

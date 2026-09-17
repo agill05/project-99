@@ -6,19 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>E-LKPD Interaktif IPA STEAM - UNG</title>
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- SweetAlert2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- PDF.js Engine untuk Ekstraksi Teks Client-Side -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   </script>
 
-  <!-- Google Fonts: Poppins & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -46,7 +40,6 @@
     }
   </script>
 
-  <!-- MathJax CDN -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -55,31 +48,25 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="min-h-screen flex flex-col justify-between">
 
-  <!-- Application Wrapper -->
   <div id="app" class="flex-1 flex flex-col max-w-[1600px] w-full mx-auto p-2 sm:p-4 lg:p-6 gap-3">
 
     <div class="bg-slate-100 rounded-3xl shadow-2xl border border-slate-700/50 flex-1 flex flex-col md:flex-row overflow-hidden min-h-[850px] relative">
 
-      <!-- Overlay Backdrop Mobile Drawer -->
       <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-30 hidden md:hidden"></div>
 
-      <!-- Main Sidebar Drawer -->
       <aside id="main-drawer" class="fixed md:relative inset-y-0 left-0 w-80 bg-brand-darkNavy text-white flex flex-col justify-between p-5 shrink-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800">
         <div class="space-y-4 overflow-y-auto pr-1">
 
-          <!-- Header Drawer Mobile -->
           <div class="flex items-center justify-between md:hidden pb-2 border-b border-slate-800">
             <span class="text-xs font-bold text-slate-400">NAVIGASI SISTEM</span>
             <button onclick="toggleDrawer(false)" class="text-slate-400 hover:text-white text-xl font-bold p-1">&times;</button>
           </div>
 
-          <!-- Institutional Header -->
           <div class="text-center pb-4 border-b border-slate-800 space-y-1">
             <div class="flex items-center justify-center gap-2">
               <span class="text-2xl">🏛️</span>
@@ -94,20 +81,15 @@
             </div>
           </div>
 
-          <!-- Active User Badge -->
           <div id="user-info-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center">
             <span class="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Status Akses Login</span>
             <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Mode Tamu / Guest</span>
             <span id="user-display-role" class="inline-block mt-1 px-2.5 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-extrabold rounded-full uppercase border border-slate-700">GUEST</span>
           </div>
 
-          <!-- Dynamic Sidebar Navigation Items -->
-          <nav id="sidebar-nav" class="space-y-2 font-medium text-xs">
-            <!-- Rendered dynamically -->
-          </nav>
+          <nav id="sidebar-nav" class="space-y-2 font-medium text-xs"></nav>
         </div>
 
-        <!-- System Action Button -->
         <div class="pt-3 border-t border-slate-800">
           <button id="auth-action-btn" onclick="openLoginModal()" class="w-full py-2.5 bg-brand-blue hover:bg-blue-600 text-white font-black rounded-2xl text-xs transition shadow-lg flex items-center justify-center gap-2">
             <span>🔑 Login Pengguna</span>
@@ -115,10 +97,8 @@
         </div>
       </aside>
 
-      <!-- Main Content Viewport -->
       <main class="flex-1 min-w-0 flex flex-col bg-slate-50 relative overflow-y-auto">
 
-        <!-- Header Bar -->
         <header class="p-3 sm:p-4 bg-white border-b border-slate-200 flex items-center justify-between sticky top-0 z-20 shadow-xs">
           <div class="flex items-center gap-3">
             <button onclick="toggleDrawer(true)" class="md:hidden p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold text-lg">
@@ -137,19 +117,13 @@
           </div>
         </header>
 
-        <!-- Dynamic Content Viewport -->
-        <div id="content-viewport" class="flex-1 p-3 sm:p-6">
-          <!-- View rendered dynamically -->
-        </div>
+        <div id="content-viewport" class="flex-1 p-3 sm:p-6"></div>
 
       </main>
 
     </div>
   </div>
 
-  <!-- MODALS SECTION -->
-
-  <!-- Modal PDF Fullscreen -->
   <div id="pdf-fullscreen-modal" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex-col p-2 sm:p-4">
     <div class="flex items-center justify-between pb-2 text-white border-b border-slate-800">
       <span id="pdf-fullscreen-title" class="font-bold text-xs font-heading">Dokumen PDF</span>
@@ -163,7 +137,6 @@
     </div>
   </div>
 
-  <!-- Modal Login -->
   <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
       <div class="text-center space-y-1">
@@ -196,7 +169,6 @@
     </div>
   </div>
 
-  <!-- Modal Kelola Pengguna (Admin CMS) -->
   <div id="user-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -236,9 +208,7 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kelas (Khusus Siswa)</label>
-            <select id="user-form-kelas" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-              <!-- Populated dynamically -->
-            </select>
+            <select id="user-form-kelas" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -249,7 +219,6 @@
     </div>
   </div>
 
-  <!-- Modal Kelola Kelas (Admin CMS) -->
   <div id="kelas-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -278,7 +247,6 @@
     </div>
   </div>
 
-  <!-- Modal Pertemuan (Guru CMS) -->
   <div id="pertemuan-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -322,7 +290,6 @@
     </div>
   </div>
 
-  <!-- Modal Materi (Guru CMS) -->
   <div id="materi-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -337,9 +304,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Pilih Pertemuan Target</label>
-            <select id="materi-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-              <!-- Populated dynamically -->
-            </select>
+            <select id="materi-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tipe Tampilan Media</label>
@@ -360,7 +325,6 @@
           <textarea id="materi-form-teks" rows="3" placeholder="Tuliskan uraian materi pembelajaran..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
         </div>
 
-        <!-- Section Upload PDF -->
         <div id="container-materi-pdf" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
           <label class="block font-bold text-brand-navy">📄 Unggah File PDF Ke Google Drive</label>
           <input type="file" id="materi-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
@@ -378,7 +342,6 @@
     </div>
   </div>
 
-  <!-- Modal LKPD (Guru CMS) -->
   <div id="lkpd-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -393,9 +356,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Pertemuan Target</label>
-            <select id="lkpd-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-              <!-- Populated dynamically -->
-            </select>
+            <select id="lkpd-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tipe LKPD</label>
@@ -416,7 +377,6 @@
           <textarea id="lkpd-form-instruksi" rows="2" placeholder="Petunjuk pengerjaan untuk siswa..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
         </div>
 
-        <!-- Section Upload PDF & OCR Extractor -->
         <div id="container-lkpd-pdf" class="p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
           <label class="block font-bold text-brand-navy">📄 Unggah PDF LKPD & Ekstrak Teks Pembelajaran</label>
           <input type="file" id="lkpd-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
@@ -426,7 +386,6 @@
           <input type="hidden" id="lkpd-form-pdf-url" />
         </div>
 
-        <!-- Section Konten Teks & Preview Soal Interaktif -->
         <div class="space-y-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Konten / Teks Utama LKPD (Hasil Ekstraksi/Teks)</label>
@@ -460,7 +419,6 @@
     </div>
   </div>
 
-  <!-- Modal Game Interaktif CMS Guru -->
   <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -473,9 +431,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Pertemuan Target</label>
-            <select id="game-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-              <!-- Populated dynamically -->
-            </select>
+            <select id="game-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Tipe Game Interaktif</label>
@@ -507,9 +463,7 @@
             <button type="button" onclick="addGameItemRow()" class="px-3 py-1 bg-purple-600 text-white font-bold rounded-xl text-[10px] shadow hover:bg-purple-700">+ Tambah Item</button>
           </div>
 
-          <div id="game-dynamic-builder-container" class="space-y-2">
-            <!-- Dynamic Form Fields Rendered By JS -->
-          </div>
+          <div id="game-dynamic-builder-container" class="space-y-2"></div>
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -520,7 +474,6 @@
     </div>
   </div>
 
-  <!-- Modal Evaluasi & Soal (Guru CMS) -->
   <div id="soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -532,9 +485,7 @@
         <input type="hidden" id="soal-form-id" />
         <div>
           <label class="block font-bold text-slate-700 mb-1">Pilih Pertemuan Evaluasi</label>
-          <select id="soal-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
-            <!-- Populated dynamically -->
-          </select>
+          <select id="soal-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
         </div>
 
         <div>
@@ -579,7 +530,6 @@
     </div>
   </div>
 
-  <!-- Modal Koreksi LKPD Guru -->
   <div id="koreksi-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between pb-3 border-b">
@@ -613,7 +563,6 @@
     </div>
   </div>
 
-  <!-- Main JavaScript App Engine -->
   <script src="script.js"></script>
 </body>
 

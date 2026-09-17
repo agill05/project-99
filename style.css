@@ -1,7 +1,3 @@
-/* ==========================================================
-   E-LKPD INTERAKTIF STEAM - CUSTOM STYLESHEET (V3.0 REVISED)
-   ========================================================== */
-
 body {
     font-family: "Nunito", sans-serif;
     background-color: #0b2545;
@@ -10,11 +6,14 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-h1, h2, h3, h4, .font-heading {
+h1,
+h2,
+h3,
+h4,
+.font-heading {
     font-family: "Poppins", sans-serif;
 }
 
-/* Canvas Touch & Gesture Optimization */
 canvas {
     touch-action: none;
     user-select: none;
@@ -22,7 +21,6 @@ canvas {
     cursor: crosshair;
 }
 
-/* Custom Scrollbars */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -51,9 +49,6 @@ canvas {
     -webkit-backdrop-filter: blur(4px);
 }
 
-/* ==========================================================
-   POINTER DRAG AND DROP INTERACTIVE STYLES
-   ========================================================== */
 .draggable-item {
     touch-action: none;
     cursor: grab;
@@ -87,7 +82,6 @@ canvas {
     box-shadow: inset 0 0 12px rgba(13, 110, 253, 0.15);
 }
 
-/* Interactive Game & Item Row Animations */
 .gm-item-row {
     transition: all 0.2s ease-in-out;
 }
@@ -97,19 +91,84 @@ canvas {
     box-shadow: 0 2px 8px rgba(107, 56, 251, 0.1);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
     outline: none;
 }
 
 @media print {
-    #main-drawer, header, button, .no-print {
+
+    #main-drawer,
+    header,
+    button,
+    .no-print {
         display: none !important;
     }
+
     body {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
+
     #content-viewport {
         padding: 0 !important;
     }
+}
+
+@media screen and (max-width: 768px) {
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    textarea,
+    select,
+    .lkpd-fill-input {
+        font-size: 16px !important;
+    }
+}
+
+.pdf-mobile-viewer-container {
+    max-height: 45vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.pdf-field-highlight {
+    outline: 3px solid #FDC82F !important;
+    background-color: rgba(253, 200, 47, 0.4) !important;
+    transition: all 0.3s ease-in-out;
+    z-index: 30 !important;
+}
+
+.mobile-input-card {
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-input-card.active-card {
+    border-color: #0D6EFD !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    background-color: #F8FAFC !important;
+}
+
+@supports (height: 100dvh) {
+    .pdf-mobile-viewer-container {
+        max-height: 38dvh !important;
+    }
+}
+
+.mobile-card-nav-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-card-nav-btn:active {
+    transform: scale(0.95);
+}
+
+#mobile-form-cards-container {
+    scroll-padding-bottom: 80px;
 }

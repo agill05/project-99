@@ -1,7 +1,3 @@
-/* ==========================================================
-   E-LKPD INTERAKTIF STEAM (V3.2 FULL COMPLETE ENGINE)
-   ========================================================== */
-
 const GAS_API_URL =
   'https://script.google.com/macros/s/AKfycbwjFqiLUAcrOlKnxCjIsLlYi9E1oWBSg42qx1-0vL3ntSOQN5CuT5pQ2AvcftjpjpF8fQ/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
@@ -25,13 +21,10 @@ const state = {
     reviews: []
   },
   evaluasiAnswers: {},
-  gameAnswers: {}, // Format: gameAnswers[gameId] = { 0: '...', 1: '...' }
-  gameStates: {} // Format: gameStates[gameId] = { sequencerItems, wordSearchState }
+  gameAnswers: {},
+  gameStates: {}
 };
 
-/* ==========================================================
-   1. NOTIFICATION WRAPPERS
-   ========================================================== */
 function showToast(icon, title) {
   Swal.fire({
     toast: true,
@@ -75,9 +68,6 @@ function closeLoading() {
   Swal.close();
 }
 
-/* ==========================================================
-   2. DATA CACHING & API CALLS
-   ========================================================== */
 function loadFromLocalStorage() {
   try {
     const saved = localStorage.getItem(CACHE_KEY);
@@ -153,7 +143,6 @@ async function apiPost(payload) {
   }
 }
 
-/* Validasi Header Magic Bytes PDF (%PDF-) */
 function isValidPdfBuffer(buffer) {
   if (!buffer || buffer.byteLength < 5) return false;
   const uint8 = new Uint8Array(buffer);
@@ -170,7 +159,6 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-/* Helper Fetch PDF ArrayBuffer dengan Pemulihan Otomatis */
 async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
   if (!pdfUrl) throw new Error('URL PDF tidak valid atau kosong.');
 
@@ -186,7 +174,6 @@ async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
     if (match && match[1]) driveFileId = match[1];
   }
 
-  // Strategi 1: Ambil Base64 langsung melalui API Apps Script Backend
   if (driveFileId) {
     try {
       const resData = await apiPost({ action: 'get_pdf_base64', fileId: driveFileId });
@@ -199,7 +186,6 @@ async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
     }
   }
 
-  // Strategi 2: Pengunduhan via Endpoint Proxy CORS
   if (driveFileId) {
     const proxyUrls = [
       `https://api.allorigins.win/raw?url=${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + driveFileId)}`,
@@ -219,7 +205,6 @@ async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
     }
   }
 
-  // Strategi 3: Fetch Langsung ke URL Asli
   try {
     const res = await fetch(pdfUrl);
     if (res.ok) {
@@ -234,9 +219,6 @@ async function fetchPdfArrayBuffer(pdfUrl, fileDriveId = null) {
   throw new Error('Gagal memuat PDF. Pastikan hak akses file di Google Drive diset ke "Siapa saja yang memiliki link" (Public).');
 }
 
-/* ==========================================================
-   3. HELPER UTILITIES
-   ========================================================== */
 function togglePasswordVisibility(inputId, btnElem) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -326,9 +308,6 @@ function populateKelasSelects() {
       kelasList.map((k) => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 }
 
-/* ==========================================================
-   4. SIDEBAR NAV RENDERER
-   ========================================================== */
 function renderSidebarNav() {
   const navContainer = document.getElementById('sidebar-nav');
   if (!navContainer) return;
@@ -393,10 +372,10 @@ function renderSiswaNav(container) {
       const groupWrapper = document.createElement('div');
       groupWrapper.className = 'space-y-1 bg-slate-900/60 p-2 rounded-2xl border border-slate-800/80';
       groupWrapper.innerHTML = `
-                <div class="font-bold text-brand-yellow text-[11px] px-2 py-1 uppercase font-heading">
-                  Pertemuan ${ptm.nomor_pertemuan}: ${ptm.judul_pertemuan}
-                </div>
-            `;
+        <div class="font-bold text-brand-yellow text-[11px] px-2 py-1 uppercase font-heading">
+          Pertemuan ${ptm.nomor_pertemuan}: ${ptm.judul_pertemuan}
+        </div>
+      `;
 
       if (hasMateri)
         groupWrapper.appendChild(
@@ -498,9 +477,6 @@ function renderAdminNav(container) {
   });
 }
 
-/* ==========================================================
-   5. VIEW ROUTER ENGINE
-   ========================================================== */
 async function switchView(viewId, paramId = null) {
   state.currentView = viewId;
   state.activePertemuanId = paramId;
@@ -616,9 +592,6 @@ async function switchView(viewId, paramId = null) {
   }
 }
 
-/* ==========================================================
-   6. SISWA VIEWS & STANDALONE STEAM LAB
-   ========================================================== */
 function renderHomeView() {
   return `
     <div class="space-y-4 max-w-4xl mx-auto text-xs">
@@ -877,7 +850,6 @@ function renderLkpdView(ptmId) {
 
   return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
-      <!-- Informasi LKPD -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b pb-2">
           <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
@@ -888,7 +860,6 @@ function renderLkpdView(ptmId) {
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
 
-      <!-- PDF Interaktif Overlay (Jika Dipetakan Guru) -->
       ${
         hasPdfOverlay
           ? `
@@ -905,7 +876,6 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
-      <!-- Material Teks LKPD (Jika Ada) -->
       ${
         isiTeks
           ? `
@@ -921,7 +891,6 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
-      <!-- Visual Gambar (Jika Ada) -->
       ${
         lkpdObj.gambar_url
           ? `
@@ -933,7 +902,6 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
-      <!-- Form Jawaban Manual / Teks -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b pb-2">
           <h4 class="font-black text-brand-navy">✍️ Form Jawaban Teks / Manual LKPD</h4>
@@ -963,7 +931,6 @@ function renderLkpdView(ptmId) {
         }
       </div>
 
-      <!-- Kanvas Prototyping STEAM (Jika Diberdayakan) -->
       ${
         lkpdObj.fitur_kanvas === 'TRUE' || lkpdObj.fitur_kanvas === true
           ? `
@@ -989,7 +956,6 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
-      <!-- Tombol Kirim Jawaban Manual -->
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
         🚀 Kirim Jawaban LKPD Manual & Kanvas
       </button>
@@ -997,9 +963,6 @@ function renderLkpdView(ptmId) {
   `;
 }
 
-/* ==========================================================
-   7. MULTIPLE GAMES ENGINE & POINTER DRAG-DROP
-   ========================================================== */
 function renderGameView(ptmId) {
   const ptmGames = (state.cachedData.games || []).filter((g) => g.id_pertemuan === ptmId && g.status === 'Publish');
   if (ptmGames.length === 0)
@@ -1346,7 +1309,6 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
   }
 }
 
-/* POINTER EVENT DRAG & DROP ENGINE */
 function initPointerDragAndDropEngine() {
   const draggables = document.querySelectorAll('.draggable-item');
   const dropZones = document.querySelectorAll('.drop-zone');
@@ -1435,10 +1397,11 @@ function initPointerDragAndDropEngine() {
   }
 }
 
-/* ==========================================================
-   SVG LINE CONNECTOR ENGINE (MATCHING GAME & MOBILE DRAG + TAP)
-   ========================================================== */
 let activeSelectedLeftDot = null;
+
+function handleMatchingResize() {
+  redrawAllMatchingLines();
+}
 
 function initMatchingLineEngine() {
   const leftDots = document.querySelectorAll('.matching-dot.left-dot');
@@ -1454,8 +1417,8 @@ function initMatchingLineEngine() {
     dot.addEventListener('click', handleRightDotClick);
   });
 
-  window.removeEventListener('resize', redrawAllMatchingLines);
-  window.addEventListener('resize', redrawAllMatchingLines);
+  window.removeEventListener('resize', handleMatchingResize);
+  window.addEventListener('resize', handleMatchingResize);
 }
 
 function handleDotPointerDown(e) {
@@ -1677,9 +1640,6 @@ function checkWordSearchMatch(gameId, ptmId) {
   }
 }
 
-/* ==========================================================
-   8. EVALUASI VIEW
-   ========================================================== */
 function renderEvaluasiView(ptmId) {
   const evalObj = (state.cachedData.evaluasi || []).find((e) => e.id_pertemuan === ptmId && e.status === 'Publish');
   if (!evalObj) return `<div class="p-8 text-center text-slate-400">Evaluasi belum tersedia pada pertemuan ini.</div>`;
@@ -1738,9 +1698,6 @@ function selectEvalOption(soalId, option) {
   });
 }
 
-/* ==========================================================
-   9. ADMIN CMS VIEWS
-   ========================================================== */
 function renderAdminUsersView(container) {
   const usersList = state.cachedData.users || [];
   container.innerHTML = `
@@ -1825,9 +1782,6 @@ function renderAdminClassesView(container) {
   `;
 }
 
-/* ==========================================================
-   10. GURU CMS VIEWS & EXPORT REKAP CSV
-   ========================================================== */
 function renderGuruPertemuanView(container) {
   const ptmList = state.cachedData.pertemuan || [];
   container.innerHTML = `
@@ -2136,19 +2090,15 @@ function exportRekapToCsv() {
   showToast('success', 'Rekap nilai berhasil diunduh (CSV)!');
 }
 
-/* ==========================================================
-   11. CANVAS DRAWING LOGIC & PDF FORM OVERLAY MAPPING ENGINE
-   ========================================================== */
 let canvasCtx = null;
 let isDrawing = false;
 let currentPenColor = '#0B2545';
 let canvasUndoStack = [];
 
-/* --- PDF FIELD MAPPING (SISI GURU) --- */
 let currentPdfDocGuru = null;
 let currentPageGuru = 1;
 let totalPagesGuru = 1;
-let fieldsByPageGuru = {}; // { [halaman]: [{id,label,type,x,y,w,h}] }
+let fieldsByPageGuru = {};
 let fieldCounterGuru = 1;
 let renderScaleGuru = 1.5;
 
@@ -2239,7 +2189,6 @@ async function openFieldMapEditorGuru(containerEl, pdfUrl, existingFieldMapJson,
     fieldsByPageGuru = {};
   }
 
-  // Hitung angka urutan tertinggi untuk penamaan default field baru
   let maxNum = 0;
   Object.values(fieldsByPageGuru).forEach((pageFields) => {
     if (Array.isArray(pageFields)) {
@@ -2398,7 +2347,6 @@ function redrawGuruFieldBoxes() {
     });
     box.title = `${f.label || f.id} (${f.type})`;
 
-    // Label Badge Visual Tepat di Atas Kotak Overlay
     const labelBadge = document.createElement('div');
     labelBadge.className = 'guru-field-badge';
     labelBadge.textContent = f.label || f.id;
@@ -2504,7 +2452,6 @@ async function saveFieldMapGuru(idLkpd) {
   return res;
 }
 
-/* --- RENDERING LKPD OVERLAY (SISI SISWA) --- */
 async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
   const user = state.currentUser || { username: 'guest' };
 
@@ -2513,7 +2460,7 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
     return;
   }
 
-  containerEl.innerHTML = `<div class="p-4 text-center text-slate-500 font-bold text-xs">Memuat Lembar Isian LKPD...</div>`;
+  containerEl.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold text-xs">Memuat Lembar Isian LKPD...</div>`;
 
   try {
     const fieldMap = JSON.parse(lkpdObj.peta_field_json);
@@ -2527,72 +2474,235 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
     });
     const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
 
-    containerEl.innerHTML = `
-      <div class="space-y-4">
-        <div id="siswa-lkpd-pages" class="space-y-4"></div>
-        <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
-          💾 Simpan Jawaban LKPD Overlay
-        </button>
-      </div>
-    `;
+    const isMobile = window.innerWidth < 768;
 
-    const pagesWrap = document.getElementById('siswa-lkpd-pages');
-
-    const firstPageForScale = await pdfDoc.getPage(1);
-    const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
-    const availableWidth = Math.max(containerEl.clientWidth - 24, 260);
-    const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
-
-    for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
-      const page = await pdfDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: responsiveScale });
-
-      const pageWrap = document.createElement('div');
-      pageWrap.style.position = 'relative';
-      pageWrap.style.width = viewport.width + 'px';
-      pageWrap.style.height = viewport.height + 'px';
-      pageWrap.style.maxWidth = '100%';
-      pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
-
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      pageWrap.appendChild(canvas);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-      const fields = fieldMap.fields[pageNum] || [];
-      fields.forEach((f) => {
-        const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
-        if (f.type !== 'textarea') el.type = 'text';
-        el.className = 'lkpd-fill-input';
-        el.dataset.fieldId = f.id;
-        el.placeholder = f.label || f.id;
-        el.title = f.label || f.id;
-        el.value = savedAnswers[f.id] || '';
-        Object.assign(el.style, {
-          position: 'absolute',
-          left: f.x + '%',
-          top: f.y + '%',
-          width: f.w + '%',
-          height: f.h + '%',
-          border: '1.5px solid #2563eb',
-          background: 'rgba(255, 255, 255, 0.85)',
-          fontFamily: 'inherit',
-          fontSize: '12px',
-          padding: '3px 6px',
-          borderRadius: '6px',
-          boxSizing: 'border-box'
-        });
-        pageWrap.appendChild(el);
-      });
-
-      pagesWrap.appendChild(pageWrap);
+    if (isMobile) {
+      await renderLkpdMobileHybrid(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
+    } else {
+      await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
     }
-
-    document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, lkpdObj.id_lkpd);
   } catch (err) {
     console.error('Error rendering student PDF overlay:', err);
     containerEl.innerHTML = `<div class="p-4 text-center text-red-500 font-bold text-xs">Gagal memuat PDF Interaktif (${err.message})</div>`;
+  }
+}
+
+async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
+  containerEl.innerHTML = `
+    <div class="space-y-4">
+      <div id="siswa-lkpd-pages" class="space-y-4"></div>
+      <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
+        💾 Simpan Jawaban LKPD Overlay
+      </button>
+    </div>
+  `;
+
+  const pagesWrap = document.getElementById('siswa-lkpd-pages');
+  const firstPageForScale = await pdfDoc.getPage(1);
+  const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
+  const availableWidth = Math.max(containerEl.clientWidth - 24, 260);
+  const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
+
+  for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: responsiveScale });
+
+    const pageWrap = document.createElement('div');
+    pageWrap.style.position = 'relative';
+    pageWrap.style.width = viewport.width + 'px';
+    pageWrap.style.height = viewport.height + 'px';
+    pageWrap.style.maxWidth = '100%';
+    pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    pageWrap.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    const fields = fieldMap.fields[pageNum] || [];
+    fields.forEach((f) => {
+      const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
+      if (f.type !== 'textarea') el.type = 'text';
+      el.className = 'lkpd-fill-input';
+      el.dataset.fieldId = f.id;
+      el.placeholder = f.label || f.id;
+      el.title = f.label || f.id;
+      el.value = savedAnswers[f.id] || '';
+      Object.assign(el.style, {
+        position: 'absolute',
+        left: f.x + '%',
+        top: f.y + '%',
+        width: f.w + '%',
+        height: f.h + '%',
+        border: '1.5px solid #2563eb',
+        background: 'rgba(255, 255, 255, 0.85)',
+        fontFamily: 'inherit',
+        fontSize: '12px',
+        padding: '3px 6px',
+        borderRadius: '6px',
+        boxSizing: 'border-box'
+      });
+      pageWrap.appendChild(el);
+    });
+
+    pagesWrap.appendChild(pageWrap);
+  }
+
+  document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, idLkpd);
+}
+
+async function renderLkpdMobileHybrid(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
+  const allFields = [];
+  Object.keys(fieldMap.fields || {}).forEach((pgNum) => {
+    const pageFields = fieldMap.fields[pgNum] || [];
+    pageFields.forEach((f) => {
+      allFields.push({ ...f, pageNum: parseInt(pgNum, 10) });
+    });
+  });
+
+  const totalFields = allFields.length;
+
+  containerEl.innerHTML = `
+    <div class="space-y-3 text-xs">
+      <div class="bg-slate-900 p-2 rounded-2xl space-y-1">
+        <div class="flex items-center justify-between px-2 py-1 text-white">
+          <span class="font-bold text-[10px] text-brand-yellow font-heading">📖 DOKUMEN SOAL LKPD</span>
+          <span class="text-[9px] text-slate-400">Pinch/geser untuk memperbesar</span>
+        </div>
+        <div id="mobile-pdf-scroll-box" class="pdf-mobile-viewer-container bg-slate-800 p-1 space-y-3">
+          <div id="mobile-pdf-pages-wrap" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-3xl border shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b pb-2">
+          <h4 class="font-black text-brand-navy">✍️ Kartu Isian Jawaban (${totalFields} Isian)</h4>
+          <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Mode Mobile Hybrid</span>
+        </div>
+
+        <div id="mobile-form-cards-container" class="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+          ${
+            totalFields === 0
+              ? `<p class="text-center text-slate-400 italic py-4">Belum ada area isian yang dipetakan pada dokumen ini.</p>`
+              : allFields
+                  .map(
+                    (f, idx) => `
+              <div id="card-mobile-${f.id}" class="mobile-input-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                  <span class="font-extrabold text-slate-800 text-xs">${idx + 1}. ${f.label || f.id}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] bg-blue-100 text-brand-blue font-bold px-2 py-0.5 rounded-md">Hal. ${f.pageNum}</span>
+                    <button type="button" onclick="navigateMobileField(${idx}, -1, ${totalFields})" ${
+                      idx === 0 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''
+                    } class="mobile-card-nav-btn px-2 py-1 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]">◀</button>
+                    <button type="button" onclick="navigateMobileField(${idx}, 1, ${totalFields})" ${
+                      idx === totalFields - 1 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''
+                    } class="mobile-card-nav-btn px-2 py-1 bg-brand-blue text-white font-bold rounded-lg text-[10px]">▶</button>
+                  </div>
+                </div>
+
+                ${
+                  f.type === 'textarea'
+                    ? `<textarea id="input-field-idx-${idx}" data-field-id="${f.id}" onfocus="focusAndScrollPdfField(${f.pageNum}, '${f.id}')" rows="3" class="lkpd-fill-input w-full p-2.5 rounded-xl border border-slate-300 font-medium focus:ring-2 focus:ring-brand-blue bg-white text-sm" placeholder="Tuliskan jawaban lengkap di sini...">${savedAnswers[f.id] || ''}</textarea>`
+                    : `<input type="text" id="input-field-idx-${idx}" data-field-id="${f.id}" onfocus="focusAndScrollPdfField(${f.pageNum}, '${f.id}')" value="${savedAnswers[f.id] || ''}" class="lkpd-fill-input w-full p-2.5 rounded-xl border border-slate-300 font-medium focus:ring-2 focus:ring-brand-blue bg-white text-sm" placeholder="Ketik jawaban singkat..." />`
+                }
+              </div>
+            `
+                  )
+                  .join('')
+          }
+        </div>
+
+        <button id="btn-simpan-jawaban-lkpd" class="w-full py-3.5 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition mt-2 text-xs">
+          💾 Simpan Semua Jawaban LKPD
+        </button>
+      </div>
+    </div>
+  `;
+
+  const pdfPagesWrap = document.getElementById('mobile-pdf-pages-wrap');
+  const availableWidth = containerEl.clientWidth - 20;
+
+  for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const naturalViewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.4), 1.8);
+    const viewport = page.getViewport({ scale });
+
+    const pageWrap = document.createElement('div');
+    pageWrap.id = `mobile-pdf-page-${pageNum}`;
+    pageWrap.style.position = 'relative';
+    pageWrap.style.width = viewport.width + 'px';
+    pageWrap.style.height = viewport.height + 'px';
+    pageWrap.className = 'mx-auto shadow rounded-xl overflow-hidden bg-white border';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    pageWrap.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    const fields = fieldMap.fields[pageNum] || [];
+    fields.forEach((f) => {
+      const pinBox = document.createElement('div');
+      pinBox.id = `pdf-pin-${f.id}`;
+      Object.assign(pinBox.style, {
+        position: 'absolute',
+        left: f.x + '%',
+        top: f.y + '%',
+        width: f.w + '%',
+        height: f.h + '%',
+        border: '2px dashed #0D6EFD',
+        background: 'rgba(13, 110, 253, 0.15)',
+        borderRadius: '4px',
+        pointerEvents: 'none'
+      });
+      pageWrap.appendChild(pinBox);
+    });
+
+    pdfPagesWrap.appendChild(pageWrap);
+  }
+
+  document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, idLkpd);
+}
+
+function navigateMobileField(currentIdx, direction, total) {
+  const nextIdx = currentIdx + direction;
+  if (nextIdx < 0 || nextIdx >= total) return;
+
+  const targetInput = document.getElementById(`input-field-idx-${nextIdx}`);
+  if (targetInput) {
+    targetInput.focus();
+    targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function focusAndScrollPdfField(pageNum, fieldId) {
+  document.querySelectorAll('.mobile-input-card').forEach((card) => card.classList.remove('active-card'));
+  const activeCard = document.getElementById(`card-mobile-${fieldId}`);
+  if (activeCard) activeCard.classList.add('active-card');
+
+  document.querySelectorAll('[id^="pdf-pin-"]').forEach((pin) => pin.classList.remove('pdf-field-highlight'));
+  const targetPin = document.getElementById(`pdf-pin-${fieldId}`);
+  if (targetPin) targetPin.classList.add('pdf-field-highlight');
+
+  const pdfScrollBox = document.getElementById('mobile-pdf-scroll-box');
+  const pageElem = document.getElementById(`mobile-pdf-page-${pageNum}`);
+
+  if (pdfScrollBox && pageElem) {
+    const boxRect = pdfScrollBox.getBoundingClientRect();
+    const pageRect = pageElem.getBoundingClientRect();
+
+    let offsetTop = pageElem.offsetTop - pdfScrollBox.offsetTop;
+    if (targetPin) {
+      offsetTop += targetPin.offsetTop - 40;
+    }
+
+    pdfScrollBox.scrollTo({
+      top: Math.max(offsetTop, 0),
+      behavior: 'smooth'
+    });
   }
 }
 
@@ -2685,8 +2795,12 @@ function draw(e, canvas, ctx) {
 function stopDrawing() {
   if (isDrawing) {
     isDrawing = false;
-    saveCanvasState();
-    saveStandaloneCanvasState();
+    if (document.getElementById('steam-canvas')) {
+      saveCanvasState();
+    }
+    if (document.getElementById('ruang-steam-canvas')) {
+      saveStandaloneCanvasState();
+    }
   }
 }
 
@@ -2819,9 +2933,6 @@ function getCoords(e, canvas) {
   };
 }
 
-/* ==========================================================
-   12. SUBMISSION LOGIC & AUTO-SAVE DRAFT
-   ========================================================== */
 function saveLkpdDraft(ptmId, questionCount) {
   const username = state.currentUser ? state.currentUser.username : 'guest';
   const draftKey = `${CACHE_KEY}_DRAFT_${ptmId}_${username}`;
@@ -2998,9 +3109,6 @@ async function submitEvaluasiSiswa(ptmId, idEvaluasi) {
   }
 }
 
-/* ==========================================================
-   13. CMS ADMIN MODALS & HANDLERS
-   ========================================================== */
 function openUserModal(userId = null) {
   populateKelasSelects();
 
@@ -3151,9 +3259,6 @@ function deleteKelas(id) {
   });
 }
 
-/* ==========================================================
-   14. CMS GURU HANDLERS & MODALS
-   ========================================================== */
 function populatePertemuanSelects() {
   const ptmList = state.cachedData.pertemuan || [];
   const opts = ptmList
@@ -3287,7 +3392,6 @@ function toggleMateriFormTipe() {
   else pdfCon.classList.add('hidden');
 }
 
-/* CLIENT-SIDE PDF EXTRACTION ENGINE (PDF.JS) & UPLOAD */
 async function extractTextFromPdfClientSide(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -3507,7 +3611,6 @@ async function handleMateriSubmit(e) {
   }
 }
 
-/* TOGGLE TIPE LKPD FORM (PDF INTERAKTIF / MANUAL) */
 function toggleLkpdFormTipe() {
   const tipeElem = document.getElementById('lkpd-form-tipe');
   const pdfCon = document.getElementById('container-lkpd-pdf');
@@ -4194,7 +4297,6 @@ async function handleGradeSubmit(e) {
   }
 }
 
-// DELETE HANDLERS
 function deletePertemuan(id) {
   showConfirm('Hapus Pertemuan?', 'Data yang dihapus tidak dapat dikembalikan!', async () => {
     showLoading('Menghapus pertemuan...');
@@ -4250,9 +4352,6 @@ function deleteSoal(id) {
   });
 }
 
-/* ==========================================================
-   15. AUTHENTICATION HANDLERS
-   ========================================================== */
 async function handleLoginSubmit(e) {
   e.preventDefault();
   const unElem = document.getElementById('login-username');
@@ -4266,17 +4365,29 @@ async function handleLoginSubmit(e) {
   setButtonLoading(btn, false, '', 'Masuk');
 
   if (res.success) {
+    const previousGuestUser = 'guest';
     state.currentUser = res.user;
+
+    if (state.activePertemuanId) {
+      const guestDraftKey = `${CACHE_KEY}_DRAFT_${state.activePertemuanId}_${previousGuestUser}`;
+      const userDraftKey = `${CACHE_KEY}_DRAFT_${state.activePertemuanId}_${res.user.username}`;
+      const savedDraft = localStorage.getItem(guestDraftKey);
+
+      if (savedDraft && !localStorage.getItem(userDraftKey)) {
+        localStorage.setItem(userDraftKey, savedDraft);
+        localStorage.removeItem(guestDraftKey);
+      }
+    }
+
     closeLoginModal();
     if (unElem) unElem.value = '';
     if (pwElem) pwElem.value = '';
     updateUIForAuthenticatedUser();
     showToast('success', `Selamat Datang, ${res.user.name}!`);
+
     if (res.user.role === 'guru') switchView('guru-pertemuan');
     else if (res.user.role === 'admin') switchView('admin-users');
     else switchView('home');
-  } else {
-    Swal.fire({ icon: 'error', title: 'Gagal Login', text: res.message });
   }
 }
 

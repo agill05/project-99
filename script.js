@@ -2555,11 +2555,13 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
         el.addEventListener('focus', () => {
           el.style.zIndex = '20';
           el.style.transform = 'scale(1.25)';
+          pageWrap.style.overflow = 'visible';
           el.scrollIntoView({ block: 'center', behavior: 'smooth' });
         });
         el.addEventListener('blur', () => {
           el.style.zIndex = '1';
           el.style.transform = 'scale(1)';
+          pageWrap.style.overflow = 'hidden';
         });
       }
 

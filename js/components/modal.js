@@ -2,6 +2,7 @@ import { renderSidebarNav, switchView } from '../components/drawer.js';
 import { CACHE_KEY } from '../config.js';
 import { apiPost } from '../services/api.js';
 import { state } from '../state.js';
+import { playClick, playError, playSuccess, playWarning } from './sound.js';
 
 export function showToast(icon, title) {
   Swal.fire({
@@ -13,9 +14,15 @@ export function showToast(icon, title) {
     timer: 2500,
     timerProgressBar: true
   });
+
+  if (icon === 'success') playSuccess();
+  else if (icon === 'error') playError();
+  else if (icon === 'warning') playWarning();
+  else playClick();
 }
 
 export function showConfirm(title, text, confirmCallback, confirmBtnText = 'Ya, Lanjutkan') {
+  playWarning();
   Swal.fire({
     title: title,
     text: text,

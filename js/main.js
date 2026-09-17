@@ -6,6 +6,7 @@ import './components/modal.js';
 import './components/drawer.js';
 import './components/canvas-steam.js';
 import './components/pdf-overlay.js';
+import './components/sound.js';
 import './games/drag-drop.js';
 import './games/matching.js';
 import './games/quiz-speed.js';
@@ -24,8 +25,10 @@ import './views/guru.js';
 
 import { switchView } from './components/drawer.js';
 import { updateUIForAuthenticatedUser } from './components/modal.js';
+import { updateSoundToggleUI } from './components/sound.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
+  updateSoundToggleUI();
   updateUIForAuthenticatedUser();
   await switchView('home');
 });

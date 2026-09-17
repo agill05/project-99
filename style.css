@@ -189,3 +189,21 @@ select:focus {
     background-color: #ffffff !important;
     z-index: 40 !important;
 }
+
+#siswa-lkpd-pages canvas,
+#lkpd-fullscreen-content canvas,
+.lkpd-fullscreen-page-wrap canvas {
+    touch-action: pan-y !important;
+    user-select: auto !important;
+    pointer-events: auto;
+}
+
+#lkpd-fullscreen-scroll-body {
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    overflow-y: auto !important;
+}
+
+#lkpd-fullscreen-modal {
+    touch-action: pan-y;
+}

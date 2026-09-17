@@ -860,7 +860,7 @@ function renderLkpdView(ptmId) {
         <div class="flex items-center justify-between border-b pb-2">
           <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
           <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
-            ${isPdfLkpd ? '📄 Form PDF Interaktif Overlay' : '📝 Modul LKPD Manual Teks'}
+            ${isPdfLkpd ? 'Form PDF Interaktif Overlay' : 'Modul LKPD Manual Teks'}
           </span>
         </div>
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
@@ -872,14 +872,9 @@ function renderLkpdView(ptmId) {
           ? hasPdfOverlay
             ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
-            <div>
-              <h4 class="font-black text-brand-navy">✍️ Form Isian PDF Interaktif</h4>
-              <p class="text-[11px] text-slate-500 font-medium">Ketik jawaban langsung pada lembar kerja PDF</p>
-            </div>
-            <button onclick="openLkpdFullscreenModal('${ptmId}', '${lkpdObj.id_lkpd}')" class="px-4 py-2.5 bg-brand-purple hover:bg-purple-700 text-white font-black rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-xs">
-              <span>🖥️ Buka Mode Layar Penuh (Fullscreen)</span>
-            </button>
+          <div class="border-b pb-2">
+            <h4 class="font-black text-brand-navy">Form Isian PDF Interaktif</h4>
+            <p class="text-[11px] text-slate-500 font-medium">Ketik jawaban langsung pada lembar kerja PDF</p>
           </div>
           <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
         </div>
@@ -887,7 +882,6 @@ function renderLkpdView(ptmId) {
             : `
         <div class="bg-amber-50 border border-amber-200 p-5 rounded-3xl shadow-sm space-y-3">
           <div class="flex items-center gap-2 text-amber-800 font-bold">
-            <span class="text-lg">⚠️</span>
             <h4>Peta Area Isian Belum Dikonfigurasi Guru</h4>
           </div>
           <p class="text-amber-700 font-medium leading-relaxed text-xs">
@@ -907,12 +901,12 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
-      <!-- KONDISI B: LKPD Tipe Manual (Teks / Gambar) -->
+      <!-- KONDISI B: LKPD Tipe Manual -->
       ${
         !isPdfLkpd && isiTeks
           ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
-          <h4 class="font-black text-brand-navy border-b pb-2">📖 Material Teks LKPD</h4>
+          <h4 class="font-black text-brand-navy border-b pb-2">Material Teks LKPD</h4>
           <div class="prose max-w-none text-slate-800 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border whitespace-pre-line text-xs">
             ${isiTeks}
           </div>
@@ -925,7 +919,7 @@ function renderLkpdView(ptmId) {
         !isPdfLkpd
           ? `
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-        <h4 class="font-black text-brand-navy border-b pb-2">✍️ Form Jawaban Teks LKPD</h4>
+        <h4 class="font-black text-brand-navy border-b pb-2">Form Jawaban Teks LKPD</h4>
         ${
           questions.length > 0
             ? questions
@@ -944,7 +938,7 @@ function renderLkpdView(ptmId) {
         }
       </div>
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
-        🚀 Kirim Jawaban LKPD Manual
+        Kirim Jawaban LKPD Manual
       </button>
       `
           : ''
@@ -2476,12 +2470,13 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 
 async function renderLkpdInlineContainer(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
   containerEl.innerHTML = `
-    <div class="space-y-3 w-full text-center">
-      <p class="text-xs text-slate-600 font-medium">
-        Gunakan tombol di bawah ini untuk pengerjaan yang lebih nyaman dan pas di layar HP kamu:
+    <div class="space-y-3 w-full text-center p-4 bg-slate-50 rounded-2xl border border-slate-200">
+      <h5 class="font-bold text-brand-navy text-xs">Lembar Kerja PDF Interaktif</h5>
+      <p class="text-[11px] text-slate-600 font-medium max-w-sm mx-auto">
+        Klik tombol di bawah ini untuk membuka lembar pengerjaan layar penuh (Fullscreen) yang nyaman dan pas di layar HP.
       </p>
-      <button onclick="openLkpdFullscreenModal('${ptmId}', '${idLkpd}')" class="w-full py-3.5 bg-brand-purple hover:bg-purple-700 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-xs">
-        <span>🖥️ Buka Layar Penuh (Fullscreen)</span>
+      <button onclick="openLkpdFullscreenModal('${ptmId}', '${idLkpd}')" class="w-full sm:w-auto px-6 py-3.5 bg-brand-purple hover:bg-purple-700 text-white font-black rounded-2xl shadow-lg transition inline-flex items-center justify-center gap-2 text-xs">
+        <span>Buka Layar Penuh (Fullscreen)</span>
       </button>
     </div>
   `;

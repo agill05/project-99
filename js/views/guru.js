@@ -256,6 +256,17 @@ export function renderGuruKoreksiView(container) {
 }
 
 export function openEvaluasiModal(idEvaluasi = null) {
+  const modal = document.getElementById('evaluasi-modal');
+  if (!modal) {
+    console.error('Modal #evaluasi-modal tidak ditemukan di index.html!');
+    Swal.fire({
+      icon: 'error',
+      title: 'Modal Tidak Ditemukan',
+      text: 'Pastikan kode HTML modal #evaluasi-modal sudah ditambahkan ke index.html!'
+    });
+    return;
+  }
+
   populatePertemuanSelects();
 
   const titleElem = document.getElementById('evaluasi-modal-title');
@@ -265,14 +276,15 @@ export function openEvaluasiModal(idEvaluasi = null) {
   const durasiElem = document.getElementById('evaluasi-form-durasi');
   const statusElem = document.getElementById('evaluasi-form-status');
 
-  if (idEvaluasi) {
+  if (idEvaluasi !== null && idEvaluasi !== undefined && String(idEvaluasi).trim() !== '') {
+    const targetIdStr = String(idEvaluasi).trim();
     const ev = (state.cachedData.evaluasi || []).find(
-      (x) => String(x.id_evaluasi || x.id || '').trim() === String(idEvaluasi).trim()
+      (x) => String(x.id_evaluasi || x.id || '').trim() === targetIdStr
     );
 
     if (ev) {
       if (titleElem) titleElem.textContent = 'Edit Modul & Durasi Evaluasi';
-      if (idElem) idElem.value = ev.id_evaluasi;
+      if (idElem) idElem.value = ev.id_evaluasi || ev.id || '';
       if (ptmElem) ptmElem.value = ev.id_pertemuan || '';
       if (judulElem) judulElem.value = ev.judul_evaluasi || '';
       if (durasiElem) durasiElem.value = ev.durasi_menit || 30;
@@ -286,8 +298,8 @@ export function openEvaluasiModal(idEvaluasi = null) {
     if (statusElem) statusElem.value = 'Publish';
   }
 
-  document.getElementById('evaluasi-modal').classList.remove('hidden');
-  document.getElementById('evaluasi-modal').classList.add('flex');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 }
 
 export function closeEvaluasiModal() {
@@ -439,6 +451,8 @@ export function populatePertemuanSelects() {
   if (gSel) gSel.innerHTML = opts;
   const sSel = document.getElementById('soal-form-pertemuan');
   if (sSel) sSel.innerHTML = opts;
+  const evSel = document.getElementById('evaluasi-form-pertemuan');
+  if (evSel) evSel.innerHTML = opts;
 }
 
 export function openPertemuanModal(idPtm = null) {

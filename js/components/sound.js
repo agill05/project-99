@@ -74,5 +74,23 @@ export function playError() {
 export function playWarning() {
     playTone(440, 0.1, 'triangle', 0.12);
 }
+const NO_SOUND_ATTR = 'data-no-sound';
+let globalClickBound = false;
+
+export function initGlobalClickFeedback() {
+    if (globalClickBound) return;
+    globalClickBound = true;
+
+    document.addEventListener(
+        'click',
+        (e) => {
+            const target = e.target.closest('button, a, [onclick], select, input[type="radio"], input[type="checkbox"]');
+            if (!target || target.closest(`[${NO_SOUND_ATTR}]`)) return;
+            if (target.id === 'sound-toggle-btn') return;
+            playClick();
+        },
+        true
+    );
+}
 
 window.toggleSound = toggleSound;

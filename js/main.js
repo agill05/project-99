@@ -25,7 +25,9 @@ import './views/guru.js';
 
 import { switchView } from './components/drawer.js';
 import { updateUIForAuthenticatedUser } from './components/modal.js';
-import { updateSoundToggleUI } from './components/sound.js';
+import { initGlobalClickFeedback, updateSoundToggleUI } from './components/sound.js';
+
+initGlobalClickFeedback();
 
 window.addEventListener('DOMContentLoaded', async () => {
   updateSoundToggleUI();

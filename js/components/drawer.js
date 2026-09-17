@@ -309,5 +309,4 @@ export async function switchView(viewId, paramId = null) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.toggleDrawer = toggleDrawer;

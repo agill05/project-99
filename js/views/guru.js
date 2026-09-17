@@ -1,6 +1,7 @@
 import { switchView } from '../components/drawer.js';
 import { closeLoading, setButtonLoading, showConfirm, showLoading, showToast } from '../components/modal.js';
 import { openModalPetakanFieldGuru } from '../components/pdf-overlay.js';
+import { collectHotspotItem, renderHotspotConfigForm, renderHotspotItemRow } from '../games/hotspot.js';
 import { apiPost, fetchAllInitialData, refreshSubmissionsData } from '../services/api.js';
 import { state } from '../state.js';
 import { populateKelasSelects } from '../views/admin.js';
@@ -711,16 +712,7 @@ export function renderGameConfigInputs(existingItems = null) {
   } else if (tipe === 'sequencer') {
     container.innerHTML = `<div class="text-[10px] text-purple-700 font-bold mb-1">Isikan tahapan proses berurutan DARI AWAL HINGGA AKHIR:</div>`;
   } else if (tipe === 'hotspot') {
-    const imgUrl = firstItem?.img_url || '';
-    container.innerHTML = `
-      <div class="space-y-2 mb-3">
-        <div>
-          <label class="block font-bold text-slate-700">URL Gambar Diagram / STEAM</label>
-          <input type="url" id="gm-hotspot-img-url" value="${imgUrl}" placeholder="https://example.com/diagram.png" class="w-full p-2 border rounded-xl font-mono text-[11px]" />
-        </div>
-        <div class="text-[10px] text-purple-700 font-bold">Isikan Label Bagian/Pin Gambar:</div>
-      </div>
-    `;
+    container.innerHTML = renderHotspotConfigForm(firstItem);
   } else if (tipe === 'simulator') {
     const scenario = firstItem?.soal || '';
     container.innerHTML = `
@@ -790,14 +782,7 @@ export function addGameItemRow(itemData = null) {
     `;
   } else if (tipe === 'hotspot') {
     const pinNum = container.querySelectorAll('.gm-item-row').length + 1;
-    const soal = itemData?.soal || '';
-    row.innerHTML = `
-      ${removeBtnHtml}
-      <div class="flex items-center gap-2 clear-both">
-        <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-[10px] flex items-center justify-center shrink-0">Pin ${pinNum}</span>
-        <input type="text" class="gm-input-soal w-full p-2 rounded-xl border text-[11px]" value="${soal}" placeholder="Nama label pin ${pinNum}..." />
-      </div>
-    `;
+    row.innerHTML = renderHotspotItemRow(itemData, pinNum, removeBtnHtml);
   } else if (tipe === 'simulator') {
     const param = itemData?.parameter || '';
     const opsiA = itemData?.opsi_a || '';
@@ -878,7 +863,8 @@ export async function handleGameSubmit(e) {
     } else if (tipe === 'sequencer') {
       if (soal) itemsList.push({ soal });
     } else if (tipe === 'hotspot') {
-      if (soal) itemsList.push({ soal, img_url: hotspotUrl });
+      const item = collectHotspotItem(soal, hotspotUrl);
+      if (item) itemsList.push(item);
     } else if (tipe === 'simulator') {
       const param = r.querySelector('.gm-input-param')?.value || '';
       const opsiA = r.querySelector('.gm-input-opsi-a')?.value || '';

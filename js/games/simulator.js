@@ -15,5 +15,4 @@ export function setSimChoice(gameId, idx, choice) {
   });
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.setSimChoice = setSimChoice;

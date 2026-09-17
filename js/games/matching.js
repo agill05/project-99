@@ -173,5 +173,4 @@ export function redrawAllMatchingLines() {
   });
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.resetMatchingLines = resetMatchingLines;

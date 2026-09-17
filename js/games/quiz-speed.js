@@ -15,5 +15,4 @@ export function setQuizChoice(gameId, idx, choice) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.setQuizChoice = setQuizChoice;

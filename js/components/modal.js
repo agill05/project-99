@@ -200,7 +200,6 @@ export function updateUIForAuthenticatedUser() {
   renderSidebarNav();
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.openPdfFullscreen = openPdfFullscreen;
 window.closePdfFullscreenModal = closePdfFullscreenModal;

@@ -118,7 +118,6 @@ export function getCoords(e, canvas) {
   };
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.undoStandaloneCanvas = undoStandaloneCanvas;
 window.setStandaloneCanvasColor = setStandaloneCanvasColor;
 window.setStandaloneCanvasSize = setStandaloneCanvasSize;

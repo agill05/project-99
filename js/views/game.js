@@ -4,6 +4,7 @@ import { setQuizChoice } from '../games/quiz-speed.js';
 import { moveSequencerItem } from '../games/sequencer.js';
 import { setSimChoice } from '../games/simulator.js';
 import { checkWordSearchMatch } from '../games/word-search.js';
+import { renderHotspotGameBody, scoreHotspotAnswers } from '../games/hotspot.js';
 import { apiPost, fetchAllInitialData } from '../services/api.js';
 import { state } from '../state.js';
 
@@ -203,45 +204,7 @@ export function renderGameTypeBody(gameId, tipe, items, ptmId) {
       </div>
     `;
   } else if (tipe === 'hotspot') {
-    const imgUrl = items[0]?.img_url || '';
-    const allLabels = items.map((it) => it.soal).sort(() => Math.random() - 0.5);
-
-    return `
-      <div class="space-y-4">
-        ${imgUrl
-        ? `
-          <div class="bg-white p-3 rounded-3xl border text-center">
-            <img src="${imgUrl}" alt="Diagram STEAM" class="max-h-80 mx-auto rounded-2xl object-contain border" />
-          </div>
-        `
-        : ''
-      }
-
-        <div class="space-y-2">
-          ${items
-        .map(
-          (item, idx) => `
-            <div class="bg-slate-50 p-3 rounded-2xl border flex items-center justify-between gap-3">
-              <span class="font-bold text-slate-800 text-xs flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${idx + 1
-            }</span>
-                <span>Label Pin #${idx + 1}:</span>
-              </span>
-              <select onchange="state.gameAnswers['${gameId}'][${idx}] = this.value" class="p-2 rounded-xl border font-bold text-xs text-brand-blue bg-white">
-                <option value="">-- Pilih Label --</option>
-                ${allLabels.map((lbl) => `<option value="${lbl}">${lbl}</option>`).join('')}
-              </select>
-            </div>
-          `
-        )
-        .join('')}
-        </div>
-
-        <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'hotspot'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
-          🎮 Periksa & Simpan Label Pin
-        </button>
-      </div>
-    `;
+    return renderHotspotGameBody(gameId, items, ptmId);
   } else if (tipe === 'simulator') {
     return `
       <div class="space-y-4">
@@ -369,9 +332,7 @@ export async function submitGameSiswa(ptmId, idGame, tipe) {
       if (it.correctOrder === currentIdx) correctCount++;
     });
   } else if (tipe === 'hotspot') {
-    items.forEach((item, idx) => {
-      if (answers[idx] === item.soal) correctCount++;
-    });
+    correctCount = scoreHotspotAnswers(items, answers);
   } else if (tipe === 'simulator') {
     items.forEach((item, idx) => {
       if (answers[idx] === item.kunci) correctCount++;

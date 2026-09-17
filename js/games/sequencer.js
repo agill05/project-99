@@ -18,5 +18,4 @@ export function moveSequencerItem(gameId, index, direction, ptmId) {
   setTimeout(() => initPointerDragAndDropEngine(), 100);
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.moveSequencerItem = moveSequencerItem;

@@ -697,7 +697,6 @@ export function clearLkpdOverlayDraft(idLkpd) {
   localStorage.removeItem(draftKey);
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.openModalPetakanFieldGuru = openModalPetakanFieldGuru;
 window.closeModalPetakanFieldGuru = closeModalPetakanFieldGuru;
 window.changeGuruPage = changeGuruPage;

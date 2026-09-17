@@ -20,7 +20,6 @@ export const state = {
   gameStates: {}
 };
 
-// State UI sementara (scale, canvas, drag-drop, pdf field-map, dsb) yang dipakai lintas modul
 export const uiState = {
   activeLkpdScale: 1.0,
   activeLkpdFitMode: 'fit',

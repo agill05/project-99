@@ -579,12 +579,16 @@ export function closeLkpdModal() {
 export function toggleLkpdFormTipe() {
   const tipeElem = document.getElementById('lkpd-form-tipe');
   const pdfCon = document.getElementById('container-lkpd-pdf');
-  if (!tipeElem || !pdfCon) return;
+  const manualCon = document.getElementById('container-lkpd-manual');
+
+  if (!tipeElem || !pdfCon || !manualCon) return;
 
   if (tipeElem.value === 'manual') {
     pdfCon.classList.add('hidden');
+    manualCon.classList.remove('hidden');
   } else {
     pdfCon.classList.remove('hidden');
+    manualCon.classList.add('hidden');
   }
 }
 

@@ -847,37 +847,62 @@ function renderLkpdView(ptmId) {
   const questionCount = Math.max(questions.length, 1);
   const isiTeks = lkpdObj.isi_teks || '';
   const hasPdfOverlay = Boolean(lkpdObj.peta_field_json && lkpdObj.file_pdf_url);
+  const isPdfLkpd = lkpdObj.tipe_lkpd === 'pdf_interaktif' || Boolean(lkpdObj.file_pdf_url);
 
   return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
+      <!-- Header LKPD -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b pb-2">
           <h3 class="font-black text-brand-navy text-sm font-heading">${lkpdObj.judul_lkpd}</h3>
           <span class="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
-            ${hasPdfOverlay ? '📄 Form PDF Interaktif Overlay' : '✨ Modul Interaktif Web'}
+            ${isPdfLkpd ? '📄 Form PDF Interaktif Overlay' : '📝 Modul LKPD Manual Teks'}
           </span>
         </div>
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
 
+      <!-- KONDISI A: LKPD Tipe PDF Overlay -->
       ${
-        hasPdfOverlay
-          ? `
+        isPdfLkpd
+          ? hasPdfOverlay
+            ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b pb-2">
             <h4 class="font-black text-brand-navy">✍️ Form Isian PDF Interaktif</h4>
             <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
-              Ketik jawaban langsung di atas dokumen PDF
+              Ketik jawaban langsung di atas dokumen PDF (Auto-Save Active)
             </span>
           </div>
           <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
         </div>
       `
+            : `
+        <div class="bg-amber-50 border border-amber-200 p-5 rounded-3xl shadow-sm space-y-3">
+          <div class="flex items-center gap-2 text-amber-800 font-bold">
+            <span class="text-lg">⚠️</span>
+            <h4>Peta Area Isian Belum Dikonfigurasi Guru</h4>
+          </div>
+          <p class="text-amber-700 font-medium leading-relaxed text-xs">
+            Dokumen PDF LKPD sudah diunggah, namun area isian interaktif belum dipetakan oleh guru. Silakan pelajari materi PDF di bawah ini.
+          </p>
+          ${
+            lkpdObj.file_pdf_url
+              ? `
+            <div class="bg-slate-900 rounded-2xl overflow-hidden h-[500px] border mt-2">
+              <iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0" allow="fullscreen"></iframe>
+            </div>
+          `
+              : ''
+          }
+        </div>
+      `
           : ''
       }
 
+      <!-- KONDISI B: LKPD Tipe Manual (Teks / Gambar) -->
       ${
-        isiTeks
+        !isPdfLkpd && isiTeks
           ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
           <h4 class="font-black text-brand-navy border-b pb-2 flex items-center gap-2">
@@ -892,7 +917,7 @@ function renderLkpdView(ptmId) {
       }
 
       ${
-        lkpdObj.gambar_url
+        !isPdfLkpd && lkpdObj.gambar_url
           ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
           <h4 class="font-black text-brand-navy border-b pb-2">🖼️ Visual Ilustrasi LKPD</h4>
@@ -902,6 +927,10 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
+      ${
+        !isPdfLkpd
+          ? `
+      <!-- Form Manual Teks HANYA TAMPIL jika Tipe Manual -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b pb-2">
           <h4 class="font-black text-brand-navy">✍️ Form Jawaban Teks / Manual LKPD</h4>
@@ -930,7 +959,11 @@ function renderLkpdView(ptmId) {
         `
         }
       </div>
+      `
+          : ''
+      }
 
+      <!-- Fitur Kanvas Prototyping STEAM (Opsional) -->
       ${
         lkpdObj.fitur_kanvas === 'TRUE' || lkpdObj.fitur_kanvas === true
           ? `
@@ -956,9 +989,16 @@ function renderLkpdView(ptmId) {
           : ''
       }
 
+      <!-- Tombol Kirim Manual (Hanya Tampil Jika Bukan PDF Overlay) -->
+      ${
+        !isPdfLkpd
+          ? `
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
         🚀 Kirim Jawaban LKPD Manual & Kanvas
       </button>
+      `
+          : ''
+      }
     </div>
   `;
 }
@@ -2472,9 +2512,17 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
       id_lkpd: lkpdObj.id_lkpd,
       username_siswa: user.username
     });
-    const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
+    
+    // Gabungkan jawaban dari server dan draft lokal (draft lokal diprioritaskan jika ada ketikan baru)
+    const savedServerAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
+    const localDraft = getLkpdOverlayDraft(lkpdObj.id_lkpd);
+    const combinedAnswers = { ...savedServerAnswers, ...localDraft };
 
-    await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
+    await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, combinedAnswers, ptmId, lkpdObj.id_lkpd);
+    
+    if (Object.keys(localDraft).length > 0) {
+      showToast('info', 'Draft pengerjaan PDF Overlay dipulihkan!');
+    }
   } catch (err) {
     console.error('Error rendering student PDF overlay:', err);
     containerEl.innerHTML = `<div class="p-4 text-center text-red-500 font-bold text-xs">Gagal memuat PDF Interaktif (${err.message})</div>`;
@@ -2523,6 +2571,13 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
       el.placeholder = f.label || f.id;
       el.title = f.label || f.id;
       el.value = savedAnswers[f.id] || '';
+      
+      // Auto-save draft setiap kali input diubah
+      el.oninput = () => saveLkpdOverlayDraft(idLkpd);
+
+      // Skala ukuran huruf proporsional dengan viewport PDF
+      const calculatedFontSize = Math.max(Math.min(13, Math.round(11 * responsiveScale)), 9);
+
       Object.assign(el.style, {
         position: 'absolute',
         left: f.x + '%',
@@ -2530,9 +2585,9 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
         width: f.w + '%',
         height: f.h + '%',
         border: '1.5px solid #2563eb',
-        background: 'rgba(255, 255, 255, 0.85)',
+        background: 'rgba(255, 255, 255, 0.88)',
         fontFamily: 'inherit',
-        fontSize: '12px',
+        fontSize: calculatedFontSize + 'px',
         padding: '3px 6px',
         borderRadius: '6px',
         boxSizing: 'border-box'
@@ -2709,7 +2764,9 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
 
   const jawaban = {};
   document.querySelectorAll('.lkpd-fill-input').forEach((el) => {
-    jawaban[el.dataset.fieldId] = el.value;
+    if (el.dataset.fieldId) {
+      jawaban[el.dataset.fieldId] = el.value;
+    }
   });
 
   const btn = document.getElementById('btn-simpan-jawaban-lkpd');
@@ -2728,6 +2785,7 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
   setButtonLoading(btn, false, '', '💾 Simpan Jawaban LKPD Overlay');
 
   if (res.success) {
+    clearLkpdOverlayDraft(idLkpd);
     showToast('success', 'Jawaban LKPD Overlay tersimpan!');
   } else {
     Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Jawaban', text: res.message });
@@ -4437,6 +4495,39 @@ function updateUIForAuthenticatedUser() {
     authBtn.onclick = openLoginModal;
   }
   renderSidebarNav();
+}
+
+function saveLkpdOverlayDraft(idLkpd) {
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_OVERLAY_${idLkpd}_${username}`;
+  const jawaban = {};
+  document.querySelectorAll('.lkpd-fill-input').forEach((el) => {
+    if (el.dataset.fieldId) {
+      jawaban[el.dataset.fieldId] = el.value;
+    }
+  });
+  localStorage.setItem(draftKey, JSON.stringify({ jawaban, timestamp: new Date().toISOString() }));
+}
+
+function getLkpdOverlayDraft(idLkpd) {
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_OVERLAY_${idLkpd}_${username}`;
+  try {
+    const saved = localStorage.getItem(draftKey);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed && parsed.jawaban ? parsed.jawaban : {};
+    }
+  } catch (e) {
+    console.error('Gagal membaca draft overlay:', e);
+  }
+  return {};
+}
+
+function clearLkpdOverlayDraft(idLkpd) {
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+  const draftKey = `${CACHE_KEY}_DRAFT_OVERLAY_${idLkpd}_${username}`;
+  localStorage.removeItem(draftKey);
 }
 
 window.addEventListener('DOMContentLoaded', async () => {

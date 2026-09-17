@@ -121,6 +121,23 @@ export function renderGameTypeBody(gameId, tipe, items, ptmId) {
   } else if (tipe === 'drag_drop') {
     const cat1 = items[0]?.kategori_a || 'Kategori A';
     const cat2 = items[0]?.kategori_b || 'Kategori B';
+    const answers = state.gameAnswers[gameId] || {};
+
+    const poolItems = [];
+    const aItems = [];
+    const bItems = [];
+
+    items.forEach((item, idx) => {
+      const savedCat = answers[idx];
+      const itemHtml = `
+        <div id="drag-item-${gameId}-${idx}" data-game-id="${gameId}" data-item-idx="${idx}" class="draggable-item px-3.5 py-2.5 bg-white border border-slate-300 shadow-xs rounded-2xl font-bold text-slate-800 text-xs">
+          ${item.soal}
+        </div>
+      `;
+      if (savedCat === 'A') aItems.push(itemHtml);
+      else if (savedCat === 'B') bItems.push(itemHtml);
+      else poolItems.push(itemHtml);
+    });
 
     return `
       <div class="space-y-4" data-game-id="${gameId}">
@@ -131,27 +148,19 @@ export function renderGameTypeBody(gameId, tipe, items, ptmId) {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div id="drop-zone-${gameId}-A" data-game-id="${gameId}" data-cat="A" class="drop-zone bg-blue-50/60 border-2 border-dashed border-blue-300 p-4 rounded-3xl space-y-2">
             <span class="font-black text-brand-blue block uppercase font-heading text-center border-b border-blue-200 pb-1">${cat1}</span>
-            <div class="drop-zone-items space-y-2 min-h-[80px]"></div>
+            <div class="drop-zone-items space-y-2 min-h-[80px]">${aItems.join('')}</div>
           </div>
 
           <div id="drop-zone-${gameId}-B" data-game-id="${gameId}" data-cat="B" class="drop-zone bg-purple-50/60 border-2 border-dashed border-purple-300 p-4 rounded-3xl space-y-2">
             <span class="font-black text-purple-600 block uppercase font-heading text-center border-b border-purple-200 pb-1">${cat2}</span>
-            <div class="drop-zone-items space-y-2 min-h-[80px]"></div>
+            <div class="drop-zone-items space-y-2 min-h-[80px]">${bItems.join('')}</div>
           </div>
         </div>
 
         <div id="drop-zone-${gameId}-pool" data-game-id="${gameId}" data-cat="pool" class="drop-zone bg-slate-100 p-4 rounded-3xl border space-y-2">
           <span class="font-bold text-slate-500 block text-[11px] uppercase tracking-wider text-center">Pilihan Objek (Seret dari sini):</span>
           <div class="drop-zone-items flex flex-wrap gap-2 justify-center">
-            ${items
-        .map(
-          (item, idx) => `
-              <div id="drag-item-${gameId}-${idx}" data-game-id="${gameId}" data-item-idx="${idx}" class="draggable-item px-3.5 py-2.5 bg-white border border-slate-300 shadow-xs rounded-2xl font-bold text-slate-800 text-xs">
-                ${item.soal}
-              </div>
-            `
-        )
-        .join('')}
+            ${poolItems.join('')}
           </div>
         </div>
 
@@ -251,7 +260,8 @@ export function renderGameTypeBody(gameId, tipe, items, ptmId) {
       <div class="space-y-4">
         <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl space-y-1">
           <span class="font-black text-purple-900 block text-xs">🔍 Cari Kata-Kata Istilah Berikut:</span>
-          <div class="flex flex-wrap gap-1.5 mt-1">
+          <!-- Tambahkan id ws-${gameId}-badges pada pembungkus badge -->
+          <div id="ws-${gameId}-badges" class="flex flex-wrap gap-1.5 mt-1">
             ${words
         .map(
           (w) => `

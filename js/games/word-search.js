@@ -1,6 +1,5 @@
 import { showToast } from '../components/modal.js';
 import { state } from '../state.js';
-import { renderGameView } from '../views/game.js';
 
 export function checkWordSearchMatch(gameId, ptmId) {
   const inputElem = document.getElementById(`ws-${gameId}-input-word`);
@@ -15,8 +14,21 @@ export function checkWordSearchMatch(gameId, ptmId) {
       wsState.foundWords.push(val);
       showToast('success', `Hebat! Kata "${val}" ditemukan!`);
       inputElem.value = '';
-      const viewport = document.getElementById('content-viewport');
-      viewport.innerHTML = renderGameView(ptmId);
+
+      const badgesContainer = document.getElementById(`ws-${gameId}-badges`);
+      if (badgesContainer) {
+        badgesContainer.innerHTML = wsState.targetWords
+          .map(
+            (w) => `
+            <span class="px-2.5 py-1 rounded-xl text-xs font-black ${
+              wsState.foundWords.includes(w)
+                ? 'bg-emerald-500 text-white line-through'
+                : 'bg-white border text-purple-800'
+            }">${w}</span>
+          `
+          )
+          .join('');
+      }
     } else {
       showToast('info', 'Kata tersebut sudah kamu temukan!');
     }
@@ -25,5 +37,4 @@ export function checkWordSearchMatch(gameId, ptmId) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.checkWordSearchMatch = checkWordSearchMatch;

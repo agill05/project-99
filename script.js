@@ -1,5 +1,5 @@
 const GAS_API_URL =
-  'https://script.google.com/macros/s/AKfycbwjFqiLUAcrOlKnxCjIsLlYi9E1oWBSg42qx1-0vL3ntSOQN5CuT5pQ2AvcftjpjpF8fQ/exec';
+  'https://script.google.com/macros/s/AKfycbzH3D43u12QRZ2lXzmALHrqc9mRA66GI47oY1mOJ8WmqwVXPqtzdVXJYpQROK9xzv8oGA/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 const OCR_FALLBACK_MIN_CHARS = 40;
 
@@ -328,11 +328,10 @@ function renderSiswaNav(container) {
     switchView('home');
     toggleDrawer(false);
   };
-  homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
-    state.currentView === 'home'
+  homeBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'home'
       ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
       : 'text-slate-300 hover:bg-slate-800'
-  }`;
+    }`;
   homeBtn.innerHTML = `<span>🏠</span><span>Beranda</span>`;
   container.appendChild(homeBtn);
 
@@ -341,11 +340,10 @@ function renderSiswaNav(container) {
     switchView('ruang-steam');
     toggleDrawer(false);
   };
-  steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
-    state.currentView === 'ruang-steam'
+  steamBtn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === 'ruang-steam'
       ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
       : 'text-slate-300 hover:bg-slate-800'
-  }`;
+    }`;
   steamBtn.innerHTML = `<span>🎨</span><span>Ruang STEAM Lab</span>`;
   container.appendChild(steamBtn);
 
@@ -421,9 +419,8 @@ function createSubNavButton(label, onClickFn, isActive) {
     onClickFn();
     toggleDrawer(false);
   };
-  btn.className = `w-full text-left px-3 py-1.5 rounded-xl font-medium transition text-[11px] flex items-center justify-between ${
-    isActive ? 'bg-brand-blue text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
-  }`;
+  btn.className = `w-full text-left px-3 py-1.5 rounded-xl font-medium transition text-[11px] flex items-center justify-between ${isActive ? 'bg-brand-blue text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+    }`;
   btn.innerHTML = `<span>${label}</span> <span>&rarr;</span>`;
   return btn;
 }
@@ -445,11 +442,10 @@ function renderGuruNav(container) {
       switchView(m.id);
       toggleDrawer(false);
     };
-    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
-      state.currentView === m.id
+    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === m.id
         ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
         : 'text-slate-300 hover:bg-slate-800'
-    }`;
+      }`;
     btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
     container.appendChild(btn);
   });
@@ -467,11 +463,10 @@ function renderAdminNav(container) {
       switchView(m.id);
       toggleDrawer(false);
     };
-    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${
-      state.currentView === m.id
+    btn.className = `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-heading text-left ${state.currentView === m.id
         ? 'bg-brand-yellow text-slate-950 font-extrabold shadow-md'
         : 'text-slate-300 hover:bg-slate-800'
-    }`;
+      }`;
     btn.innerHTML = `<span>${m.icon}</span><span>${m.title}</span>`;
     container.appendChild(btn);
   });
@@ -618,8 +613,8 @@ function renderRuangSteamView() {
   const optionsHtml =
     pertemuanList.length > 0
       ? pertemuanList
-          .map((p) => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`)
-          .join('')
+        .map((p) => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`)
+        .join('')
       : '<option value="">-- Belum ada pertemuan aktif --</option>';
 
   const defaultPtm = pertemuanList[0] || null;
@@ -656,11 +651,10 @@ function renderRuangSteamView() {
           <div class="md:col-span-2 text-slate-300 text-[11px] border-t md:border-t-0 md:border-l border-slate-700 pt-2 md:pt-0 md:pl-3">
             <span class="font-bold text-white block">Capaian & Fokus Topik:</span>
             <p id="steam-pertemuan-deskripsi" class="text-slate-300 font-medium mt-0.5">
-              ${
-                defaultPtm
-                  ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.'
-                  : 'Belum ada modul tersedia.'
-              }
+              ${defaultPtm
+      ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.'
+      : 'Belum ada modul tersedia.'
+    }
             </p>
           </div>
         </div>
@@ -736,10 +730,14 @@ function updateSteamPertemuanInfo(ptmId) {
 
   const descElem = document.getElementById('steam-pertemuan-deskripsi');
   const badgeElem = document.getElementById('steam-canvas-badge-ptm');
+  const sciTextarea = document.getElementById('steam-note-science');
+  const engTextarea = document.getElementById('steam-note-engineering');
 
   if (ptm) {
     if (descElem) descElem.textContent = ptm.deskripsi || 'Tidak ada deskripsi khusus.';
     if (badgeElem) badgeElem.textContent = `Pertemuan ${ptm.nomor_pertemuan}`;
+    if (sciTextarea) sciTextarea.placeholder = ptm.prompt_science || 'Jelaskan fenomena sains/teknologi yang melandasi gambar kamu...';
+    if (engTextarea) engTextarea.placeholder = ptm.prompt_engineering || 'Jelaskan rancangan struktur, ukuran, atau perhitungan matematika...';
   } else {
     if (descElem) descElem.textContent = 'Pilih modul pertemuan di atas.';
     if (badgeElem) badgeElem.textContent = 'Mode Bebas';
@@ -758,10 +756,16 @@ async function submitSteamLabToTeacher() {
   const eng = document.getElementById('steam-note-engineering')?.value || '';
 
   const canvas = document.getElementById('ruang-steam-canvas');
-  const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
+  const canvasBase64 = canvas ? canvas.toDataURL('image/jpeg', 0.6) : '';
 
-  const btn = document.getElementById('btn-submit-steam-lab');
-  setButtonLoading(btn, true, 'Mengirim...', '🚀 Kirim ke Guru');
+  Swal.fire({
+    title: '🚀 Mengirim Karya STEAM...',
+    html: 'Mohon tunggu sebentar, sistem sedang mengunggah sketsa dan catatan proyek kamu ke guru.',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
   const res = await apiPost({
     action: 'submit_lkpd',
@@ -777,13 +781,29 @@ async function submitSteamLabToTeacher() {
     canvas_image_base64: canvasBase64
   });
 
-  setButtonLoading(btn, false, '', '🚀 Kirim ke Guru');
-
   if (res.success) {
     await fetchAllInitialData(true);
-    showToast('success', 'Karya STEAM berhasil dikirim ke guru!');
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil Terkirim! 🎉',
+      html: `
+        <div class="text-xs text-slate-600 space-y-2 mt-2">
+          <p>Karya proyek dan sketsa canvas kamu telah berhasil diterima oleh guru.</p>
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl font-bold text-emerald-800 text-left">
+            📌 <b>Judul:</b> ${title}<br>
+            👤 <b>Siswa:</b> ${state.currentUser.name} (${state.currentUser.kelas})
+          </div>
+        </div>
+      `,
+      confirmButtonText: 'Mantap, Terima Kasih!',
+      confirmButtonColor: '#10B981'
+    });
   } else {
-    Swal.fire({ icon: 'error', title: 'Gagal Mengirim', text: res.message });
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengirim Karya',
+      text: res.message || 'Terjadi kesalahan koneksi saat mengirim data.'
+    });
   }
 }
 
@@ -797,14 +817,13 @@ function renderMateriView(ptmId) {
   return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
       ${materiList
-        .map(
-          (m) => `
+      .map(
+        (m) => `
         <div class="bg-white p-5 rounded-3xl border shadow-xs space-y-3">
           <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">${m.judul_materi}</h3>
           ${m.isi_teks ? `<p class="text-slate-700 leading-relaxed font-medium whitespace-pre-line">${m.isi_teks}</p>` : ''}
-          ${
-            m.tipe_media === 'pdf_document' && m.file_pdf_url
-              ? `
+          ${m.tipe_media === 'pdf_document' && m.file_pdf_url
+            ? `
             <div class="space-y-2 mt-2">
               <div class="flex items-center justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-2xl">
                 <span class="font-bold text-brand-navy text-[11px]">📄 Dokumen Bahan Ajar PDF</span>
@@ -822,12 +841,12 @@ function renderMateriView(ptmId) {
               </div>
             </div>
           `
-              : ''
+            : ''
           }
         </div>
       `
-        )
-        .join('')}
+      )
+      .join('')}
     </div>
   `;
 }
@@ -866,10 +885,9 @@ function renderLkpdView(ptmId) {
       </div>
 
       <!-- KONDISI A: LKPD Tipe PDF Overlay -->
-      ${
-        isPdfLkpd
-          ? hasPdfOverlay
-            ? `
+      ${isPdfLkpd
+      ? hasPdfOverlay
+        ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
           <div class="border-b pb-2">
             <h4 class="font-black text-brand-navy">Form Isian PDF Interaktif</h4>
@@ -878,7 +896,7 @@ function renderLkpdView(ptmId) {
           <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
         </div>
       `
-            : `
+        : `
         <div class="bg-amber-50 border border-amber-200 p-5 rounded-3xl shadow-sm space-y-3">
           <div class="flex items-center gap-2 text-amber-800 font-bold">
             <h4>Peta Area Isian Belum Dikonfigurasi Guru</h4>
@@ -886,24 +904,22 @@ function renderLkpdView(ptmId) {
           <p class="text-amber-700 font-medium leading-relaxed text-xs">
             Dokumen PDF LKPD sudah diunggah, namun area isian interaktif belum dipetakan oleh guru.
           </p>
-          ${
-            lkpdObj.file_pdf_url
-              ? `
+          ${lkpdObj.file_pdf_url
+          ? `
             <div class="bg-slate-900 rounded-2xl overflow-hidden h-[500px] border mt-2">
               <iframe src="${lkpdObj.file_pdf_url}" class="w-full h-full border-0" allow="fullscreen"></iframe>
             </div>
           `
-              : ''
-          }
+          : ''
+        }
         </div>
       `
-          : ''
-      }
+      : ''
+    }
 
       <!-- KONDISI B: LKPD Tipe Manual -->
-      ${
-        !isPdfLkpd && isiTeks
-          ? `
+      ${!isPdfLkpd && isiTeks
+      ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
           <h4 class="font-black text-brand-navy border-b pb-2">Material Teks LKPD</h4>
           <div class="prose max-w-none text-slate-800 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border whitespace-pre-line text-xs">
@@ -911,37 +927,35 @@ function renderLkpdView(ptmId) {
           </div>
         </div>
       `
-          : ''
-      }
+      : ''
+    }
 
-      ${
-        !isPdfLkpd
-          ? `
+      ${!isPdfLkpd
+      ? `
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
         <h4 class="font-black text-brand-navy border-b pb-2">Form Jawaban Teks LKPD</h4>
-        ${
-          questions.length > 0
-            ? questions
-                .map(
-                  (q, idx) => `
+        ${questions.length > 0
+        ? questions
+          .map(
+            (q, idx) => `
           <div class="space-y-1.5 p-3 rounded-2xl bg-slate-50 border">
             <label class="block font-bold text-slate-800">${idx + 1}. ${q}</label>
             <textarea id="lkpd-ans-${idx}" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="3" class="w-full p-3 rounded-xl border bg-white text-xs" placeholder="Tuliskan jawaban kamu..."></textarea>
           </div>
         `
-                )
-                .join('')
-            : `
+          )
+          .join('')
+        : `
           <textarea id="lkpd-ans-0" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="6" class="w-full p-3 rounded-xl border bg-white text-xs" placeholder="Tuliskan jawaban lengkap kamu..."></textarea>
         `
-        }
+      }
       </div>
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
         Kirim Jawaban LKPD Manual
       </button>
       `
-          : ''
-      }
+      : ''
+    }
     </div>
   `;
 }
@@ -972,7 +986,7 @@ function renderSingleGameCard(g, gameIdx, ptmId) {
   let config = { items: [] };
   try {
     config = typeof g.konfigurasi_json === 'string' ? JSON.parse(g.konfigurasi_json) : g.konfigurasi_json;
-  } catch (e) {}
+  } catch (e) { }
 
   const items = config.items || [];
   const tipe = g.tipe_game || 'matching';
@@ -1014,8 +1028,8 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
           <div class="space-y-4">
             <span class="font-black text-brand-navy block text-[11px] uppercase tracking-wider mb-2">Soal / Pertanyaan</span>
             ${items
-              .map(
-                (item, leftIdx) => `
+        .map(
+          (item, leftIdx) => `
               <div class="relative bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between min-h-[60px] shadow-xs">
                 <span class="font-bold text-slate-800 text-xs pr-2">${leftIdx + 1}. ${item.soal}</span>
                 <div class="matching-dot left-dot absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-brand-blue text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
@@ -1024,15 +1038,15 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
                 </div>
               </div>
             `
-              )
-              .join('')}
+        )
+        .join('')}
           </div>
 
           <div class="space-y-4">
             <span class="font-black text-purple-700 block text-[11px] uppercase tracking-wider mb-2">Pilihan Pasangan</span>
             ${rightAnswers
-              .map(
-                (rightItem) => `
+        .map(
+          (rightItem) => `
               <div class="relative bg-purple-50/70 p-3.5 rounded-2xl border border-purple-200 flex items-center min-h-[60px] shadow-xs">
                 <div class="matching-dot right-dot absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-7 sm:h-7 rounded-full bg-purple-600 text-white border-2 border-white shadow-md flex items-center justify-center cursor-pointer touch-none hover:scale-110 transition z-20"
                      data-game-id="${gameId}" data-right-text="${rightItem.text}">
@@ -1041,8 +1055,8 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
                 <span class="font-bold text-purple-950 text-xs pl-3">${rightItem.text}</span>
               </div>
             `
-              )
-              .join('')}
+        )
+        .join('')}
           </div>
         </div>
       </div>
@@ -1082,14 +1096,14 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
           <span class="font-bold text-slate-500 block text-[11px] uppercase tracking-wider text-center">Pilihan Objek (Seret dari sini):</span>
           <div class="drop-zone-items flex flex-wrap gap-2 justify-center">
             ${items
-              .map(
-                (item, idx) => `
+        .map(
+          (item, idx) => `
               <div id="drag-item-${gameId}-${idx}" data-game-id="${gameId}" data-item-idx="${idx}" class="draggable-item px-3.5 py-2.5 bg-white border border-slate-300 shadow-xs rounded-2xl font-bold text-slate-800 text-xs">
                 ${item.soal}
               </div>
             `
-              )
-              .join('')}
+        )
+        .join('')}
           </div>
         </div>
 
@@ -1113,31 +1127,28 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
       <div class="space-y-3">
         <div id="sequencer-list-container-${gameId}" class="space-y-2">
           ${seqState.sequencerItems
-            .map(
-              (item, idx) => `
+        .map(
+          (item, idx) => `
             <div class="p-3 bg-slate-50 rounded-2xl border flex items-center justify-between gap-3">
               <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">${
-                  idx + 1
-                }</span>
+                <span class="w-6 h-6 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">${idx + 1
+            }</span>
                 <span class="font-bold text-slate-800 text-xs">${item.text}</span>
               </div>
               <div class="flex items-center gap-1 shrink-0">
-                <button onclick="moveSequencerItem('${gameId}', ${idx}, -1, '${ptmId}')" ${
-                idx === 0
-                  ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
-                  : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
-              }>▲</button>
-                <button onclick="moveSequencerItem('${gameId}', ${idx}, 1, '${ptmId}')" ${
-                idx === seqState.sequencerItems.length - 1
-                  ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
-                  : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
-              }>▼</button>
+                <button onclick="moveSequencerItem('${gameId}', ${idx}, -1, '${ptmId}')" ${idx === 0
+              ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
+              : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
+            }>▲</button>
+                <button onclick="moveSequencerItem('${gameId}', ${idx}, 1, '${ptmId}')" ${idx === seqState.sequencerItems.length - 1
+              ? 'disabled class="px-2 py-1 bg-slate-200 text-slate-400 rounded-lg text-xs font-bold"'
+              : 'class="px-2 py-1 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg text-xs font-bold"'
+            }>▼</button>
               </div>
             </div>
           `
-            )
-            .join('')}
+        )
+        .join('')}
         </div>
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'sequencer'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Urutan
@@ -1150,25 +1161,23 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
 
     return `
       <div class="space-y-4">
-        ${
-          imgUrl
-            ? `
+        ${imgUrl
+        ? `
           <div class="bg-white p-3 rounded-3xl border text-center">
             <img src="${imgUrl}" alt="Diagram STEAM" class="max-h-80 mx-auto rounded-2xl object-contain border" />
           </div>
         `
-            : ''
-        }
+        : ''
+      }
 
         <div class="space-y-2">
           ${items
-            .map(
-              (item, idx) => `
+        .map(
+          (item, idx) => `
             <div class="bg-slate-50 p-3 rounded-2xl border flex items-center justify-between gap-3">
               <span class="font-bold text-slate-800 text-xs flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${
-                  idx + 1
-                }</span>
+                <span class="w-6 h-6 rounded-lg bg-brand-navy text-white font-black text-xs flex items-center justify-center">Pin ${idx + 1
+            }</span>
                 <span>Label Pin #${idx + 1}:</span>
               </span>
               <select onchange="state.gameAnswers['${gameId}'][${idx}] = this.value" class="p-2 rounded-xl border font-bold text-xs text-brand-blue bg-white">
@@ -1177,8 +1186,8 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
               </select>
             </div>
           `
-            )
-            .join('')}
+        )
+        .join('')}
         </div>
 
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'hotspot'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
@@ -1196,27 +1205,23 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
 
         <div class="space-y-3">
           ${items
-            .map(
-              (item, idx) => `
+        .map(
+          (item, idx) => `
             <div class="bg-white p-4 rounded-3xl border space-y-2">
-              <span class="font-black text-brand-navy block">Parameter #${idx + 1}: ${
-                item.parameter || 'Variabel Keputusan'
-              }</span>
+              <span class="font-black text-brand-navy block">Parameter #${idx + 1}: ${item.parameter || 'Variabel Keputusan'
+            }</span>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button id="gm-${gameId}-sim-${idx}-A" onclick="setSimChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
-                item.opsi_a || 'Pilihan A'
-              }</button>
-                <button id="gm-${gameId}-sim-${idx}-B" onclick="setSimChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
-                item.opsi_b || 'Pilihan B'
-              }</button>
-                <button id="gm-${gameId}-sim-${idx}-C" onclick="setSimChoice('${gameId}', ${idx}, 'C')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${
-                item.opsi_c || 'Pilihan C'
-              }</button>
+                <button id="gm-${gameId}-sim-${idx}-A" onclick="setSimChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_a || 'Pilihan A'
+            }</button>
+                <button id="gm-${gameId}-sim-${idx}-B" onclick="setSimChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_b || 'Pilihan B'
+            }</button>
+                <button id="gm-${gameId}-sim-${idx}-C" onclick="setSimChoice('${gameId}', ${idx}, 'C')" class="p-2.5 rounded-xl border bg-slate-50 font-bold text-left text-xs">${item.opsi_c || 'Pilihan C'
+            }</button>
               </div>
             </div>
           `
-            )
-            .join('')}
+        )
+        .join('')}
         </div>
 
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'simulator'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
@@ -1238,16 +1243,15 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
           <span class="font-black text-purple-900 block text-xs">🔍 Cari Kata-Kata Istilah Berikut:</span>
           <div class="flex flex-wrap gap-1.5 mt-1">
             ${words
-              .map(
-                (w) => `
-              <span class="px-2.5 py-1 rounded-xl text-xs font-black ${
-                wsState.wordSearchState.foundWords.includes(w)
-                  ? 'bg-emerald-500 text-white line-through'
-                  : 'bg-white border text-purple-800'
-              }">${w}</span>
+        .map(
+          (w) => `
+              <span class="px-2.5 py-1 rounded-xl text-xs font-black ${wsState.wordSearchState.foundWords.includes(w)
+              ? 'bg-emerald-500 text-white line-through'
+              : 'bg-white border text-purple-800'
+            }">${w}</span>
             `
-              )
-              .join('')}
+        )
+        .join('')}
           </div>
         </div>
 
@@ -1268,22 +1272,20 @@ function renderGameTypeBody(gameId, tipe, items, ptmId) {
     return `
       <div class="space-y-3">
         ${items
-          .map(
-            (item, idx) => `
+        .map(
+          (item, idx) => `
           <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
             <p class="font-bold text-slate-800">${idx + 1}. ${item.soal}</p>
             <div class="grid grid-cols-2 gap-2">
-              <button id="gm-${gameId}-quiz-${idx}-A" onclick="setQuizChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-white font-bold text-left">A. ${
-              item.opsi_a || 'Opsi A'
+              <button id="gm-${gameId}-quiz-${idx}-A" onclick="setQuizChoice('${gameId}', ${idx}, 'A')" class="p-2.5 rounded-xl border bg-white font-bold text-left">A. ${item.opsi_a || 'Opsi A'
             }</button>
-              <button id="gm-${gameId}-quiz-${idx}-B" onclick="setQuizChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-white font-bold text-left">B. ${
-              item.opsi_b || 'Opsi B'
+              <button id="gm-${gameId}-quiz-${idx}-B" onclick="setQuizChoice('${gameId}', ${idx}, 'B')" class="p-2.5 rounded-xl border bg-white font-bold text-left">B. ${item.opsi_b || 'Opsi B'
             }</button>
             </div>
           </div>
         `
-          )
-          .join('')}
+        )
+        .join('')}
         <button id="btn-submit-game-${gameId}" onclick="requireStudentAuth(() => submitGameSiswa('${ptmId}', '${gameId}', 'quiz_speed'))" class="w-full py-3 bg-purple-600 text-white font-black rounded-2xl shadow hover:bg-purple-700 transition">
           🎮 Periksa & Simpan Skor Game
         </button>
@@ -1639,27 +1641,27 @@ function renderEvaluasiView(ptmId) {
 
       <div class="space-y-4">
         ${soalList
-          .map(
-            (s, idx) => `
+      .map(
+        (s, idx) => `
           <div class="bg-white p-5 rounded-3xl border space-y-3">
             <span class="font-black text-brand-navy">Soal #${idx + 1}</span>
             <p class="font-bold text-slate-800">${s.pertanyaan}</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               ${['A', 'B', 'C', 'D']
-                .map(
-                  (o) => `
+            .map(
+              (o) => `
                 <button id="eval-opt-${s.id_soal}-${o}" onclick="selectEvalOption('${s.id_soal}', '${o}')" class="w-full p-3 text-left rounded-2xl border bg-white hover:bg-slate-50 font-medium transition flex items-center gap-2">
                   <span class="w-6 h-6 rounded-xl bg-slate-100 font-black text-[10px] flex items-center justify-center border">${o}</span>
                   <span>${s['opsi_' + o.toLowerCase()]}</span>
                 </button>
               `
-                )
-                .join('')}
+            )
+            .join('')}
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
 
       <button id="btn-submit-eval-siswa" onclick="requireStudentAuth(() => submitEvaluasiSiswa('${ptmId}', '${evalObj.id_evaluasi}'))" class="w-full py-4 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
@@ -1702,18 +1704,17 @@ function renderAdminUsersView(container) {
           </thead>
           <tbody class="divide-y divide-slate-100">
             ${usersList
-              .map(
-                (u) => `
+      .map(
+        (u) => `
               <tr>
                 <td class="p-3 font-bold whitespace-nowrap">${u.nama_lengkap}</td>
                 <td class="p-3 font-mono">${u.username}</td>
-                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  u.role === 'admin'
-                    ? 'bg-red-100 text-red-700'
-                    : u.role === 'guru'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-blue-100 text-blue-700'
-                }">${String(u.role).toUpperCase()}</span></td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin'
+            ? 'bg-red-100 text-red-700'
+            : u.role === 'guru'
+              ? 'bg-purple-100 text-purple-700'
+              : 'bg-blue-100 text-blue-700'
+          }">${String(u.role).toUpperCase()}</span></td>
                 <td class="p-3 font-bold">${u.kelas || '-'}</td>
                 <td class="p-3 text-center whitespace-nowrap">
                   <div class="flex items-center justify-center gap-1.5">
@@ -1723,8 +1724,8 @@ function renderAdminUsersView(container) {
                 </td>
               </tr>
             `
-              )
-              .join('')}
+      )
+      .join('')}
           </tbody>
         </table>
       </div>
@@ -1742,13 +1743,12 @@ function renderAdminClassesView(container) {
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         ${kelasList
-          .map(
-            (k) => `
+      .map(
+        (k) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between gap-2 shadow-xs">
             <div>
-              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${
-                k.tingkat || '-'
-              }</span>
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Tingkat ${k.tingkat || '-'
+          }</span>
               <h4 class="font-black text-brand-navy text-sm mt-1">${k.nama_kelas}</h4>
               <p class="text-slate-500 text-[11px]">${k.keterangan || ''}</p>
             </div>
@@ -1758,8 +1758,8 @@ function renderAdminClassesView(container) {
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1775,8 +1775,8 @@ function renderGuruPertemuanView(container) {
       </div>
       <div class="space-y-2">
         ${ptmList
-          .map(
-            (p) => `
+      .map(
+        (p) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
             <div>
               <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-black rounded-full text-[10px]">Pertemuan ${p.nomor_pertemuan}</span>
@@ -1789,8 +1789,8 @@ function renderGuruPertemuanView(container) {
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1806,8 +1806,8 @@ function renderGuruMateriView(container) {
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         ${materiList
-          .map(
-            (m) => `
+      .map(
+        (m) => `
           <div class="bg-white p-4 rounded-3xl border flex flex-col justify-between space-y-2">
             <div>
               <span class="px-2 py-0.5 bg-purple-100 text-purple-800 font-bold text-[10px] rounded-full">${m.tipe_media}</span>
@@ -1819,8 +1819,8 @@ function renderGuruMateriView(container) {
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1836,29 +1836,27 @@ function renderGuruLkpdView(container) {
       </div>
       <div class="space-y-2">
         ${lkpdList
-          .map(
-            (l) => `
+      .map(
+        (l) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between gap-3">
             <div>
-              <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-bold text-[10px] rounded-full uppercase">${
-                l.tipe_lkpd || 'manual'
-              }</span>
+              <span class="px-2 py-0.5 bg-blue-100 text-brand-blue font-bold text-[10px] rounded-full uppercase">${l.tipe_lkpd || 'manual'
+          }</span>
               <h4 class="font-black text-brand-navy mt-1">${l.judul_lkpd}</h4>
               <p class="text-slate-500">${l.instruksi}</p>
             </div>
             <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
-              ${
-                l.file_pdf_url
-                  ? `<button onclick="openModalPetakanFieldGuru('${l.id_lkpd}')" class="px-3 py-1 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow">🗺️ Petakan Field</button>`
-                  : ''
-              }
+              ${l.file_pdf_url
+            ? `<button onclick="openModalPetakanFieldGuru('${l.id_lkpd}')" class="px-3 py-1 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow">🗺️ Petakan Field</button>`
+            : ''
+          }
               <button onclick="openLkpdModal('${l.id_lkpd}')" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
               <button onclick="deleteLkpd('${l.id_lkpd}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1874,8 +1872,8 @@ function renderGuruGameView(container) {
       </div>
       <div class="space-y-2">
         ${gamesList
-          .map(
-            (g) => `
+      .map(
+        (g) => `
           <div class="bg-white p-4 rounded-3xl border flex items-center justify-between">
             <div>
               <span class="px-2 py-0.5 bg-purple-100 text-purple-800 font-bold text-[10px] rounded-full uppercase">${g.tipe_game}</span>
@@ -1888,8 +1886,8 @@ function renderGuruGameView(container) {
             </div>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1905,8 +1903,8 @@ function renderGuruSoalView(container) {
       </div>
       <div class="space-y-2">
         ${soalList
-          .map(
-            (s, idx) => `
+      .map(
+        (s, idx) => `
           <div class="bg-white p-4 rounded-3xl border space-y-1">
             <div class="flex items-center justify-between border-b pb-1">
               <span class="font-black text-brand-navy">#${idx + 1} Kunci: ${s.kunci_jawaban}</span>
@@ -1918,8 +1916,8 @@ function renderGuruSoalView(container) {
             <p class="font-bold text-slate-800">${s.pertanyaan}</p>
           </div>
         `
-          )
-          .join('')}
+      )
+      .join('')}
       </div>
     </div>
   `;
@@ -1943,14 +1941,14 @@ function renderGuruKoreksiView(container) {
             </thead>
             <tbody class="divide-y divide-slate-100">
               ${subs
-                .map((s) => {
-                  const scoreDisplay =
-                    s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
-                      ? s.nilai_esai
-                      : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
-                      ? s.skor_otomatis
-                      : 'Belum';
-                  return `
+      .map((s) => {
+        const scoreDisplay =
+          s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+            ? s.nilai_esai
+            : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+              ? s.skor_otomatis
+              : 'Belum';
+        return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
                   <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
@@ -1960,8 +1958,8 @@ function renderGuruKoreksiView(container) {
                   </td>
                 </tr>
               `;
-                })
-                .join('')}
+      })
+      .join('')}
             </tbody>
           </table>
         </div>
@@ -1994,31 +1992,29 @@ function renderGuruRekapView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${
-                subs.length === 0
-                  ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>`
-                  : subs
-                      .map((s) => {
-                        const scoreDisplay =
-                          s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
-                            ? s.nilai_esai
-                            : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
-                            ? s.skor_otomatis
-                            : 0;
-                        return `
+              ${subs.length === 0
+      ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>`
+      : subs
+        .map((s) => {
+          const scoreDisplay =
+            s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+              ? s.nilai_esai
+              : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+                ? s.skor_otomatis
+                : 0;
+          return `
                 <tr>
                   <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
                   <td class="p-3">${s.kelas || '-'}</td>
                   <td class="p-3 text-center uppercase font-mono">${s.tipe_sub || '-'}</td>
                   <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                  }">${s.status || 'Belum'}</span></td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            }">${s.status || 'Belum'}</span></td>
                 </tr>
               `;
-                      })
-                      .join('')
-              }
+        })
+        .join('')
+    }
             </tbody>
           </table>
         </div>
@@ -2043,8 +2039,8 @@ function exportRekapToCsv() {
       s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
         ? s.nilai_esai
         : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
-        ? s.skor_otomatis
-        : 0;
+          ? s.skor_otomatis
+          : 0;
 
     const row = [
       `"${s.id_sub || ''}"`,
@@ -2448,7 +2444,7 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
       id_lkpd: lkpdObj.id_lkpd,
       username_siswa: user.username
     });
-    
+
     const savedServerAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
     const localDraft = getLkpdOverlayDraft(lkpdObj.id_lkpd);
     const combinedAnswers = { ...savedServerAnswers, ...localDraft };
@@ -2534,7 +2530,7 @@ async function renderDesktopInlinePdfPages(containerWrap, pdfDoc, fieldMap, save
       el.placeholder = f.label || f.id;
       el.title = f.label || f.id;
       el.value = savedAnswers[f.id] || '';
-      
+
       el.oninput = () => saveLkpdOverlayDraft(idLkpd);
 
       const calculatedFontSize = Math.max(Math.min(14, Math.round(11 * renderScale)), 10);
@@ -2603,7 +2599,7 @@ async function openLkpdFullscreenModal(ptmId, idLkpd) {
       id_lkpd: lkpdObj.id_lkpd,
       username_siswa: user.username
     });
-    
+
     const savedServerAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
     const localDraft = getLkpdOverlayDraft(idLkpd);
     const combinedAnswers = { ...savedServerAnswers, ...localDraft };
@@ -2663,10 +2659,10 @@ async function drawLkpdFullscreenPages(containerEl) {
       el.dataset.fieldId = f.id;
       el.placeholder = f.label || f.id;
       el.title = f.label || f.id;
-      
+
       const currentVal = document.querySelector(`.lkpd-fill-input[data-field-id="${f.id}"]`)?.value;
       el.value = currentVal !== undefined ? currentVal : (savedAnswers[f.id] || '');
-      
+
       el.oninput = () => saveLkpdOverlayDraft(idLkpd);
 
       const calculatedFontSize = Math.max(Math.min(15, Math.round(12 * (renderScale / 1.2))), 10);
@@ -2938,7 +2934,7 @@ async function submitGameSiswa(ptmId, idGame, tipe) {
   let config = { items: [] };
   try {
     config = typeof gameObj.konfigurasi_json === 'string' ? JSON.parse(gameObj.konfigurasi_json) : gameObj.konfigurasi_json;
-  } catch (e) {}
+  } catch (e) { }
 
   const items = config.items || [];
   const answers = state.gameAnswers[idGame] || {};
@@ -3211,6 +3207,8 @@ function openPertemuanModal(idPtm = null) {
   const nomorElem = document.getElementById('pertemuan-form-nomor');
   const judulElem = document.getElementById('pertemuan-form-judul');
   const descElem = document.getElementById('pertemuan-form-deskripsi');
+  const promptSciElem = document.getElementById('pertemuan-form-prompt-science');
+  const promptEngElem = document.getElementById('pertemuan-form-prompt-engineering');
   const kelasElem = document.getElementById('pertemuan-form-kelas');
   const statusElem = document.getElementById('pertemuan-form-status');
 
@@ -3222,6 +3220,8 @@ function openPertemuanModal(idPtm = null) {
       if (nomorElem) nomorElem.value = p.nomor_pertemuan || '1';
       if (judulElem) judulElem.value = p.judul_pertemuan || '';
       if (descElem) descElem.value = p.deskripsi || '';
+      if (promptSciElem) promptSciElem.value = p.prompt_science || '';
+      if (promptEngElem) promptEngElem.value = p.prompt_engineering || '';
       if (kelasElem) kelasElem.value = p.id_kelas || 'ALL';
       if (statusElem) statusElem.value = p.status || 'Publish';
     }
@@ -3231,6 +3231,8 @@ function openPertemuanModal(idPtm = null) {
     if (nomorElem) nomorElem.value = '1';
     if (judulElem) judulElem.value = '';
     if (descElem) descElem.value = '';
+    if (promptSciElem) promptSciElem.value = '';
+    if (promptEngElem) promptEngElem.value = '';
     if (kelasElem) kelasElem.value = 'ALL';
     if (statusElem) statusElem.value = 'Publish';
   }
@@ -3255,6 +3257,8 @@ async function handlePertemuanSubmit(e) {
     nomor_pertemuan: document.getElementById('pertemuan-form-nomor').value,
     judul_pertemuan: document.getElementById('pertemuan-form-judul').value,
     deskripsi: document.getElementById('pertemuan-form-deskripsi').value,
+    prompt_science: document.getElementById('pertemuan-form-prompt-science').value,
+    prompt_engineering: document.getElementById('pertemuan-form-prompt-engineering').value,
     id_kelas: document.getElementById('pertemuan-form-kelas').value,
     status: document.getElementById('pertemuan-form-status').value
   });
@@ -3443,18 +3447,16 @@ async function uploadPdfToDrive(targetModule = 'materi') {
           html: `
                         <div class="text-xs text-left space-y-2 mt-2">
                             <p class="font-bold text-slate-700">Hasil Pemrosesan Berkas PDF:</p>
-                            <div class="p-3 ${
-                              textLength > 0
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                : 'bg-amber-50 border-amber-200 text-amber-900'
-                            } border rounded-xl space-y-1">
+                            <div class="p-3 ${textLength > 0
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+            } border rounded-xl space-y-1">
                                 <p>📝 <b>Panjang Teks Ditampilkan:</b> ${textLength} Karakter</p>
                                 <p>❓ <b>Soal Terdeteksi:</b> ${questionCount} Pertanyaan</p>
-                                ${
-                                  usedOcr
-                                    ? `<p>🔍 <b>Metode:</b> OCR (teks asli PDF tidak terbaca / kemungkinan hasil Flatten Canva)</p>`
-                                    : ''
-                                }
+                                ${usedOcr
+              ? `<p>🔍 <b>Metode:</b> OCR (teks asli PDF tidak terbaca / kemungkinan hasil Flatten Canva)</p>`
+              : ''
+            }
                             </div>
                             <p class="text-slate-500 italic text-[11px]">Teks materi dan daftar soal otomatis diisikan ke dalam form di bawah ini.</p>
                         </div>
@@ -3676,7 +3678,7 @@ function openGameModal(idGame = null) {
           typeof g.konfigurasi_json === 'string'
             ? JSON.parse(g.konfigurasi_json)
             : g.konfigurasi_json || { items: [] };
-      } catch (e) {}
+      } catch (e) { }
 
       renderGameConfigInputs(config.items || []);
     }
@@ -4071,7 +4073,7 @@ function openKoreksiModal(idSub) {
               }
             });
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       const entries = Object.keys(parsedJawaban).map((key) => {
@@ -4085,9 +4087,8 @@ function openKoreksiModal(idSub) {
           (entry, idx) => `
             <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center gap-3">
               <span class="font-bold text-slate-600 shrink-0">${fieldLabels[entry.key] || entry.key || `Isian #${idx + 1}`}:</span>
-              <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-right break-words">${
-                entry.value || '<i class="text-slate-400 font-normal">(Tidak diisi)</i>'
-              }</span>
+              <span class="font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-right break-words">${entry.value || '<i class="text-slate-400 font-normal">(Tidak diisi)</i>'
+            }</span>
             </div>
           `
         )
@@ -4098,9 +4099,8 @@ function openKoreksiModal(idSub) {
           (ans, idx) => `
                 <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
                     <span class="font-bold text-slate-700 text-[11px]">Pertanyaan #${idx + 1}</span>
-                    <p class="text-slate-800 font-medium whitespace-pre-wrap bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs">${
-                      ans ? ans.trim() : '<i class="text-slate-400">(Tidak diisi)</i>'
-                    }</p>
+                    <p class="text-slate-800 font-medium whitespace-pre-wrap bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs">${ans ? ans.trim() : '<i class="text-slate-400">(Tidak diisi)</i>'
+            }</p>
                 </div>
             `
         )
@@ -4127,20 +4127,17 @@ function openKoreksiModal(idSub) {
                     <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5">
                         <div class="flex items-start justify-between gap-2 border-b pb-1">
                             <span class="font-bold text-slate-800 text-xs">#${idx + 1}. ${qText}</span>
-                            ${
-                              kunci
-                                ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
-                                    isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                                  }">
+                            ${kunci
+                ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                }">
                                 ${isCorrect ? '✅ Benar' : '❌ Salah'} (Kunci: ${kunci})
                             </span>`
-                                : ''
-                            }
+                : ''
+              }
                         </div>
                         <p class="text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">
-                            Pilihan Jawaban Siswa: <span class="uppercase border px-2 py-0.5 rounded bg-slate-50">${
-                              userAns || '-'
-                            }</span>
+                            Pilihan Jawaban Siswa: <span class="uppercase border px-2 py-0.5 rounded bg-slate-50">${userAns || '-'
+              }</span>
                         </p>
                     </div>
                 `;
@@ -4161,9 +4158,8 @@ function openKoreksiModal(idSub) {
             (key, idx) => `
                 <div class="p-2.5 bg-white rounded-xl border border-slate-200 text-xs flex justify-between items-center">
                     <span class="font-bold text-slate-500">Item #${idx + 1}</span>
-                    <span class="font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">${
-                      parsedJawaban[key]
-                    }</span>
+                    <span class="font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded border border-purple-200">${parsedJawaban[key]
+              }</span>
                 </div>
             `
           )
@@ -4186,10 +4182,12 @@ function openKoreksiModal(idSub) {
         ${jawabanHtml}
       </div>
     </div>
-    ${
-      sub.canvas_image_base64
-        ? `<div class="p-3 bg-slate-50 border rounded-2xl"><span class="font-black text-brand-navy block mb-2">🎨 Sketsa Proyek STEAM</span><img src="${sub.canvas_image_base64}" class="max-h-56 rounded-xl border mx-auto bg-white" /></div>`
-        : ''
+    ${sub.canvas_image_base64
+      ? `<div class="p-3 bg-slate-50 border rounded-2xl">
+            <span class="font-black text-brand-navy block mb-2">🎨 Sketsa Proyek STEAM</span>
+            <img src="${sub.canvas_image_base64}" onerror="this.onerror=null; this.src='https://placehold.co/600x300?text=Gagal+Memuat+Gambar';" class="max-h-60 rounded-xl border mx-auto bg-white object-contain shadow-xs" />
+          </div>`
+      : ''
     }
   `;
 

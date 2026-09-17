@@ -97,12 +97,6 @@ select:focus {
     outline: none;
 }
 
-#siswa-lkpd-pages {
-    touch-action: pan-x pan-y pinch-zoom;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
 @media print {
 
     #main-drawer,

@@ -2482,8 +2482,6 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 }
 
 async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-
   containerEl.innerHTML = `
     <div class="space-y-4">
       <div id="siswa-lkpd-pages" class="space-y-4"></div>
@@ -2497,12 +2495,7 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
   const firstPageForScale = await pdfDoc.getPage(1);
   const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
   const availableWidth = Math.max(containerEl.clientWidth - 24, 260);
-
-  const minScale = isMobile ? 1.15 : 0.3;
-  const responsiveScale = Math.min(
-    Math.max(availableWidth / naturalViewport.width, minScale),
-    fieldMap.renderScale || 1.5
-  );
+  const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
 
   for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
     const page = await pdfDoc.getPage(pageNum);
@@ -2512,7 +2505,7 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
     pageWrap.style.position = 'relative';
     pageWrap.style.width = viewport.width + 'px';
     pageWrap.style.height = viewport.height + 'px';
-    pageWrap.style.maxWidth = isMobile ? 'none' : '100%';
+    pageWrap.style.maxWidth = '100%';
     pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
 
     const canvas = document.createElement('canvas');
@@ -2530,41 +2523,20 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
       el.placeholder = f.label || f.id;
       el.title = f.label || f.id;
       el.value = savedAnswers[f.id] || '';
-
       Object.assign(el.style, {
         position: 'absolute',
         left: f.x + '%',
         top: f.y + '%',
         width: f.w + '%',
         height: f.h + '%',
-        minWidth: '48px',
-        minHeight: isMobile ? '32px' : '24px',
         border: '1.5px solid #2563eb',
         background: 'rgba(255, 255, 255, 0.85)',
         fontFamily: 'inherit',
-        fontSize: isMobile ? '16px' : '12px',
+        fontSize: '12px',
         padding: '3px 6px',
         borderRadius: '6px',
-        boxSizing: 'border-box',
-        transition: 'transform 0.15s ease',
-        transformOrigin: 'top left',
-        zIndex: '1'
+        boxSizing: 'border-box'
       });
-
-      if (isMobile) {
-        el.addEventListener('focus', () => {
-          el.style.zIndex = '20';
-          el.style.transform = 'scale(1.25)';
-          pageWrap.style.overflow = 'visible';
-          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        });
-        el.addEventListener('blur', () => {
-          el.style.zIndex = '1';
-          el.style.transform = 'scale(1)';
-          pageWrap.style.overflow = 'hidden';
-        });
-      }
-
       pageWrap.appendChild(el);
     });
 

@@ -5,6 +5,8 @@ import { collectHotspotItem, renderHotspotConfigForm, renderHotspotItemRow } fro
 import { apiPost, fetchAllInitialData, refreshSubmissionsData } from '../services/api.js';
 import { state } from '../state.js';
 import { populateKelasSelects } from '../views/admin.js';
+import { apiPost, fetchAllInitialData, refreshSubmissionsData, saveToLocalStorage } from '../services/api.js';
+
 
 export function renderGuruPertemuanView(container) {
   const ptmList = state.cachedData.pertemuan || [];
@@ -643,7 +645,7 @@ export async function handleLkpdSubmit(e) {
     petaFieldVal = JSON.stringify(petaFieldVal);
   }
 
-  const res = await apiPost({
+  const payload = {
     action: 'save_lkpd',
     id_lkpd: idLkpd,
     id_pertemuan: document.getElementById('lkpd-form-pertemuan').value,
@@ -657,13 +659,42 @@ export async function handleLkpdSubmit(e) {
     gambar_url: document.getElementById('lkpd-form-gambar-url').value,
     soal_json: soalArr,
     fitur_kanvas: document.getElementById('lkpd-form-kanvas').checked
-  });
+  };
+
+  const res = await apiPost(payload);
 
   setButtonLoading(btn, false, '', '💾 Simpan LKPD');
   if (res.success) {
     closeLkpdModal();
     showToast('success', res.message);
-    await fetchAllInitialData(true);
+
+    const targetId = res.id_lkpd || idLkpd || payload.id_lkpd;
+    const newLkpdData = {
+      id_lkpd: targetId,
+      id_pertemuan: payload.id_pertemuan,
+      id_kelas: 'ALL',
+      judul_lkpd: payload.judul_lkpd,
+      tipe_lkpd: payload.tipe_lkpd,
+      instruksi: payload.instruksi,
+      file_pdf_url: payload.file_pdf_url,
+      file_drive_id: payload.file_drive_id,
+      gambar_url: payload.gambar_url,
+      soal_json: typeof payload.soal_json === 'object' ? JSON.stringify(payload.soal_json) : payload.soal_json,
+      fitur_kanvas: payload.fitur_kanvas ? 'TRUE' : 'FALSE',
+      status: 'Publish',
+      isi_teks: payload.isi_teks,
+      peta_field_json: payload.peta_field_json
+    };
+
+    if (!Array.isArray(state.cachedData.lkpd)) state.cachedData.lkpd = [];
+    const idx = state.cachedData.lkpd.findIndex((x) => String(x.id_lkpd || x.id) === String(targetId));
+    if (idx !== -1) {
+      state.cachedData.lkpd[idx] = { ...state.cachedData.lkpd[idx], ...newLkpdData };
+    } else {
+      state.cachedData.lkpd.push(newLkpdData);
+    }
+
+    await saveToLocalStorage();
     switchView('guru-lkpd');
   } else {
     Swal.fire({ icon: 'error', title: 'Gagal Menyimpan LKPD', text: res.message });

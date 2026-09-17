@@ -3,6 +3,7 @@ import { CACHE_KEY } from '../config.js';
 import { apiPost } from '../services/api.js';
 import { state } from '../state.js';
 import { playClick, playError, playSuccess, playWarning } from './sound.js';
+import { clearSessionState, saveSessionState, state } from '../state.js';
 
 export function showToast(icon, title) {
   Swal.fire({
@@ -129,6 +130,8 @@ export async function handleLoginSubmit(e) {
   if (res.success) {
     const previousGuestUser = 'guest';
     state.currentUser = res.user;
+    state.lastActivity = Date.now();
+    saveSessionState();
 
     if (state.activePertemuanId) {
       const guestDraftKey = `${CACHE_KEY}_DRAFT_${state.activePertemuanId}_${previousGuestUser}`;
@@ -169,12 +172,21 @@ export function logout() {
     'Kamu akan keluar dari akun saat ini.',
     () => {
       state.currentUser = null;
+      clearSessionState();
       updateUIForAuthenticatedUser();
       switchView('home');
       showToast('success', 'Berhasil Keluar Akun');
     },
     'Logout'
   );
+}
+
+export function performAutoLogout() {
+  state.currentUser = null;
+  clearSessionState();
+  updateUIForAuthenticatedUser();
+  switchView('home');
+  showToast('warning', 'Sesi berakhir karena tidak ada aktivitas selama 15 menit.');
 }
 
 export function updateUIForAuthenticatedUser() {

@@ -12,6 +12,7 @@ import { renderHomeView } from '../views/home.js';
 import { loadLkpdDraft, renderLkpdView } from '../views/lkpd.js';
 import { renderMateriView } from '../views/materi.js';
 import { renderRuangSteamView, updateSteamPertemuanInfo } from '../views/steam-lab.js';
+import { state, saveSessionState } from '../state.js';
 
 export function toggleDrawer(isOpen) {
   const drawer = document.getElementById('main-drawer');
@@ -192,6 +193,10 @@ export function renderAdminNav(container) {
 export async function switchView(viewId, paramId = null) {
   state.currentView = viewId;
   state.activePertemuanId = paramId;
+
+  if (state.currentUser) {
+    saveSessionState();
+  }
 
   const viewport = document.getElementById('content-viewport');
   const titleElem = document.getElementById('view-title');

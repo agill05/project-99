@@ -172,3 +172,20 @@ select:focus {
 #mobile-form-cards-container {
     scroll-padding-bottom: 80px;
 }
+
+#lkpd-fullscreen-scroll-body {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+.lkpd-fullscreen-page-wrap {
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.lkpd-fill-input:focus {
+    border-color: #0D6EFD !important;
+    box-shadow: 0 0 8px rgba(13, 110, 253, 0.5) !important;
+    background-color: #ffffff !important;
+    z-index: 40 !important;
+}

@@ -1,3 +1,233 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: index.html, logo-ung.png, script.js, style.css
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+index.html
+logo-ung.png
+script.js
+style.css
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="style.css">
+body {
+    font-family: "Nunito", sans-serif;
+    background-color: #0b2545;
+    color: #1e293b;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+    font-family: "Poppins", sans-serif;
+}
+
+canvas {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: crosshair;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.05);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(11, 37, 69, 0.2);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(11, 37, 69, 0.4);
+}
+
+#main-drawer {
+    will-change: transform;
+}
+
+.backdrop-blur-xs {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.draggable-item {
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.draggable-item:active {
+    cursor: grabbing;
+}
+
+.draggable-item.dragging {
+    position: fixed !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    opacity: 0.85;
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 12px 28px rgba(11, 37, 69, 0.25) !important;
+}
+
+.drop-zone {
+    min-height: 120px;
+    transition: all 0.2s ease-in-out;
+}
+
+.drop-zone.drag-over {
+    border-color: #0D6EFD !important;
+    background-color: rgba(13, 110, 253, 0.08) !important;
+    transform: scale(1.01);
+    box-shadow: inset 0 0 12px rgba(13, 110, 253, 0.15);
+}
+
+.gm-item-row {
+    transition: all 0.2s ease-in-out;
+}
+
+.gm-item-row:hover {
+    border-color: #6b38fb;
+    box-shadow: 0 2px 8px rgba(107, 56, 251, 0.1);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+}
+
+@media print {
+
+    #main-drawer,
+    header,
+    button,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    #content-viewport {
+        padding: 0 !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    textarea,
+    select,
+    .lkpd-fill-input {
+        font-size: 16px !important;
+    }
+}
+
+.pdf-mobile-viewer-container {
+    max-height: 45vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.pdf-field-highlight {
+    outline: 3px solid #FDC82F !important;
+    background-color: rgba(253, 200, 47, 0.4) !important;
+    transition: all 0.3s ease-in-out;
+    z-index: 30 !important;
+}
+
+.mobile-input-card {
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-input-card.active-card {
+    border-color: #0D6EFD !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    background-color: #F8FAFC !important;
+}
+
+@supports (height: 100dvh) {
+    .pdf-mobile-viewer-container {
+        max-height: 38dvh !important;
+    }
+}
+
+.mobile-card-nav-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-card-nav-btn:active {
+    transform: scale(0.95);
+}
+
+#mobile-form-cards-container {
+    scroll-padding-bottom: 80px;
+}
+</file>
+
+<file path="script.js">
 const GAS_API_URL =
   'https://script.google.com/macros/s/AKfycbwjFqiLUAcrOlKnxCjIsLlYi9E1oWBSg42qx1-0vL3ntSOQN5CuT5pQ2AvcftjpjpF8fQ/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
@@ -833,10 +1063,6 @@ function renderMateriView(ptmId) {
   `;
 }
 
-let activeLkpdScale = 1.0;
-let activeLkpdFitMode = 'fit';
-let currentActiveLkpdContext = { ptmId: null, idLkpd: null, pdfDoc: null, fieldMap: null, savedAnswers: {} };
-
 function renderLkpdView(ptmId) {
   const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
   if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
@@ -872,14 +1098,11 @@ function renderLkpdView(ptmId) {
           ? hasPdfOverlay
             ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
-            <div>
-              <h4 class="font-black text-brand-navy">✍️ Form Isian PDF Interaktif</h4>
-              <p class="text-[11px] text-slate-500 font-medium">Ketik jawaban langsung pada lembar kerja PDF</p>
-            </div>
-            <button onclick="openLkpdFullscreenModal('${ptmId}', '${lkpdObj.id_lkpd}')" class="px-4 py-2.5 bg-brand-purple hover:bg-purple-700 text-white font-black rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-xs">
-              <span>🖥️ Buka Mode Layar Penuh (Fullscreen)</span>
-            </button>
+          <div class="flex items-center justify-between border-b pb-2">
+            <h4 class="font-black text-brand-navy">✍️ Form Isian PDF Interaktif</h4>
+            <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
+              Ketik jawaban langsung di atas dokumen PDF (Auto-Save Active)
+            </span>
           </div>
           <div id="siswa-lkpd-overlay-container" class="overflow-x-auto flex justify-center bg-slate-100 p-3 rounded-2xl border"></div>
         </div>
@@ -891,7 +1114,7 @@ function renderLkpdView(ptmId) {
             <h4>Peta Area Isian Belum Dikonfigurasi Guru</h4>
           </div>
           <p class="text-amber-700 font-medium leading-relaxed text-xs">
-            Dokumen PDF LKPD sudah diunggah, namun area isian interaktif belum dipetakan oleh guru.
+            Dokumen PDF LKPD sudah diunggah, namun area isian interaktif belum dipetakan oleh guru. Silakan pelajari materi PDF di bawah ini.
           </p>
           ${
             lkpdObj.file_pdf_url
@@ -912,8 +1135,10 @@ function renderLkpdView(ptmId) {
         !isPdfLkpd && isiTeks
           ? `
         <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
-          <h4 class="font-black text-brand-navy border-b pb-2">📖 Material Teks LKPD</h4>
-          <div class="prose max-w-none text-slate-800 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border whitespace-pre-line text-xs">
+          <h4 class="font-black text-brand-navy border-b pb-2 flex items-center gap-2">
+            <span>📖 Material Teks / Lembar Kerja LKPD</span>
+          </h4>
+          <div class="prose max-w-none text-slate-800 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line text-xs">
             ${isiTeks}
           </div>
         </div>
@@ -922,29 +1147,84 @@ function renderLkpdView(ptmId) {
       }
 
       ${
+        !isPdfLkpd && lkpdObj.gambar_url
+          ? `
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+          <h4 class="font-black text-brand-navy border-b pb-2">🖼️ Visual Ilustrasi LKPD</h4>
+          <img src="${lkpdObj.gambar_url}" alt="Visual LKPD" class="max-h-96 rounded-2xl border mx-auto object-contain bg-slate-50" />
+        </div>
+      `
+          : ''
+      }
+
+      ${
         !isPdfLkpd
           ? `
+      <!-- Form Manual Teks HANYA TAMPIL jika Tipe Manual -->
       <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-4">
-        <h4 class="font-black text-brand-navy border-b pb-2">✍️ Form Jawaban Teks LKPD</h4>
+        <div class="flex items-center justify-between border-b pb-2">
+          <h4 class="font-black text-brand-navy">✍️ Form Jawaban Teks / Manual LKPD</h4>
+          <span class="text-[10px] bg-blue-50 text-brand-blue border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">
+            💾 Auto-Save Draft Aktif
+          </span>
+        </div>
+
         ${
           questions.length > 0
             ? questions
                 .map(
                   (q, idx) => `
-          <div class="space-y-1.5 p-3 rounded-2xl bg-slate-50 border">
+          <div class="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
             <label class="block font-bold text-slate-800">${idx + 1}. ${q}</label>
-            <textarea id="lkpd-ans-${idx}" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="3" class="w-full p-3 rounded-xl border bg-white text-xs" placeholder="Tuliskan jawaban kamu..."></textarea>
+            <textarea id="lkpd-ans-${idx}" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="3" class="w-full p-3 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none bg-white text-xs" placeholder="Tuliskan jawaban kamu di sini..."></textarea>
           </div>
         `
                 )
                 .join('')
             : `
-          <textarea id="lkpd-ans-0" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="6" class="w-full p-3 rounded-xl border bg-white text-xs" placeholder="Tuliskan jawaban lengkap kamu..."></textarea>
+          <div class="space-y-1.5">
+            <label class="block font-bold text-slate-800">Tuliskan hasil pengerjaan/jawaban LKPD kamu di bawah ini:</label>
+            <textarea id="lkpd-ans-0" oninput="saveLkpdDraft('${ptmId}', ${questionCount})" rows="6" class="w-full p-3 rounded-xl border font-medium focus:ring-2 focus:ring-brand-blue focus:outline-none bg-white text-xs" placeholder="Tuliskan jawaban kamu secara lengkap..."></textarea>
+          </div>
         `
         }
       </div>
+      `
+          : ''
+      }
+
+      <!-- Fitur Kanvas Prototyping STEAM (Opsional) -->
+      ${
+        lkpdObj.fitur_kanvas === 'TRUE' || lkpdObj.fitur_kanvas === true
+          ? `
+        <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-3">
+          <h4 class="font-black text-brand-navy border-b pb-2">🎨 Kanvas Prototyping STEAM</h4>
+          <div class="flex items-center justify-between p-2 bg-slate-50 rounded-2xl border">
+            <div class="flex items-center gap-1.5">
+              <button onclick="setCanvasColor('#0B2545')" class="w-6 h-6 rounded-full bg-brand-navy border-2 border-white shadow-xs" title="Biru Tua"></button>
+              <button onclick="setCanvasColor('#EF4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-xs" title="Merah"></button>
+              <button onclick="setCanvasColor('#10B981')" class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white shadow-xs" title="Hijau"></button>
+              <button onclick="setCanvasColor('#6B38FB')" class="w-6 h-6 rounded-full bg-purple-600 border-2 border-white shadow-xs" title="Ungu"></button>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="undoCanvas()" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-xl text-[10px] hover:bg-amber-200 transition">↩️ Undo</button>
+              <button onclick="clearCanvas()" class="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-xl text-[10px] hover:bg-red-200 transition">🗑️ Clear</button>
+            </div>
+          </div>
+          <div class="border-2 border-dashed border-slate-300 bg-white rounded-3xl overflow-hidden">
+            <canvas id="steam-canvas" class="w-full h-[240px] cursor-crosshair touch-none"></canvas>
+          </div>
+        </div>
+      `
+          : ''
+      }
+
+      <!-- Tombol Kirim Manual (Hanya Tampil Jika Bukan PDF Overlay) -->
+      ${
+        !isPdfLkpd
+          ? `
       <button id="btn-submit-lkpd-siswa" onclick="requireStudentAuth(() => submitLkpdSiswa('${ptmId}', '${lkpdObj.id_lkpd}', ${questionCount}))" class="w-full py-3.5 bg-brand-emerald text-white font-black rounded-2xl shadow hover:bg-emerald-600 transition">
-        🚀 Kirim Jawaban LKPD Manual
+        🚀 Kirim Jawaban LKPD Manual & Kanvas
       </button>
       `
           : ''
@@ -2446,7 +2726,11 @@ let currentLkpdScaleMultiplier = 1.0;
 
 async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
   const user = state.currentUser || { username: 'guest' };
-  if (!lkpdObj.peta_field_json) return;
+
+  if (!lkpdObj.peta_field_json) {
+    containerEl.innerHTML = `<iframe src="${lkpdObj.file_pdf_url}" class="w-full h-[600px] border-0 rounded-2xl"></iframe>`;
+    return;
+  }
 
   containerEl.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold text-xs">Memuat Lembar Isian LKPD...</div>`;
 
@@ -2465,158 +2749,15 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
     const localDraft = getLkpdOverlayDraft(lkpdObj.id_lkpd);
     const combinedAnswers = { ...savedServerAnswers, ...localDraft };
 
-    currentActiveLkpdContext = { ptmId, idLkpd: lkpdObj.id_lkpd, pdfDoc, fieldMap, savedAnswers: combinedAnswers };
-
-    await renderLkpdInlineContainer(containerEl, pdfDoc, fieldMap, combinedAnswers, ptmId, lkpdObj.id_lkpd);
+    await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, combinedAnswers, ptmId, lkpdObj.id_lkpd);
+    
+    if (Object.keys(localDraft).length > 0) {
+      showToast('info', 'Draft pengerjaan PDF Overlay dipulihkan!');
+    }
   } catch (err) {
     console.error('Error rendering student PDF overlay:', err);
     containerEl.innerHTML = `<div class="p-4 text-center text-red-500 font-bold text-xs">Gagal memuat PDF Interaktif (${err.message})</div>`;
   }
-}
-
-async function renderLkpdInlineContainer(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
-  containerEl.innerHTML = `
-    <div class="space-y-3 w-full text-center">
-      <p class="text-xs text-slate-600 font-medium">
-        Gunakan tombol di bawah ini untuk pengerjaan yang lebih nyaman dan pas di layar HP kamu:
-      </p>
-      <button onclick="openLkpdFullscreenModal('${ptmId}', '${idLkpd}')" class="w-full py-3.5 bg-brand-purple hover:bg-purple-700 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-xs">
-        <span>🖥️ Buka Layar Penuh (Fullscreen)</span>
-      </button>
-    </div>
-  `;
-}
-
-async function openLkpdFullscreenModal(ptmId, idLkpd) {
-  const lkpdObj = (state.cachedData.lkpd || []).find((l) => String(l.id_lkpd) === String(idLkpd));
-  if (!lkpdObj) return;
-
-  const modal = document.getElementById('lkpd-fullscreen-modal');
-  const titleElem = document.getElementById('lkpd-fullscreen-title');
-  const contentWrap = document.getElementById('lkpd-fullscreen-content');
-
-  if (titleElem) titleElem.textContent = lkpdObj.judul_lkpd;
-
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-
-  document.getElementById('btn-floating-save-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, idLkpd);
-
-  if (currentActiveLkpdContext.pdfDoc && currentActiveLkpdContext.idLkpd === idLkpd) {
-    await drawLkpdFullscreenPages(contentWrap);
-  } else {
-    contentWrap.innerHTML = `<div class="p-8 text-white font-bold text-xs">Memuat PDF...</div>`;
-    const user = state.currentUser || { username: 'guest' };
-    const fieldMap = JSON.parse(lkpdObj.peta_field_json);
-    const arrayBuffer = await fetchPdfArrayBuffer(lkpdObj.file_pdf_url, lkpdObj.file_drive_id);
-    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-    const jawabanRes = await apiPost({
-      action: 'get_jawaban_lkpd_isian',
-      id_lkpd: lkpdObj.id_lkpd,
-      username_siswa: user.username
-    });
-    
-    const savedServerAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
-    const localDraft = getLkpdOverlayDraft(idLkpd);
-    const combinedAnswers = { ...savedServerAnswers, ...localDraft };
-
-    currentActiveLkpdContext = { ptmId, idLkpd, pdfDoc, fieldMap, savedAnswers: combinedAnswers };
-    await drawLkpdFullscreenPages(contentWrap);
-  }
-}
-
-function closeLkpdFullscreenModal() {
-  const modal = document.getElementById('lkpd-fullscreen-modal');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
-}
-
-async function drawLkpdFullscreenPages(containerEl) {
-  const { pdfDoc, fieldMap, savedAnswers, idLkpd } = currentActiveLkpdContext;
-  if (!pdfDoc || !fieldMap) return;
-
-  containerEl.innerHTML = '';
-  const scrollBody = document.getElementById('lkpd-fullscreen-scroll-body');
-  const viewportWidth = scrollBody.clientWidth - 24;
-
-  const firstPage = await pdfDoc.getPage(1);
-  const naturalViewport = firstPage.getViewport({ scale: 1 });
-
-  // Hitung skala berdasarkan mode
-  let renderScale = 1.0;
-  if (activeLkpdFitMode === 'fit') {
-    renderScale = Math.max(viewportWidth / naturalViewport.width, 0.45);
-    activeLkpdScale = renderScale;
-  } else {
-    renderScale = activeLkpdScale;
-  }
-
-  document.getElementById('lkpd-zoom-text').textContent = `${Math.round((renderScale / (viewportWidth / naturalViewport.width)) * 100)}%`;
-
-  for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
-    const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: renderScale });
-
-    const pageWrap = document.createElement('div');
-    pageWrap.className = 'lkpd-fullscreen-page-wrap relative bg-white rounded-xl overflow-hidden mb-6 border shrink-0';
-    pageWrap.style.width = viewport.width + 'px';
-    pageWrap.style.height = viewport.height + 'px';
-
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    pageWrap.appendChild(canvas);
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-    const fields = fieldMap.fields[pageNum] || [];
-    fields.forEach((f) => {
-      const el = document.createElement(f.type === 'textarea' ? 'textarea' : 'input');
-      if (f.type !== 'textarea') el.type = 'text';
-      el.className = 'lkpd-fill-input';
-      el.dataset.fieldId = f.id;
-      el.placeholder = f.label || f.id;
-      el.title = f.label || f.id;
-      
-      const currentVal = document.querySelector(`.lkpd-fill-input[data-field-id="${f.id}"]`)?.value;
-      el.value = currentVal !== undefined ? currentVal : (savedAnswers[f.id] || '');
-      
-      el.oninput = () => saveLkpdOverlayDraft(idLkpd);
-
-      const calculatedFontSize = Math.max(Math.min(15, Math.round(12 * (renderScale / 1.2))), 10);
-
-      Object.assign(el.style, {
-        position: 'absolute',
-        left: f.x + '%',
-        top: f.y + '%',
-        width: f.w + '%',
-        height: f.h + '%',
-        border: '1.5px solid #2563eb',
-        background: 'rgba(255, 255, 255, 0.92)',
-        fontFamily: 'inherit',
-        fontSize: calculatedFontSize + 'px',
-        padding: '3px 6px',
-        borderRadius: '6px',
-        boxSizing: 'border-box'
-      });
-      pageWrap.appendChild(el);
-    });
-
-    containerEl.appendChild(pageWrap);
-  }
-}
-
-function setLkpdZoomMode(mode) {
-  activeLkpdFitMode = mode;
-  const contentWrap = document.getElementById('lkpd-fullscreen-content');
-  if (contentWrap) drawLkpdFullscreenPages(contentWrap);
-}
-
-function changeLkpdZoom(delta) {
-  activeLkpdFitMode = 'custom';
-  activeLkpdScale = Math.min(Math.max(activeLkpdScale + delta, 0.4), 2.5);
-  const contentWrap = document.getElementById('lkpd-fullscreen-content');
-  if (contentWrap) drawLkpdFullscreenPages(contentWrap);
 }
 
 async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
@@ -4668,3 +4809,578 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateUIForAuthenticatedUser();
   await switchView('home');
 });
+</file>
+
+<file path="index.html">
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>E-LKPD Interaktif IPA STEAM - UNG</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+            nunito: ['Nunito', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              navy: '#0B2545',
+              darkNavy: '#07182E',
+              blue: '#0D6EFD',
+              yellow: '#FDC82F',
+              purple: '#6B38FB',
+              emerald: '#10B981',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="min-h-screen flex flex-col justify-between">
+
+  <div id="app" class="flex-1 flex flex-col max-w-[1600px] w-full mx-auto p-2 sm:p-4 lg:p-6 gap-3">
+
+    <div class="bg-slate-100 rounded-3xl shadow-2xl border border-slate-700/50 flex-1 flex flex-col md:flex-row overflow-hidden min-h-[850px] relative">
+
+      <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-30 hidden md:hidden"></div>
+
+      <aside id="main-drawer" class="fixed md:relative inset-y-0 left-0 w-80 bg-brand-darkNavy text-white flex flex-col justify-between p-5 shrink-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800">
+        <div class="space-y-4 overflow-y-auto pr-1">
+
+          <div class="flex items-center justify-between md:hidden pb-2 border-b border-slate-800">
+            <span class="text-xs font-bold text-slate-400">NAVIGASI SISTEM</span>
+            <button onclick="toggleDrawer(false)" class="text-slate-400 hover:text-white text-xl font-bold p-1">&times;</button>
+          </div>
+
+          <div class="text-center pb-4 border-b border-slate-800 space-y-1">
+            <div class="flex items-center justify-center gap-2">
+              <span class="text-2xl">🏛️</span>
+              <div class="text-left">
+                <span class="text-[9px] font-black text-brand-yellow uppercase tracking-wider block font-heading">UNIVERSITAS NEGERI</span>
+                <span class="text-xs font-black text-white uppercase tracking-wider block font-heading">GORONTALO</span>
+              </div>
+            </div>
+            <h1 class="text-sm font-extrabold text-white uppercase font-heading mt-2">E-LKPD INTERAKTIF</h1>
+            <div class="inline-block px-2.5 py-0.5 bg-slate-800 rounded-full border border-slate-700">
+              <span class="text-[10px] font-bold text-slate-300">BERBASIS <b class="text-blue-400">S</b><b class="text-emerald-400">T</b><b class="text-yellow-400">E</b><b class="text-pink-400">A</b><b class="text-purple-400">M</b></span>
+            </div>
+          </div>
+
+          <div id="user-info-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center">
+            <span class="text-[9px] font-extrabold text-slate-400 block uppercase tracking-wider">Status Akses Login</span>
+            <span id="user-display-name" class="text-xs font-black text-white block mt-0.5">Mode Tamu / Guest</span>
+            <span id="user-display-role" class="inline-block mt-1 px-2.5 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-extrabold rounded-full uppercase border border-slate-700">GUEST</span>
+          </div>
+
+          <nav id="sidebar-nav" class="space-y-2 font-medium text-xs"></nav>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800">
+          <button id="auth-action-btn" onclick="openLoginModal()" class="w-full py-2.5 bg-brand-blue hover:bg-blue-600 text-white font-black rounded-2xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+            <span>🔑 Login Pengguna</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="flex-1 min-w-0 flex flex-col bg-slate-50 relative overflow-y-auto">
+
+        <header class="p-3 sm:p-4 bg-white border-b border-slate-200 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+          <div class="flex items-center gap-3">
+            <button onclick="toggleDrawer(true)" class="md:hidden p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold text-lg">
+              ☰
+            </button>
+            <div>
+              <h2 id="view-title" class="text-base sm:text-lg font-black text-brand-navy font-heading">BERANDA</h2>
+              <p id="view-subtitle" class="text-[11px] text-slate-500 font-medium">Platform E-LKPD Interaktif STEAM Universitas Negeri Gorontalo</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="role-badge" class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-black rounded-xl">
+              Mode Tamu
+            </span>
+          </div>
+        </header>
+
+        <div id="content-viewport" class="flex-1 p-3 sm:p-6"></div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <div id="pdf-fullscreen-modal" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex-col p-2 sm:p-4">
+    <div class="flex items-center justify-between pb-2 text-white border-b border-slate-800">
+      <span id="pdf-fullscreen-title" class="font-bold text-xs font-heading">Dokumen PDF</span>
+      <div class="flex items-center gap-2">
+        <a id="pdf-fullscreen-external-link" href="#" target="_blank" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-xl text-[11px]">🔗 Buka Tab Baru</a>
+        <button onclick="closePdfFullscreenModal()" class="px-3 py-1 bg-red-600 text-white font-bold rounded-xl text-[11px]">&times; Tutup Fullscreen</button>
+      </div>
+    </div>
+    <div class="flex-1 mt-2 rounded-2xl overflow-hidden bg-black">
+      <iframe id="pdf-fullscreen-iframe" src="" class="w-full h-full border-0" allow="fullscreen"></iframe>
+    </div>
+  </div>
+
+  <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-blue-100 text-brand-blue rounded-2xl flex items-center justify-center text-xl font-bold mx-auto">🔑</div>
+        <h3 class="text-lg font-black text-brand-navy font-heading">LOGIN AKUN E-LKPD</h3>
+        <p class="text-xs text-slate-500">Masukkan username dan password kamu</p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" autocomplete="off" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Username / NIS</label>
+          <input type="text" id="login-username" autocomplete="off" required placeholder="Masukkan Username / NIS" class="w-full p-3 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Password</label>
+          <div class="relative">
+            <input type="password" id="login-password" placeholder="Masukkan password" class="w-full p-2.5 pr-10 rounded-xl border border-slate-300 font-bold text-xs focus:ring-2 focus:ring-brand-blue focus:outline-none" required />
+            <button type="button" id="btn-toggle-login-password" onclick="togglePasswordVisibility('login-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 text-sm focus:outline-none p-1" title="Lihat Password">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition">Batal</button>
+          <button type="submit" id="btn-submit-login" class="flex-1 py-2.5 bg-brand-blue text-white font-black rounded-xl shadow hover:bg-blue-600 transition">Masuk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="user-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 class="text-base font-black text-brand-navy font-heading">Tambah / Edit Pengguna</h3>
+        <button onclick="closeUserModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleUserSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="user-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
+          <input type="text" id="user-form-nama" autocomplete="off" required placeholder="Contoh: Ahmad Subagja" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Username / NIS</label>
+            <input type="text" id="user-form-username" autocomplete="off" required placeholder="username" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Password</label>
+            <div class="relative">
+              <input type="password" id="user-form-password" autocomplete="new-password" required placeholder="******" class="w-full p-2.5 pr-10 rounded-xl border border-slate-300 font-bold focus:ring-2 focus:ring-brand-blue focus:outline-none" />
+              <button type="button" id="btn-toggle-user-password" onclick="togglePasswordVisibility('user-form-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 text-sm focus:outline-none p-1" title="Lihat Password">
+                👁️
+              </button>
+            </div>
+          </div>
+        </div>
+        <span class="text-[10px] text-slate-400 block">*Admin dapat membuat atau memperbarui password untuk Guru & Siswa.</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Role Akses</label>
+            <select id="user-form-role" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+              <option value="siswa">Siswa</option>
+              <option value="guru">Guru</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kelas (Khusus Siswa)</label>
+            <select id="user-form-kelas" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-user" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Pengguna</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="kelas-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 class="text-base font-black text-brand-navy font-heading">Tambah Data Kelas</h3>
+        <button onclick="closeKelasModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handleKelasSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="kelas-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Kelas</label>
+          <input type="text" id="kelas-form-nama" autocomplete="off" required placeholder="Contoh: VIII-A" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tingkat Kelas</label>
+          <input type="text" id="kelas-form-tingkat" autocomplete="off" placeholder="Contoh: 8" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Keterangan</label>
+          <input type="text" id="kelas-form-keterangan" autocomplete="off" placeholder="Contoh: Kelas Unggulan" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeKelasModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-kelas" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Kelas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="pertemuan-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="pertemuan-modal-title" class="text-base font-black text-brand-navy font-heading">Buat Pertemuan Pembelajaran</h3>
+        <button onclick="closePertemuanModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+      <form onsubmit="handlePertemuanSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="pertemuan-form-id" />
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nomor Pertemuan</label>
+            <input type="number" id="pertemuan-form-nomor" value="1" min="1" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Target Kelas</label>
+            <select id="pertemuan-form-kelas" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold">
+              <option value="ALL">Semua Kelas</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Judul Pertemuan</label>
+          <input type="text" id="pertemuan-form-judul" autocomplete="off" required placeholder="Contoh: Konsep Usaha dan Gaya" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Deskripsi / Capaian Pembelajaran</label>
+          <textarea id="pertemuan-form-deskripsi" rows="2" placeholder="Penjelasan singkat fokus materi..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Status Publikasi</label>
+          <select id="pertemuan-form-status" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+            <option value="Publish">Publish (Tampilkan ke Siswa)</option>
+            <option value="Draft">Draft (Sembunyikan)</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closePertemuanModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-pertemuan" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Pertemuan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="materi-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="materi-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Bahan Ajar Materi</h3>
+        <button onclick="closeMateriModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <form onsubmit="handleMateriSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="materi-form-id" />
+        <input type="hidden" id="materi-form-pdf-id" />
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Pilih Pertemuan Target</label>
+            <select id="materi-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tipe Tampilan Media</label>
+            <select id="materi-form-tipe" onchange="toggleMateriFormTipe()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+              <option value="web_text">📝 Rangkuman Teks Web</option>
+              <option value="pdf_document">📄 Dokumen PDF (Google Drive)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Judul Materi / Modul</label>
+          <input type="text" id="materi-form-judul" autocomplete="off" required placeholder="Contoh: Modul Fisika Usaha Mekanik" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Isi Teks / Pengantar Materi</label>
+          <textarea id="materi-form-teks" rows="3" placeholder="Tuliskan uraian materi pembelajaran..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+
+        <div id="container-materi-pdf" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
+          <label class="block font-bold text-brand-navy">📄 Unggah File PDF Ke Google Drive</label>
+          <input type="file" id="materi-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
+          <button type="button" id="btn-upload-pdf" onclick="uploadPdfToDrive('materi')" class="w-full py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow">
+            📤 Unggah PDF ke Drive
+          </button>
+          <input type="text" id="materi-form-pdf-url" readonly placeholder="URL Preview PDF..." class="w-full p-2 rounded-xl border bg-slate-100 font-mono text-[10px] text-slate-600" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeMateriModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-materi" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Materi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="lkpd-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="lkpd-modal-title" class="text-base font-black text-brand-navy font-heading">Kelola LKPD Pertemuan</h3>
+        <button onclick="closeLkpdModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <form onsubmit="handleLkpdSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="lkpd-form-id" />
+        <input type="hidden" id="lkpd-form-pdf-id" />
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Pertemuan Target</label>
+            <select id="lkpd-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tipe LKPD</label>
+            <select id="lkpd-form-tipe" onchange="toggleLkpdFormTipe()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+              <option value="pdf_interaktif">📄 Upload PDF (Ekstraksi Teks Interaktif)</option>
+              <option value="manual">📝 Form Pertanyaan Manual</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Judul LKPD</label>
+          <input type="text" id="lkpd-form-judul" autocomplete="off" required placeholder="Contoh: LKPD 1: Identifikasi Masalah STEAM" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Instruksi / Petunjuk Pengerjaan</label>
+          <textarea id="lkpd-form-instruksi" rows="2" placeholder="Petunjuk pengerjaan untuk siswa..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+
+        <div id="container-lkpd-pdf" class="p-3 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
+          <label class="block font-bold text-brand-navy">📄 Unggah PDF LKPD & Ekstrak Teks Pembelajaran</label>
+          <input type="file" id="lkpd-form-file-pdf" accept="application/pdf" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:bg-blue-100 file:text-brand-blue" />
+          <button type="button" id="btn-upload-pdf-lkpd" onclick="uploadPdfToDrive('lkpd')" class="w-full py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow">
+            📤 Unggah & Ekstrak Teks PDF
+          </button>
+          <input type="hidden" id="lkpd-form-pdf-url" />
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Konten / Teks Utama LKPD (Hasil Ekstraksi/Teks)</label>
+            <textarea id="lkpd-form-isi-teks" rows="4" placeholder="Konten bacaan LKPD, narasi fenomena sains, atau teks dari PDF..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">URL Gambar Ilustrasi LKPD (Opsional)</label>
+            <input type="url" id="lkpd-form-gambar-url" autocomplete="off" placeholder="https://example.com/gambar-soal.png" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-[11px]" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Pertanyaan Esai (Pisahkan dengan baris baru Enter)</label>
+            <textarea id="lkpd-form-soal-text" rows="4" placeholder="Pertanyaan 1&#10;Pertanyaan 2&#10;Pertanyaan 3" class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+          </div>
+        </div>
+
+        <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="font-bold text-purple-900 block">Fitur Kanvas Gambar STEAM</span>
+            <span class="text-[10px] text-purple-700">Izinkan siswa menggambar sketsa/prototipe</span>
+          </div>
+          <input type="checkbox" id="lkpd-form-kanvas" class="w-5 h-5 accent-purple-600" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeLkpdModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-lkpd" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan LKPD</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="game-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="game-modal-title" class="text-base font-black text-brand-navy font-heading">Konfigurasi Game Interaktif</h3>
+        <button onclick="closeGameModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <form onsubmit="handleGameSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="game-form-id" />
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Pertemuan Target</label>
+            <select id="game-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tipe Game Interaktif</label>
+            <select id="game-form-tipe" onchange="renderGameConfigInputs()" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-purple-600">
+              <option value="matching">🧩 Pasangkan Pasangan (Matching)</option>
+              <option value="drag_drop">🎯 Drag and Drop (Pengelompokan Real)</option>
+              <option value="quiz_speed">⚡ Kuis Kilat (Speed Quiz)</option>
+              <option value="sequencer">🔄 Susun Urutan Proses (Sequencer)</option>
+              <option value="hotspot">📍 Label Gambar Interaktif (Hotspot Pinning)</option>
+              <option value="simulator">🧪 Simulasi Keputusan STEAM (Lab Simulator)</option>
+              <option value="word_search">🔍 Cari Kata Istilah IPA (Word Search)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Judul Permainan</label>
+          <input type="text" id="game-form-judul" autocomplete="off" required placeholder="Contoh: Game Klasifikasi Usaha" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold" />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Instruksi Bermain</label>
+          <textarea id="game-form-instruksi" rows="2" placeholder="Aturan permainan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+
+        <div class="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-purple-200 pb-2">
+            <span class="font-black text-purple-900 uppercase tracking-wider text-[11px]">🎮 Item Soal Permainan</span>
+            <button type="button" onclick="addGameItemRow()" class="px-3 py-1 bg-purple-600 text-white font-bold rounded-xl text-[10px] shadow hover:bg-purple-700">+ Tambah Item</button>
+          </div>
+
+          <div id="game-dynamic-builder-container" class="space-y-2"></div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeGameModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-game" class="px-5 py-2 bg-purple-600 text-white font-black rounded-xl shadow hover:bg-purple-700">💾 Simpan Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="soal-modal-title" class="text-base font-black text-brand-navy font-heading">Tambah Soal Evaluasi</h3>
+        <button onclick="closeSoalModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <form onsubmit="handleSoalSubmit(event)" autocomplete="off" class="space-y-3">
+        <input type="hidden" id="soal-form-id" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pilih Pertemuan Evaluasi</label>
+          <select id="soal-form-pertemuan" required class="w-full p-2.5 rounded-xl border border-slate-300 font-bold"></select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pertanyaan Soal</label>
+          <textarea id="soal-form-pertanyaan" required rows="3" placeholder="Tuliskan pertanyaan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi A</label>
+            <input type="text" id="soal-form-opsi-a" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi B</label>
+            <input type="text" id="soal-form-opsi-b" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi C</label>
+            <input type="text" id="soal-form-opsi-c" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Opsi D</label>
+            <input type="text" id="soal-form-opsi-d" autocomplete="off" required class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Kunci Jawaban</label>
+          <select id="soal-form-kunci" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue">
+            <option value="A">Opsi A</option>
+            <option value="B">Opsi B</option>
+            <option value="C">Opsi C</option>
+            <option value="D">Opsi D</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeSoalModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-soal" class="px-5 py-2 bg-brand-blue text-white font-black rounded-xl shadow">💾 Simpan Soal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="koreksi-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <div>
+          <h3 class="text-base font-black text-brand-navy font-heading">📝 Koreksi & Penilaian Siswa</h3>
+          <p id="koreksi-siswa-info" class="text-[11px] text-slate-500 font-bold mt-0.5"></p>
+        </div>
+        <button onclick="closeKoreksiModal()" class="text-slate-400 font-bold text-xl hover:text-slate-700">&times;</button>
+      </div>
+
+      <div id="koreksi-detail-body" class="space-y-4"></div>
+
+      <form onsubmit="handleGradeSubmit(event)" autocomplete="off" class="space-y-3 pt-3 border-t">
+        <input type="hidden" id="koreksi-sub-id" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nilai Esai / LKPD (0–100)</label>
+            <input type="number" id="koreksi-nilai-esai" required min="0" max="100" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-brand-blue" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Catatan Evaluasi Guru</label>
+            <input type="text" id="koreksi-catatan" autocomplete="off" placeholder="Apresiasi atau catatan perbaikan..." class="w-full p-2.5 rounded-xl border border-slate-300 font-medium" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="closeKoreksiModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" id="btn-save-grade" class="px-5 py-2 bg-brand-emerald text-white font-black rounded-xl shadow hover:bg-emerald-600 transition">💾 Simpan Penilaian</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
+</file>
+
+</files>

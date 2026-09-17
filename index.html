@@ -563,6 +563,45 @@
     </div>
   </div>
 
+  <!-- Modal Fullscreen LKPD Pengerjaan Siswa -->
+<div id="lkpd-fullscreen-modal" class="fixed inset-0 bg-slate-950 z-50 hidden flex-col w-screen h-screen overflow-hidden">
+  <!-- Top Bar Control Fullscreen -->
+  <div class="flex items-center justify-between p-3 bg-slate-900 text-white border-b border-slate-800 shrink-0 shadow-md">
+    <div class="flex items-center gap-2">
+      <button onclick="closeLkpdFullscreenModal()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition">
+        ✖ Keluar
+      </button>
+      <span id="lkpd-fullscreen-title" class="font-black text-xs sm:text-sm font-heading truncate max-w-[180px] sm:max-w-xs text-brand-yellow">
+        LKPD Fullscreen
+      </span>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="flex items-center gap-1.5">
+      <button type="button" onclick="setLkpdZoomMode('fit')" class="px-2.5 py-1.5 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl text-[10px] transition">
+        📱 Fit Lebar
+      </button>
+      <button type="button" onclick="changeLkpdZoom(-0.15)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition">
+        🔍 -
+      </button>
+      <span id="lkpd-zoom-text" class="font-mono text-[11px] font-bold text-slate-300 px-1">100%</span>
+      <button type="button" onclick="changeLkpdZoom(0.15)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition">
+        🔍 +
+      </button>
+    </div>
+  </div>
+
+  <div id="lkpd-fullscreen-scroll-body" class="flex-1 overflow-auto p-2 sm:p-4 bg-slate-900 flex justify-center items-start">
+    <div id="lkpd-fullscreen-content" class="w-full flex flex-col items-center"></div>
+  </div>
+
+  <div class="fixed bottom-4 right-4 z-50">
+    <button id="btn-floating-save-lkpd" class="px-5 py-3 bg-brand-emerald hover:bg-emerald-600 text-white font-black rounded-2xl shadow-2xl flex items-center gap-2 text-xs transition transform active:scale-95 border-2 border-white">
+      <span>💾</span> <span>Simpan Jawaban</span>
+    </button>
+  </div>
+</div>
+
   <script src="script.js"></script>
 </body>
 

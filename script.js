@@ -1,5 +1,5 @@
 const GAS_API_URL =
-  'https://script.google.com/macros/s/AKfycbzH3D43u12QRZ2lXzmALHrqc9mRA66GI47oY1mOJ8WmqwVXPqtzdVXJYpQROK9xzv8oGA/exec';
+  'https://script.google.com/macros/s/AKfycbwEru2KE5XRo3LAszo2bgXl2vKhRv8xlAgKfaSibs1aM_PSKqvNJgeI73KCMNnMEUoqkg/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
 const OCR_FALLBACK_MIN_CHARS = 40;
 

@@ -27,7 +27,7 @@ export async function saveToLocalStorage() {
 
 export async function fetchAllInitialData(forceRefresh = false) {
   if (!forceRefresh) {
-    loadFromLocalStorage();
+    await loadFromLocalStorage();
     if (state.isDataLoaded) {
       fetchDataFromNetwork();
       return;
@@ -37,12 +37,18 @@ export async function fetchAllInitialData(forceRefresh = false) {
 }
 
 export async function fetchDataFromNetwork() {
+  const viewport = document.getElementById('content-viewport');
   try {
     const res = await fetch(`${GAS_API_URL}?action=get_all_data`);
+    
+    if (!res.ok) {
+      throw new Error(`Server HTTP status: ${res.status}`);
+    }
+
     const result = await res.json();
     const data = result.data || result;
 
-    if (data) {
+    if (data && result.success !== false) {
       state.cachedData = {
         users: data.users || [],
         kelas: data.kelas || [],
@@ -56,11 +62,24 @@ export async function fetchDataFromNetwork() {
         reviews: data.reviews || []
       };
       state.isDataLoaded = true;
-      saveToLocalStorage();
+      await saveToLocalStorage();
       renderSidebarNav();
+    } else {
+      throw new Error(result.message || 'Gagal mengambil data dari database.');
     }
   } catch (err) {
     console.error('Gagal memuat data dari database:', err);
+    if (viewport && !state.isDataLoaded) {
+      viewport.innerHTML = `
+        <div class="p-8 text-center text-xs space-y-3">
+          <div class="text-red-500 font-bold text-sm">⚠️ Gagal Memuat Data Database</div>
+          <p class="text-slate-600 font-medium">${err.message || 'Periksa koneksi internet atau konfigurasi URL backend Google Apps Script.'}</p>
+          <button onclick="refreshSubmissionsData()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">
+            🔄 Coba Muat Ulang Data
+          </button>
+        </div>
+      `;
+    }
   }
 }
 
@@ -126,5 +145,4 @@ export async function apiPost(payload) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.refreshSubmissionsData = refreshSubmissionsData;

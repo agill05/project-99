@@ -517,7 +517,6 @@ async function switchView(viewId, paramId = null) {
         if (lkpdObj && lkpdObj.peta_field_json && overlayContainer) {
           renderLkpdUntukSiswa(overlayContainer, lkpdObj, paramId);
         }
-        initCanvas();
         const qCount = document.querySelectorAll(`[id^="lkpd-ans-"]`).length;
         loadLkpdDraft(paramId, qCount);
       }, 150);
@@ -2074,11 +2073,6 @@ function exportRekapToCsv() {
   showToast('success', 'Rekap nilai berhasil diunduh (CSV)!');
 }
 
-let canvasCtx = null;
-let isDrawing = false;
-let currentPenColor = '#0B2545';
-let canvasUndoStack = [];
-
 let currentPdfDocGuru = null;
 let currentPageGuru = 1;
 let totalPagesGuru = 1;
@@ -2636,7 +2630,6 @@ async function drawLkpdFullscreenPages(containerEl) {
   const firstPage = await pdfDoc.getPage(1);
   const naturalViewport = firstPage.getViewport({ scale: 1 });
 
-  // Hitung skala berdasarkan mode
   let renderScale = 1.0;
   if (activeLkpdFitMode === 'fit') {
     renderScale = Math.max(viewportWidth / naturalViewport.width, 0.45);
@@ -2749,43 +2742,11 @@ async function submitJawabanLkpdIsian(ptmId, idLkpd) {
   }
 }
 
-function initCanvas() {
-  const canvas = document.getElementById('steam-canvas');
-  if (!canvas) return;
-
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width || 600;
-  canvas.height = 240;
-
-  canvasCtx = canvas.getContext('2d');
-  canvasCtx.fillStyle = '#FFFFFF';
-  canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-  canvasCtx.lineWidth = 3;
-  canvasCtx.lineCap = 'round';
-  canvasCtx.lineJoin = 'round';
-  canvasCtx.strokeStyle = currentPenColor;
-
-  canvasUndoStack = [];
-  saveCanvasState();
-
-  canvas.onmousedown = (e) => startDrawing(e, canvas, canvasCtx);
-  canvas.onmousemove = (e) => draw(e, canvas, canvasCtx);
-  canvas.onmouseup = () => stopDrawing();
-  canvas.onmouseleave = () => stopDrawing();
-
-  canvas.ontouchstart = (e) => {
-    e.preventDefault();
-    startDrawing(e.touches[0], canvas, canvasCtx);
-  };
-  canvas.ontouchmove = (e) => {
-    e.preventDefault();
-    draw(e.touches[0], canvas, canvasCtx);
-  };
-  canvas.ontouchend = (e) => {
-    e.preventDefault();
-    stopDrawing();
-  };
-}
+let isDrawing = false;
+let stCanvasCtx = null;
+let stPenColor = '#0B2545';
+let stLineWidth = 3;
+let stUndoStack = [];
 
 function startDrawing(e, canvas, ctx) {
   isDrawing = true;
@@ -2804,49 +2765,11 @@ function draw(e, canvas, ctx) {
 function stopDrawing() {
   if (isDrawing) {
     isDrawing = false;
-    if (document.getElementById('steam-canvas')) {
-      saveCanvasState();
-    }
     if (document.getElementById('ruang-steam-canvas')) {
       saveStandaloneCanvasState();
     }
   }
 }
-
-function saveCanvasState() {
-  const canvas = document.getElementById('steam-canvas');
-  if (canvas && canvasCtx && canvasUndoStack.length < 15) {
-    canvasUndoStack.push(canvasCtx.getImageData(0, 0, canvas.width, canvas.height));
-  }
-}
-
-function undoCanvas() {
-  const canvas = document.getElementById('steam-canvas');
-  if (canvas && canvasCtx && canvasUndoStack.length > 1) {
-    canvasUndoStack.pop();
-    const prevState = canvasUndoStack[canvasUndoStack.length - 1];
-    canvasCtx.putImageData(prevState, 0, 0);
-  }
-}
-
-function setCanvasColor(color) {
-  currentPenColor = color;
-  if (canvasCtx) canvasCtx.strokeStyle = color;
-}
-
-function clearCanvas() {
-  const canvas = document.getElementById('steam-canvas');
-  if (canvas && canvasCtx) {
-    canvasCtx.fillStyle = '#FFFFFF';
-    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-    saveCanvasState();
-  }
-}
-
-let stCanvasCtx = null;
-let stPenColor = '#0B2545';
-let stLineWidth = 3;
-let stUndoStack = [];
 
 function initStandaloneSteamCanvas() {
   const canvas = document.getElementById('ruang-steam-canvas');
@@ -2985,11 +2908,8 @@ async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
     answers.push(document.getElementById(`lkpd-ans-${i}`)?.value || '');
   }
 
-  const canvas = document.getElementById('steam-canvas');
-  const canvasBase64 = canvas ? canvas.toDataURL('image/png') : '';
-
   const btn = document.getElementById('btn-submit-lkpd-siswa');
-  setButtonLoading(btn, true, '🚀 Mengirim LKPD...', '🚀 Kirim Jawaban LKPD Manual & Kanvas');
+  setButtonLoading(btn, true, '🚀 Mengirim LKPD...', 'Kirim Jawaban LKPD Manual');
 
   const res = await apiPost({
     action: 'submit_lkpd',
@@ -2998,11 +2918,10 @@ async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
     username_siswa: user.username,
     nama_siswa: user.name,
     kelas: user.kelas,
-    jawaban_json: answers,
-    canvas_image_base64: canvasBase64
+    jawaban_json: answers
   });
 
-  setButtonLoading(btn, false, '', '🚀 Kirim Jawaban LKPD Manual & Kanvas');
+  setButtonLoading(btn, false, '', 'Kirim Jawaban LKPD Manual');
   if (res.success) {
     clearLkpdDraft(ptmId);
     await fetchAllInitialData(true);

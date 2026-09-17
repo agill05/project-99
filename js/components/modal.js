@@ -1,7 +1,6 @@
 import { renderSidebarNav, switchView } from '../components/drawer.js';
 import { CACHE_KEY } from '../config.js';
 import { apiPost } from '../services/api.js';
-import { state } from '../state.js';
 import { playClick, playError, playSuccess, playWarning } from './sound.js';
 import { clearSessionState, saveSessionState, state } from '../state.js';
 

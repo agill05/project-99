@@ -1,5 +1,5 @@
 const CACHE_NAME = 'elkpd-steam-v1';
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwEru2KE5XRo3LAszo2bgXl2vKhRv8xlAgKfaSibs1aM_PSKqvNJgeI73KCMNnMEUoqkg/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbytFAgYwaL2-hQxgSe-CCrSCuiSIjmyX5NJ5AdAGzVqyk99msgs2hWJNEHEoE4uI8M0Jg/exec';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

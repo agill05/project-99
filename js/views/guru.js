@@ -137,29 +137,65 @@ export function renderGuruGameView(container) {
 
 export function renderGuruSoalView(container) {
   const soalList = state.cachedData.soal_evaluasi || [];
+  const evalList = state.cachedData.evaluasi || [];
+
   container.innerHTML = `
     <div class="space-y-4 text-xs">
-      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+      <!-- Header Action -->
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Bank Soal Evaluasi: <b>${soalList.length} Soal</b></span>
-        <button onclick="openSoalModal()" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-xl shadow">+ Tambah Soal</button>
+        <div class="flex items-center gap-2">
+          <button onclick="openEvaluasiModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow transition">
+            ⚙️ Kelola Modul & Durasi Kuis
+          </button>
+          <button onclick="openSoalModal()" class="px-3.5 py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow transition">
+            + Tambah Soal PG
+          </button>
+        </div>
       </div>
+
+      <!-- Daftar Modul Evaluasi Aktif & Durasinya -->
       <div class="space-y-2">
-        ${soalList
-      .map(
-        (s, idx) => `
-          <div class="bg-white p-4 rounded-3xl border space-y-1">
-            <div class="flex items-center justify-between border-b pb-1">
-              <span class="font-black text-brand-navy">#${idx + 1} Kunci: ${s.kunci_jawaban}</span>
-              <div class="flex items-center gap-1">
-                <button onclick="openSoalModal('${s.id_soal}')" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold hover:bg-amber-200 transition">Edit</button>
-                <button onclick="deleteSoal('${s.id_soal}')" class="px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold hover:bg-red-200 transition">Hapus</button>
+        <h4 class="font-black text-brand-navy text-xs font-heading">📌 Modul Evaluasi Per Pertemuan:</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${evalList.length === 0 
+            ? `<div class="p-4 bg-white rounded-2xl border text-slate-400 italic">Belum ada modul evaluasi yang dibuat.</div>`
+            : evalList.map((ev) => `
+              <div class="bg-white p-4 rounded-3xl border flex items-center justify-between shadow-xs">
+                <div>
+                  <span class="px-2.5 py-0.5 bg-blue-50 text-brand-blue font-bold text-[10px] rounded-full border border-blue-200">
+                    ⏳ Durasi: ${ev.durasi_menit || 30} Menit
+                  </span>
+                  <h4 class="font-black text-brand-navy mt-1.5 text-xs">${ev.judul_evaluasi}</h4>
+                </div>
+                <button onclick="openEvaluasiModal('${ev.id_evaluasi}')" class="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-xl font-bold hover:bg-amber-200 transition text-[11px]">
+                  Edit Durasi ⏱️
+                </button>
               </div>
-            </div>
-            <p class="font-bold text-slate-800">${s.pertanyaan}</p>
-          </div>
-        `
-      )
-      .join('')}
+            `).join('')
+          }
+        </div>
+      </div>
+
+      <!-- Bank Soal -->
+      <div class="space-y-2 pt-2">
+        <h4 class="font-black text-brand-navy text-xs font-heading">📝 Daftar Soal Pilihan Ganda:</h4>
+        ${soalList
+          .map(
+            (s, idx) => `
+              <div class="bg-white p-4 rounded-3xl border space-y-1">
+                <div class="flex items-center justify-between border-b pb-1">
+                  <span class="font-black text-brand-navy">#${idx + 1} Kunci:${s.kunci_jawaban}</span>
+                  <div class="flex items-center gap-1">
+                    <button onclick="openSoalModal('${s.id_soal}')" class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+                    <button onclick="deleteSoal('${s.id_soal}')" class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+                  </div>
+                </div>
+                <p class="font-bold text-slate-800">${s.pertanyaan}</p>
+              </div>
+            `
+          )
+          .join('')}
       </div>
     </div>
   `;
@@ -217,6 +253,71 @@ export function renderGuruKoreksiView(container) {
       </div>
     </div>
   `;
+}
+
+export function openEvaluasiModal(idEvaluasi = null) {
+  populatePertemuanSelects();
+
+  const titleElem = document.getElementById('evaluasi-modal-title');
+  const idElem = document.getElementById('evaluasi-form-id');
+  const ptmElem = document.getElementById('evaluasi-form-pertemuan');
+  const judulElem = document.getElementById('evaluasi-form-judul');
+  const durasiElem = document.getElementById('evaluasi-form-durasi');
+  const statusElem = document.getElementById('evaluasi-form-status');
+
+  if (idEvaluasi) {
+    const ev = (state.cachedData.evaluasi || []).find(
+      (x) => String(x.id_evaluasi || x.id || '').trim() === String(idEvaluasi).trim()
+    );
+
+    if (ev) {
+      if (titleElem) titleElem.textContent = 'Edit Modul & Durasi Evaluasi';
+      if (idElem) idElem.value = ev.id_evaluasi;
+      if (ptmElem) ptmElem.value = ev.id_pertemuan || '';
+      if (judulElem) judulElem.value = ev.judul_evaluasi || '';
+      if (durasiElem) durasiElem.value = ev.durasi_menit || 30;
+      if (statusElem) statusElem.value = ev.status || 'Publish';
+    }
+  } else {
+    if (titleElem) titleElem.textContent = 'Buat Modul Evaluasi Baru';
+    if (idElem) idElem.value = '';
+    if (judulElem) judulElem.value = 'Evaluasi Kuis Pembelajaran';
+    if (durasiElem) durasiElem.value = 30;
+    if (statusElem) statusElem.value = 'Publish';
+  }
+
+  document.getElementById('evaluasi-modal').classList.remove('hidden');
+  document.getElementById('evaluasi-modal').classList.add('flex');
+}
+
+export function closeEvaluasiModal() {
+  document.getElementById('evaluasi-modal').classList.add('hidden');
+  document.getElementById('evaluasi-modal').classList.remove('flex');
+}
+
+export async function handleEvaluasiSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-save-evaluasi');
+  setButtonLoading(btn, true, '💾 Menyimpan...', '💾 Simpan Evaluasi');
+
+  const res = await apiPost({
+    action: 'save_evaluasi',
+    id_evaluasi: document.getElementById('evaluasi-form-id').value,
+    id_pertemuan: document.getElementById('evaluasi-form-pertemuan').value,
+    judul_evaluasi: document.getElementById('evaluasi-form-judul').value,
+    durasi_menit: parseInt(document.getElementById('evaluasi-form-durasi').value, 10) || 30,
+    status: document.getElementById('evaluasi-form-status').value
+  });
+
+  setButtonLoading(btn, false, '', '💾 Simpan Evaluasi');
+  if (res.success) {
+    closeEvaluasiModal();
+    showToast('success', 'Modul & Durasi Evaluasi Berhasil Diperbarui!');
+    await fetchAllInitialData(true);
+    switchView('guru-soal');
+  } else {
+    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Evaluasi', text: res.message });
+  }
 }
 
 export function renderGuruRekapView(container) {
@@ -1328,3 +1429,6 @@ window.deleteSoal = deleteSoal;
 window.openKoreksiModal = openKoreksiModal;
 window.closeKoreksiModal = closeKoreksiModal;
 window.handleGradeSubmit = handleGradeSubmit;
+window.openEvaluasiModal = openEvaluasiModal;
+window.closeEvaluasiModal = closeEvaluasiModal;
+window.handleEvaluasiSubmit = handleEvaluasiSubmit;

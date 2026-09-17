@@ -1,0 +1,48 @@
+import { GAS_API_URL } from '../config.js';
+import { initIndexedDB } from '../services/idb.js';
+
+export async function registerServiceWorkerAndSync() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      if ('sync' in reg) {
+        await reg.sync.register('sync-outbox-submissions');
+      }
+    } catch (e) {
+      console.warn('Service Worker / Background Sync tidak didukung:', e);
+    }
+  }
+}
+
+export async function triggerOutboxFlushManual() {
+  try {
+    const db = await initIndexedDB();
+    const tx = db.transaction('outbox', 'readonly');
+    const store = tx.objectStore('outbox');
+    const req = store.getAll();
+    
+    req.onsuccess = async () => {
+      const items = req.result || [];
+      if (items.length === 0) return;
+
+      for (const item of items) {
+        try {
+          const res = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(item.payload)
+          });
+          const result = await res.json();
+          if (result && result.success) {
+            const delTx = db.transaction('outbox', 'readwrite');
+            delTx.objectStore('outbox').delete(item.id);
+          }
+        } catch (err) {
+          console.warn('Manual Outbox Flush pending connection...');
+        }
+      }
+    };
+  } catch (e) {}
+}
+
+// Pemicu otomatis saat jaringan kembali online
+window.addEventListener('online', triggerOutboxFlushManual);

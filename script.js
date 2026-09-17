@@ -1,3 +1,101 @@
+const DB_NAME = 'ELKPD_STEAM_DB';
+const DB_VERSION = 1;
+
+function initIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('cache')) db.createObjectStore('cache');
+      if (!db.objectStoreNames.contains('outbox')) {
+        db.createObjectStore('outbox', { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function setIDBCache(key, val) {
+  try {
+    const db = await initIndexedDB();
+    const tx = db.transaction('cache', 'readwrite');
+    tx.objectStore('cache').put(val, key);
+  } catch (e) {
+    console.error('IDB Cache Save Error:', e);
+  }
+}
+
+async function getIDBCache(key) {
+  try {
+    const db = await initIndexedDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('cache', 'readonly');
+      const req = tx.objectStore('cache').get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+async function saveToOutboxQueue(id, payload) {
+  try {
+    const db = await initIndexedDB();
+    const tx = db.transaction('outbox', 'readwrite');
+    tx.objectStore('outbox').put({ id, payload, timestamp: Date.now() });
+  } catch (e) {
+    console.error('IDB Outbox Save Error:', e);
+  }
+}
+
+async function registerServiceWorkerAndSync() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      if ('sync' in reg) {
+        await reg.sync.register('sync-outbox-submissions');
+      }
+    } catch (e) {
+      console.warn('Service Worker / Background Sync tidak didukung:', e);
+    }
+  }
+}
+
+async function triggerOutboxFlushManual() {
+  try {
+    const db = await initIndexedDB();
+    const tx = db.transaction('outbox', 'readonly');
+    const store = tx.objectStore('outbox');
+    const req = store.getAll();
+    
+    req.onsuccess = async () => {
+      const items = req.result || [];
+      if (items.length === 0) return;
+
+      for (const item of items) {
+        try {
+          const res = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(item.payload)
+          });
+          const result = await res.json();
+          if (result && result.success) {
+            const delTx = db.transaction('outbox', 'readwrite');
+            delTx.objectStore('outbox').delete(item.id);
+          }
+        } catch (err) {
+          console.warn('Manual Outbox Flush pending connection...');
+        }
+      }
+    };
+  } catch (e) {}
+}
+
+// Pemicu otomatis saat jaringan kembali online
+window.addEventListener('online', triggerOutboxFlushManual);
+
 const GAS_API_URL =
   'https://script.google.com/macros/s/AKfycbwEru2KE5XRo3LAszo2bgXl2vKhRv8xlAgKfaSibs1aM_PSKqvNJgeI73KCMNnMEUoqkg/exec';
 const CACHE_KEY = 'ELKPD_STEAM_CACHE_DATA_V3';
@@ -68,23 +166,23 @@ function closeLoading() {
   Swal.close();
 }
 
-function loadFromLocalStorage() {
+async function loadFromLocalStorage() {
   try {
-    const saved = localStorage.getItem(CACHE_KEY);
+    const saved = await getIDBCache(CACHE_KEY);
     if (saved) {
-      state.cachedData = JSON.parse(saved);
+      state.cachedData = saved;
       state.isDataLoaded = true;
     }
   } catch (e) {
-    console.error('Gagal membaca cache lokal:', e);
+    console.error('Gagal membaca cache IndexedDB:', e);
   }
 }
 
-function saveToLocalStorage() {
+async function saveToLocalStorage() {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(state.cachedData));
+    await setIDBCache(CACHE_KEY, state.cachedData);
   } catch (e) {
-    console.error('Gagal menyimpan cache lokal:', e);
+    console.error('Gagal menyimpan cache IndexedDB:', e);
   }
 }
 
@@ -157,6 +255,23 @@ async function refreshSubmissionsData() {
 }
 
 async function apiPost(payload) {
+  const isSubmissionAction = ['submit_lkpd', 'submit_game', 'submit_evaluasi', 'submit_lkpd_isian', 'save_review'].includes(payload.action);
+
+  if (isSubmissionAction) {
+    const queueId = 'QUEUE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    
+    await saveToOutboxQueue(queueId, payload);
+    
+    registerServiceWorkerAndSync();
+    triggerOutboxFlushManual();
+
+    return {
+      success: true,
+      message: '⚡ Tersimpan secara instan di perangkat! Mengirim ke server...',
+      instant: true
+    };
+  }
+
   try {
     const res = await fetch(GAS_API_URL, {
       method: 'POST',

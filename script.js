@@ -2474,13 +2474,7 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
     });
     const savedAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
 
-    const isMobile = window.innerWidth < 768;
-
-    if (isMobile) {
-      await renderLkpdMobileHybrid(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
-    } else {
-      await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
-    }
+    await renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, lkpdObj.id_lkpd);
   } catch (err) {
     console.error('Error rendering student PDF overlay:', err);
     containerEl.innerHTML = `<div class="p-4 text-center text-red-500 font-bold text-xs">Gagal memuat PDF Interaktif (${err.message})</div>`;

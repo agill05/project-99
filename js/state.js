@@ -24,6 +24,23 @@ export const state = {
   gameStates: {}
 };
 
+export const uiState = {
+  isDrawing: false,
+  stCanvasCtx: null,
+  stLineWidth: 5,
+  stPenColor: '#0B2545',
+  stUndoStack: [],
+  fieldsByPageGuru: {},
+  fieldCounterGuru: 1,
+  currentPageGuru: 1,
+  currentPdfDocGuru: null,
+  totalPagesGuru: 1,
+  renderScaleGuru: 1.0,
+  currentActiveLkpdContext: {},
+  activeLkpdFitMode: 'fit',
+  activeLkpdScale: 1.0
+};
+
 export function saveSessionState() {
   if (!state.currentUser) {
     sessionStorage.removeItem(SESSION_KEY);

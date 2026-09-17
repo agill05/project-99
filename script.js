@@ -127,6 +127,35 @@ async function fetchDataFromNetwork() {
   }
 }
 
+async function refreshSubmissionsData() {
+  try {
+    showLoading('Memperbarui data jawaban siswa...');
+    const res = await fetch(`${GAS_API_URL}?action=get_submissions`);
+    const result = await res.json();
+    const data = result.data || result;
+
+    if (Array.isArray(data)) {
+      state.cachedData.submissions = data;
+      saveToLocalStorage();
+      closeLoading();
+      showToast('success', 'Data submisi berhasil diperbarui!');
+
+      if (state.currentView === 'guru-koreksi') {
+        switchView('guru-koreksi');
+      } else if (state.currentView === 'guru-rekap') {
+        switchView('guru-rekap');
+      }
+    } else {
+      closeLoading();
+      showToast('error', 'Gagal memperbarui data submisi!');
+    }
+  } catch (err) {
+    closeLoading();
+    console.error('Error refreshing submissions:', err);
+    showToast('error', 'Terjadi kesalahan koneksi internet!');
+  }
+}
+
 async function apiPost(payload) {
   try {
     const res = await fetch(GAS_API_URL, {
@@ -1933,6 +1962,12 @@ function renderGuruKoreksiView(container) {
   const subs = state.cachedData.submissions || [];
   container.innerHTML = `
     <div class="space-y-4 text-xs">
+      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
+        <span class="font-bold text-slate-700">Total Jawaban Masuk: <b>${subs.length}</b></span>
+        <button onclick="refreshSubmissionsData()" class="px-4 py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow transition flex items-center gap-1.5">
+          <span>🔄</span> Refresh Data Submisi
+        </button>
+      </div>
       <div class="bg-white p-5 rounded-3xl border shadow-sm">
         <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">📥 Jawaban Masuk Siswa (${subs.length})</h3>
         <div class="overflow-x-auto mt-3">
@@ -1946,26 +1981,29 @@ function renderGuruKoreksiView(container) {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              ${subs
-      .map((s) => {
-        const scoreDisplay =
-          s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
-            ? s.nilai_esai
-            : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
-              ? s.skor_otomatis
-              : 'Belum';
-        return `
-                <tr>
-                  <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
-                  <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
-                  <td class="p-3 font-bold text-brand-blue">${scoreDisplay}</td>
-                  <td class="p-3 text-center">
-                    <button onclick="openKoreksiModal('${s.id_sub}')" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-lg">Periksa</button>
-                  </td>
-                </tr>
-              `;
-      })
-      .join('')}
+              ${subs.length === 0
+                ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada jawaban siswa yang masuk.</td></tr>`
+                : subs
+                  .map((s) => {
+                    const scoreDisplay =
+                      s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+                        ? s.nilai_esai
+                        : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+                          ? s.skor_otomatis
+                          : 'Belum';
+                    return `
+                      <tr>
+                        <td class="p-3 font-bold">${s.nama_siswa} (${s.kelas})</td>
+                        <td class="p-3 font-mono uppercase">${s.tipe_sub}</td>
+                        <td class="p-3 font-bold text-brand-blue">${scoreDisplay}</td>
+                        <td class="p-3 text-center">
+                          <button onclick="openKoreksiModal('${s.id_sub}')" class="px-3 py-1 bg-brand-blue text-white font-bold rounded-lg">Periksa</button>
+                        </td>
+                      </tr>
+                    `;
+                  })
+                  .join('')
+              }
             </tbody>
           </table>
         </div>
@@ -1980,9 +2018,14 @@ function renderGuruRekapView(container) {
     <div class="space-y-4 text-xs">
       <div class="flex items-center justify-between bg-white p-4 rounded-2xl border shadow-xs">
         <span class="font-bold text-slate-700">Total Submisi Nilai: <b>${subs.length}</b></span>
-        <button onclick="exportRekapToCsv()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow flex items-center gap-1.5 transition">
-          <span>📊 Ekspor Excel / CSV</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="refreshSubmissionsData()" class="px-4 py-2 bg-brand-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh Data
+          </button>
+          <button onclick="exportRekapToCsv()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow flex items-center gap-1.5 transition">
+            <span>📊 Ekspor Excel / CSV</span>
+          </button>
+        </div>
       </div>
       <div class="bg-white p-5 rounded-3xl border shadow-sm">
         <h3 class="font-black text-brand-navy text-sm font-heading border-b pb-2">🏆 Buku Nilai & Rekapitulasi Siswa</h3>
@@ -1999,28 +2042,27 @@ function renderGuruRekapView(container) {
             </thead>
             <tbody class="divide-y divide-slate-100">
               ${subs.length === 0
-      ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>`
-      : subs
-        .map((s) => {
-          const scoreDisplay =
-            s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
-              ? s.nilai_esai
-              : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
-                ? s.skor_otomatis
-                : 0;
-          return `
-                <tr>
-                  <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
-                  <td class="p-3">${s.kelas || '-'}</td>
-                  <td class="p-3 text-center uppercase font-mono">${s.tipe_sub || '-'}</td>
-                  <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-            }">${s.status || 'Belum'}</span></td>
-                </tr>
-              `;
-        })
-        .join('')
-    }
+                ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data nilai masuk.</td></tr>`
+                : subs
+                  .map((s) => {
+                    const scoreDisplay =
+                      s.nilai_esai !== '' && s.nilai_esai !== null && s.nilai_esai !== undefined
+                        ? s.nilai_esai
+                        : s.skor_otomatis !== '' && s.skor_otomatis !== null && s.skor_otomatis !== undefined
+                          ? s.skor_otomatis
+                          : 0;
+                    return `
+                      <tr>
+                        <td class="p-3 font-bold">${s.nama_siswa || '-'}</td>
+                        <td class="p-3">${s.kelas || '-'}</td>
+                        <td class="p-3 text-center uppercase font-mono">${s.tipe_sub || '-'}</td>
+                        <td class="p-3 text-center font-black text-emerald-600">${scoreDisplay}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Selesai Dinilai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.status || 'Belum'}</span></td>
+                      </tr>
+                    `;
+                  })
+                  .join('')
+              }
             </tbody>
           </table>
         </div>

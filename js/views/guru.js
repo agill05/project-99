@@ -528,6 +528,7 @@ export function openLkpdModal(idLkpd = null) {
   const titleElem = document.getElementById('lkpd-modal-title');
   const idElem = document.getElementById('lkpd-form-id');
   const pdfIdElem = document.getElementById('lkpd-form-pdf-id');
+  const petaFieldElem = document.getElementById('lkpd-form-peta-field');
   const ptmElem = document.getElementById('lkpd-form-pertemuan');
   const tipeElem = document.getElementById('lkpd-form-tipe');
   const judulElem = document.getElementById('lkpd-form-judul');
@@ -548,6 +549,7 @@ export function openLkpdModal(idLkpd = null) {
       if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
       if (idElem) idElem.value = l.id_lkpd || l.id || '';
       if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
+      if (petaFieldElem) petaFieldElem.value = l.peta_field_json || '';
       if (ptmElem) ptmElem.value = l.id_pertemuan || '';
       if (tipeElem) tipeElem.value = l.tipe_lkpd || 'pdf_interaktif';
       if (judulElem) judulElem.value = l.judul_lkpd || '';
@@ -569,6 +571,7 @@ export function openLkpdModal(idLkpd = null) {
     if (titleElem) titleElem.textContent = 'Kelola LKPD Pertemuan';
     if (idElem) idElem.value = '';
     if (pdfIdElem) pdfIdElem.value = '';
+    if (petaFieldElem) petaFieldElem.value = '';
     if (judulElem) judulElem.value = '';
     if (instruksiElem) instruksiElem.value = '';
     if (pdfUrlElem) pdfUrlElem.value = '';
@@ -625,6 +628,7 @@ export async function handleLkpdSubmit(e) {
     instruksi: document.getElementById('lkpd-form-instruksi').value,
     file_pdf_url: document.getElementById('lkpd-form-pdf-url').value,
     file_drive_id: document.getElementById('lkpd-form-pdf-id').value,
+    peta_field_json: document.getElementById('lkpd-form-peta-field').value,
     isi_teks: document.getElementById('lkpd-form-isi-teks').value,
     gambar_url: document.getElementById('lkpd-form-gambar-url').value,
     soal_json: soalArr,

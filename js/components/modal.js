@@ -1,0 +1,209 @@
+import { renderSidebarNav, switchView } from '../components/drawer.js';
+import { CACHE_KEY } from '../config.js';
+import { apiPost } from '../services/api.js';
+import { state } from '../state.js';
+
+export function showToast(icon, title) {
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: icon,
+    title: title,
+    showConfirmButton: false,
+    timer: 2500,
+    timerProgressBar: true
+  });
+}
+
+export function showConfirm(title, text, confirmCallback, confirmBtnText = 'Ya, Lanjutkan') {
+  Swal.fire({
+    title: title,
+    text: text,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#0D6EFD',
+    cancelButtonColor: '#64748B',
+    confirmButtonText: confirmBtnText,
+    cancelButtonText: 'Batal'
+  }).then((result) => {
+    if (result.isConfirmed && confirmCallback) {
+      confirmCallback();
+    }
+  });
+}
+
+export function showLoading(title = 'Memproses data...') {
+  Swal.fire({
+    title: title,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+}
+
+export function closeLoading() {
+  Swal.close();
+}
+
+export function togglePasswordVisibility(inputId, btnElem) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  if (btnElem) {
+    btnElem.innerHTML = isPassword ? '🙈' : '👁️';
+    btnElem.setAttribute('title', isPassword ? 'Sembunyikan Password' : 'Lihat Password');
+  }
+}
+
+export function openPdfFullscreen(url, title = 'Dokumen PDF') {
+  document.getElementById('pdf-fullscreen-title').textContent = title;
+  document.getElementById('pdf-fullscreen-iframe').src = url;
+  document.getElementById('pdf-fullscreen-external-link').href = url.replace('/preview', '/view');
+  const modal = document.getElementById('pdf-fullscreen-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+export function closePdfFullscreenModal() {
+  const modal = document.getElementById('pdf-fullscreen-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.getElementById('pdf-fullscreen-iframe').src = '';
+}
+
+export function requireStudentAuth(actionCallback) {
+  if (!state.currentUser) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Akses Terbatas (Mode Guest)',
+      text: 'Kamu sedang dalam Mode Guest. Silakan login sebagai Siswa untuk menyimpan jawaban!',
+      showCancelButton: true,
+      confirmButtonColor: '#0D6EFD',
+      cancelButtonColor: '#64748B',
+      confirmButtonText: '🔑 Login Siswa',
+      cancelButtonText: 'Lanjut Melihat'
+    }).then((res) => {
+      if (res.isConfirmed) openLoginModal();
+    });
+    return false;
+  }
+  if (actionCallback) actionCallback();
+  return true;
+}
+
+export function setButtonLoading(btn, isLoading, loadText = 'Menyimpan...', origText = 'Simpan') {
+  if (!btn) return;
+  if (isLoading) {
+    btn.disabled = true;
+    btn.setAttribute('data-orig-text', origText);
+    btn.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span> ${loadText}`;
+    btn.classList.add('opacity-75', 'cursor-not-allowed');
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.getAttribute('data-orig-text') || origText;
+    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+  }
+}
+
+export async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const unElem = document.getElementById('login-username');
+  const pwElem = document.getElementById('login-password');
+  const un = unElem ? unElem.value.trim() : '';
+  const pw = pwElem ? pwElem.value.trim() : '';
+  const btn = document.getElementById('btn-submit-login');
+
+  setButtonLoading(btn, true, 'Memproses Login...', 'Masuk');
+  const res = await apiPost({ action: 'login', username: un, password: pw });
+  setButtonLoading(btn, false, '', 'Masuk');
+
+  if (res.success) {
+    const previousGuestUser = 'guest';
+    state.currentUser = res.user;
+
+    if (state.activePertemuanId) {
+      const guestDraftKey = `${CACHE_KEY}_DRAFT_${state.activePertemuanId}_${previousGuestUser}`;
+      const userDraftKey = `${CACHE_KEY}_DRAFT_${state.activePertemuanId}_${res.user.username}`;
+      const savedDraft = localStorage.getItem(guestDraftKey);
+
+      if (savedDraft && !localStorage.getItem(userDraftKey)) {
+        localStorage.setItem(userDraftKey, savedDraft);
+        localStorage.removeItem(guestDraftKey);
+      }
+    }
+
+    closeLoginModal();
+    if (unElem) unElem.value = '';
+    if (pwElem) pwElem.value = '';
+    updateUIForAuthenticatedUser();
+    showToast('success', `Selamat Datang, ${res.user.name}!`);
+
+    if (res.user.role === 'guru') switchView('guru-pertemuan');
+    else if (res.user.role === 'admin') switchView('admin-users');
+    else switchView('home');
+  }
+}
+
+export function openLoginModal() {
+  document.getElementById('login-modal').classList.remove('hidden');
+  document.getElementById('login-modal').classList.add('flex');
+}
+
+export function closeLoginModal() {
+  document.getElementById('login-modal').classList.add('hidden');
+  document.getElementById('login-modal').classList.remove('flex');
+}
+
+export function logout() {
+  showConfirm(
+    'Keluar Sistem?',
+    'Kamu akan keluar dari akun saat ini.',
+    () => {
+      state.currentUser = null;
+      updateUIForAuthenticatedUser();
+      switchView('home');
+      showToast('success', 'Berhasil Keluar Akun');
+    },
+    'Logout'
+  );
+}
+
+export function updateUIForAuthenticatedUser() {
+  const nameElem = document.getElementById('user-display-name');
+  const roleElem = document.getElementById('user-display-role');
+  const badgeElem = document.getElementById('role-badge');
+  const authBtn = document.getElementById('auth-action-btn');
+
+  if (state.currentUser) {
+    nameElem.textContent = state.currentUser.name;
+    roleElem.textContent = state.currentUser.role.toUpperCase();
+    badgeElem.textContent = `${state.currentUser.role.toUpperCase()}: ${state.currentUser.name}`;
+    badgeElem.className = 'px-3 py-1 bg-blue-100 border border-blue-200 text-brand-blue text-xs font-black rounded-xl';
+
+    authBtn.className =
+      'w-full py-2.5 bg-red-900/80 text-red-200 font-black rounded-2xl text-xs flex items-center justify-center gap-2 border border-red-800 hover:bg-red-900 transition';
+    authBtn.innerHTML = '<span>🚪 Keluar (Logout)</span>';
+    authBtn.onclick = logout;
+  } else {
+    nameElem.textContent = 'Mode Tamu / Guest';
+    roleElem.textContent = 'GUEST';
+    badgeElem.textContent = 'Mode Tamu';
+    badgeElem.className = 'px-3 py-1 bg-slate-100 border text-slate-700 text-xs font-black rounded-xl';
+
+    authBtn.className =
+      'w-full py-2.5 bg-brand-blue text-white font-black rounded-2xl text-xs shadow flex items-center justify-center gap-2 hover:bg-blue-600 transition';
+    authBtn.innerHTML = '<span>🔑 Login Pengguna</span>';
+    authBtn.onclick = openLoginModal;
+  }
+  renderSidebarNav();
+}
+
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.openPdfFullscreen = openPdfFullscreen;
+window.closePdfFullscreenModal = closePdfFullscreenModal;
+window.requireStudentAuth = requireStudentAuth;
+window.handleLoginSubmit = handleLoginSubmit;
+window.openLoginModal = openLoginModal;
+window.closeLoginModal = closeLoginModal;

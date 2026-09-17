@@ -100,12 +100,16 @@ export function openUserModal(userId = null) {
   if (passElem) passElem.type = 'password';
   if (btnEye) btnEye.innerHTML = '👁️';
 
-  if (userId) {
-    const u = (state.cachedData.users || []).find((x) => String(x.user_id) === String(userId));
+  if (userId !== null && userId !== undefined && String(userId).trim() !== '') {
+    const targetIdStr = String(userId).trim();
+    const u = (state.cachedData.users || []).find(
+      (x) => String(x.user_id || x.id || '').trim() === targetIdStr
+    );
+
     if (u) {
       if (titleElem) titleElem.textContent = 'Edit Data Pengguna';
-      if (idElem) idElem.value = u.user_id;
-      if (namaElem) namaElem.value = u.nama_lengkap || '';
+      if (idElem) idElem.value = u.user_id || u.id || '';
+      if (namaElem) namaElem.value = u.nama_lengkap || u.nama || '';
       if (usernameElem) usernameElem.value = u.username || '';
       if (passElem) passElem.value = u.password || '';
       if (roleElem) roleElem.value = u.role || 'siswa';
@@ -174,11 +178,15 @@ export function openKelasModal(idKelas = null) {
   const tingkatElem = document.getElementById('kelas-form-tingkat');
   const ketElem = document.getElementById('kelas-form-keterangan');
 
-  if (idKelas) {
-    const k = (state.cachedData.kelas || []).find((x) => String(x.id_kelas) === String(idKelas));
+  if (idKelas !== null && idKelas !== undefined && String(idKelas).trim() !== '') {
+    const targetIdStr = String(idKelas).trim();
+    const k = (state.cachedData.kelas || []).find(
+      (x) => String(x.id_kelas || x.id || '').trim() === targetIdStr
+    );
+
     if (k) {
       if (titleElem) titleElem.textContent = 'Edit Data Kelas';
-      if (idElem) idElem.value = k.id_kelas;
+      if (idElem) idElem.value = k.id_kelas || k.id || '';
       if (namaElem) namaElem.value = k.nama_kelas || '';
       if (tingkatElem) tingkatElem.value = k.tingkat || '';
       if (ketElem) ketElem.value = k.keterangan || '';

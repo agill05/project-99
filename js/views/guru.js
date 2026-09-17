@@ -352,11 +352,15 @@ export function openPertemuanModal(idPtm = null) {
   const kelasElem = document.getElementById('pertemuan-form-kelas');
   const statusElem = document.getElementById('pertemuan-form-status');
 
-  if (idPtm) {
-    const p = (state.cachedData.pertemuan || []).find((x) => String(x.id_pertemuan) === String(idPtm));
+  if (idPtm !== null && idPtm !== undefined && String(idPtm).trim() !== '') {
+    const targetIdStr = String(idPtm).trim();
+    const p = (state.cachedData.pertemuan || []).find(
+      (x) => String(x.id_pertemuan || x.id || '').trim() === targetIdStr
+    );
+
     if (p) {
       if (titleElem) titleElem.textContent = 'Edit Pertemuan Pembelajaran';
-      if (idElem) idElem.value = p.id_pertemuan;
+      if (idElem) idElem.value = p.id_pertemuan || p.id || '';
       if (nomorElem) nomorElem.value = p.nomor_pertemuan || '1';
       if (judulElem) judulElem.value = p.judul_pertemuan || '';
       if (descElem) descElem.value = p.deskripsi || '';
@@ -437,11 +441,15 @@ export function openMateriModal(idMateri = null) {
   const teksElem = document.getElementById('materi-form-teks');
   const pdfUrlElem = document.getElementById('materi-form-pdf-url');
 
-  if (idMateri) {
-    const m = (state.cachedData.materi || []).find((x) => String(x.id_materi) === String(idMateri));
+  if (idMateri !== null && idMateri !== undefined && String(idMateri).trim() !== '') {
+    const targetIdStr = String(idMateri).trim();
+    const m = (state.cachedData.materi || []).find(
+      (x) => String(x.id_materi || x.id || '').trim() === targetIdStr
+    );
+
     if (m) {
       if (titleElem) titleElem.textContent = 'Edit Bahan Ajar Materi';
-      if (idElem) idElem.value = m.id_materi;
+      if (idElem) idElem.value = m.id_materi || m.id || '';
       if (pdfIdElem) pdfIdElem.value = m.file_drive_id || '';
       if (ptmElem) ptmElem.value = m.id_pertemuan || '';
       if (tipeElem) tipeElem.value = m.tipe_media || 'web_text';
@@ -456,6 +464,7 @@ export function openMateriModal(idMateri = null) {
     if (judulElem) judulElem.value = '';
     if (teksElem) teksElem.value = '';
     if (pdfUrlElem) pdfUrlElem.value = '';
+    if (tipeElem) tipeElem.value = 'web_text';
   }
 
   toggleMateriFormTipe();
@@ -529,11 +538,15 @@ export function openLkpdModal(idLkpd = null) {
   const soalTextElem = document.getElementById('lkpd-form-soal-text');
   const kanvasElem = document.getElementById('lkpd-form-kanvas');
 
-  if (idLkpd) {
-    const l = (state.cachedData.lkpd || []).find((x) => String(x.id_lkpd) === String(idLkpd));
+  if (idLkpd !== null && idLkpd !== undefined && String(idLkpd).trim() !== '') {
+    const targetIdStr = String(idLkpd).trim();
+    const l = (state.cachedData.lkpd || []).find(
+      (x) => String(x.id_lkpd || x.id || '').trim() === targetIdStr
+    );
+
     if (l) {
       if (titleElem) titleElem.textContent = 'Edit LKPD Pertemuan';
-      if (idElem) idElem.value = l.id_lkpd;
+      if (idElem) idElem.value = l.id_lkpd || l.id || '';
       if (pdfIdElem) pdfIdElem.value = l.file_drive_id || '';
       if (ptmElem) ptmElem.value = l.id_pertemuan || '';
       if (tipeElem) tipeElem.value = l.tipe_lkpd || 'pdf_interaktif';
@@ -563,6 +576,7 @@ export function openLkpdModal(idLkpd = null) {
     if (gambarUrlElem) gambarUrlElem.value = '';
     if (soalTextElem) soalTextElem.value = '';
     if (kanvasElem) kanvasElem.checked = false;
+    if (tipeElem) tipeElem.value = 'pdf_interaktif';
   }
 
   toggleLkpdFormTipe();
@@ -649,11 +663,15 @@ export function openGameModal(idGame = null) {
   const judulElem = document.getElementById('game-form-judul');
   const instruksiElem = document.getElementById('game-form-instruksi');
 
-  if (idGame) {
-    const g = (state.cachedData.games || []).find((x) => String(x.id_game) === String(idGame));
+  if (idGame !== null && idGame !== undefined && String(idGame).trim() !== '') {
+    const targetIdStr = String(idGame).trim();
+    const g = (state.cachedData.games || []).find(
+      (x) => String(x.id_game || x.id || '').trim() === targetIdStr
+    );
+
     if (g) {
       if (titleElem) titleElem.textContent = 'Edit Game Interaktif';
-      if (idElem) idElem.value = g.id_game;
+      if (idElem) idElem.value = g.id_game || g.id || '';
       if (ptmElem) ptmElem.value = g.id_pertemuan || '';
       if (tipeElem) tipeElem.value = g.tipe_game || 'matching';
       if (judulElem) judulElem.value = g.judul_game || '';
@@ -674,6 +692,7 @@ export function openGameModal(idGame = null) {
     if (idElem) idElem.value = '';
     if (judulElem) judulElem.value = '';
     if (instruksiElem) instruksiElem.value = '';
+    if (tipeElem) tipeElem.value = 'matching';
 
     renderGameConfigInputs();
   }
@@ -939,13 +958,19 @@ export function openSoalModal(idSoal = null) {
   const opsiDElem = document.getElementById('soal-form-opsi-d');
   const kunciElem = document.getElementById('soal-form-kunci');
 
-  if (idSoal) {
-    const s = (state.cachedData.soal_evaluasi || []).find((x) => String(x.id_soal) === String(idSoal));
+  if (idSoal !== null && idSoal !== undefined && String(idSoal).trim() !== '') {
+    const targetIdStr = String(idSoal).trim();
+    const s = (state.cachedData.soal_evaluasi || []).find(
+      (x) => String(x.id_soal || x.id || '').trim() === targetIdStr
+    );
+
     if (s) {
-      const evalObj = (state.cachedData.evaluasi || []).find((ev) => ev.id_evaluasi === s.id_evaluasi);
+      const evalObj = (state.cachedData.evaluasi || []).find(
+        (ev) => String(ev.id_evaluasi || ev.id || '').trim() === String(s.id_evaluasi || '').trim()
+      );
 
       if (titleElem) titleElem.textContent = 'Edit Soal Evaluasi';
-      if (idElem) idElem.value = s.id_soal;
+      if (idElem) idElem.value = s.id_soal || s.id || '';
       if (ptmElem) ptmElem.value = evalObj ? evalObj.id_pertemuan : '';
       if (pertElem) pertElem.value = s.pertanyaan || '';
       if (opsiAElem) opsiAElem.value = s.opsi_a || '';
@@ -1217,7 +1242,6 @@ export async function handleGradeSubmit(e) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.exportRekapToCsv = exportRekapToCsv;
 window.openPertemuanModal = openPertemuanModal;
 window.closePertemuanModal = closePertemuanModal;

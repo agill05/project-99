@@ -2492,6 +2492,8 @@ async function saveFieldMapGuru(idLkpd) {
   return res;
 }
 
+let currentLkpdScaleMultiplier = 1.0;
+
 async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
   const user = state.currentUser || { username: 'guest' };
 
@@ -2513,7 +2515,6 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
       username_siswa: user.username
     });
     
-    // Gabungkan jawaban dari server dan draft lokal (draft lokal diprioritaskan jika ada ketikan baru)
     const savedServerAnswers = jawabanRes.success && jawabanRes.jawaban ? jawabanRes.jawaban : {};
     const localDraft = getLkpdOverlayDraft(lkpdObj.id_lkpd);
     const combinedAnswers = { ...savedServerAnswers, ...localDraft };
@@ -2530,31 +2531,56 @@ async function renderLkpdUntukSiswa(containerEl, lkpdObj, ptmId) {
 }
 
 async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {
+  const baseScale = fieldMap.renderScale || 1.3;
+  const activeScale = Math.max(baseScale * currentLkpdScaleMultiplier, 0.8);
+
   containerEl.innerHTML = `
-    <div class="space-y-4">
-      <div id="siswa-lkpd-pages" class="space-y-4"></div>
-      <button id="btn-simpan-jawaban-lkpd" class="w-full py-3 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition">
-        💾 Simpan Jawaban LKPD Overlay
+    <div class="space-y-3 w-full">
+      <!-- Toolbar Kontrol Tampilan Desktop & Zoom untuk Layar HP/Tablet -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-800 text-white rounded-2xl shadow-xs text-xs">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 bg-purple-600 font-bold rounded-xl text-[10px] flex items-center gap-1 shrink-0">
+            🖥️ Tampilan Desktop
+          </span>
+          <span class="text-[11px] text-slate-300 hidden sm:inline">Geser/scroll untuk melihat seluruh lembar pengerjaan</span>
+        </div>
+        
+        <div class="flex items-center gap-1.5 ml-auto">
+          <button type="button" onclick="zoomLkpdDesktop(-0.15, '${ptmId}', '${idLkpd}')" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-[11px] transition" title="Perkecil Zoom">
+            🔍 -
+          </button>
+          <span class="font-mono text-[11px] px-1 font-bold text-brand-yellow">${Math.round(currentLkpdScaleMultiplier * 100)}%</span>
+          <button type="button" onclick="zoomLkpdDesktop(0.15, '${ptmId}', '${idLkpd}')" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-[11px] transition" title="Perbesar Zoom">
+            🔍 +
+          </button>
+          <button type="button" onclick="resetLkpdDesktopZoom('${ptmId}', '${idLkpd}')" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-xl text-[10px] transition ml-1">
+            🔄 Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Area Scrollable Horisontal & Vertikal (Menjaga Resolusi Desktop Tanpa Squish) -->
+      <div class="overflow-x-auto overflow-y-visible w-full pb-3 scroll-smooth" style="-webkit-overflow-scrolling: touch;">
+        <div id="siswa-lkpd-pages" class="space-y-4 min-w-max mx-auto flex flex-col items-center"></div>
+      </div>
+
+      <button id="btn-simpan-jawaban-lkpd" class="w-full py-3.5 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl shadow transition text-xs">
+        💾 Simpan Semua Jawaban LKPD Overlay
       </button>
     </div>
   `;
 
   const pagesWrap = document.getElementById('siswa-lkpd-pages');
-  const firstPageForScale = await pdfDoc.getPage(1);
-  const naturalViewport = firstPageForScale.getViewport({ scale: 1 });
-  const availableWidth = Math.max(containerEl.clientWidth - 24, 260);
-  const responsiveScale = Math.min(Math.max(availableWidth / naturalViewport.width, 0.3), fieldMap.renderScale || 1.5);
 
   for (let pageNum = 1; pageNum <= fieldMap.totalPages; pageNum++) {
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: responsiveScale });
+    const viewport = page.getViewport({ scale: activeScale });
 
     const pageWrap = document.createElement('div');
     pageWrap.style.position = 'relative';
     pageWrap.style.width = viewport.width + 'px';
     pageWrap.style.height = viewport.height + 'px';
-    pageWrap.style.maxWidth = '100%';
-    pageWrap.className = 'mx-auto shadow-md rounded-xl overflow-hidden bg-white border';
+    pageWrap.className = 'shadow-md rounded-xl overflow-hidden bg-white border shrink-0';
 
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
@@ -2572,11 +2598,9 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
       el.title = f.label || f.id;
       el.value = savedAnswers[f.id] || '';
       
-      // Auto-save draft setiap kali input diubah
       el.oninput = () => saveLkpdOverlayDraft(idLkpd);
 
-      // Skala ukuran huruf proporsional dengan viewport PDF
-      const calculatedFontSize = Math.max(Math.min(13, Math.round(11 * responsiveScale)), 9);
+      const calculatedFontSize = Math.max(Math.min(14, Math.round(11 * activeScale)), 10);
 
       Object.assign(el.style, {
         position: 'absolute',
@@ -2585,7 +2609,7 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
         width: f.w + '%',
         height: f.h + '%',
         border: '1.5px solid #2563eb',
-        background: 'rgba(255, 255, 255, 0.88)',
+        background: 'rgba(255, 255, 255, 0.92)',
         fontFamily: 'inherit',
         fontSize: calculatedFontSize + 'px',
         padding: '3px 6px',
@@ -2599,6 +2623,27 @@ async function renderLkpdDesktopOverlay(containerEl, pdfDoc, fieldMap, savedAnsw
   }
 
   document.getElementById('btn-simpan-jawaban-lkpd').onclick = () => submitJawabanLkpdIsian(ptmId, idLkpd);
+}
+
+function zoomLkpdDesktop(delta, ptmId, idLkpd) {
+  const newMultiplier = Math.min(Math.max(currentLkpdScaleMultiplier + delta, 0.5), 2.0);
+  if (newMultiplier !== currentLkpdScaleMultiplier) {
+    currentLkpdScaleMultiplier = newMultiplier;
+    const lkpdObj = (state.cachedData.lkpd || []).find((l) => String(l.id_lkpd) === String(idLkpd));
+    const overlayContainer = document.getElementById('siswa-lkpd-overlay-container');
+    if (lkpdObj && overlayContainer) {
+      renderLkpdUntukSiswa(overlayContainer, lkpdObj, ptmId);
+    }
+  }
+}
+
+function resetLkpdDesktopZoom(ptmId, idLkpd) {
+  currentLkpdScaleMultiplier = 1.0;
+  const lkpdObj = (state.cachedData.lkpd || []).find((l) => String(l.id_lkpd) === String(idLkpd));
+  const overlayContainer = document.getElementById('siswa-lkpd-overlay-container');
+  if (lkpdObj && overlayContainer) {
+    renderLkpdUntukSiswa(overlayContainer, lkpdObj, ptmId);
+  }
 }
 
 async function renderLkpdMobileHybrid(containerEl, pdfDoc, fieldMap, savedAnswers, ptmId, idLkpd) {

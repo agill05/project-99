@@ -245,24 +245,14 @@ export async function submitEvaluasiSiswa(ptmId, idEvaluasi, isAutoSubmit = fals
 
   const username = state.currentUser ? state.currentUser.username : 'guest';
 
-  const existingSub = (state.cachedData.submissions || []).find((s) =>
-    String(s.username_siswa || '').trim().toLowerCase() === String(username).trim().toLowerCase() &&
-    String(s.id_pertemuan || '').trim() === String(ptmId).trim() &&
-    String(s.tipe_sub || '').trim().toLowerCase() === 'evaluasi'
-  );
-
-  if (existingSub) {
-    clearEvaluasiTimer();
-    showToast('warning', 'Kamu sudah pernah mengirimkan evaluasi untuk pertemuan ini!');
-    switchView('evaluasi-ptm', ptmId);
-    return;
-  }
-
-  const btn = document.getElementById('btn-submit-eval-siswa');
-  if (btn) {
-    if (btn.disabled) return;
-    setButtonLoading(btn, true, isAutoSubmit ? '⏱️ Auto-Sending...' : '🚀 Mengirim Evaluasi...', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
-  }
+  Swal.fire({
+    title: isAutoSubmit ? '⏱️ Waktu Habis!' : '🚀 Mengirim Evaluasi...',
+    text: 'Sedang menyimpan jawaban ke database server, mohon tunggu...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
   clearEvaluasiTimer();
 
@@ -286,8 +276,6 @@ export async function submitEvaluasiSiswa(ptmId, idEvaluasi, isAutoSubmit = fals
     skor_pg: score
   });
 
-  if (btn) setButtonLoading(btn, false, '', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
-
   if (res.success) {
     localStorage.removeItem(startKey);
     state.evaluasiAnswers = {};
@@ -305,14 +293,6 @@ export async function submitEvaluasiSiswa(ptmId, idEvaluasi, isAutoSubmit = fals
       icon: 'error', 
       title: 'Gagal Mengirim Evaluasi', 
       text: res.message || 'Terjadi kesalahan saat menyimpan jawaban.' 
-    }).then(() => {
-      if (res.message && res.message.includes('sudah pernah')) {
-        localStorage.removeItem(startKey);
-        state.evaluasiAnswers = {};
-        fetchAllInitialData(true).then(() => {
-          switchView('evaluasi-ptm', ptmId);
-        });
-      }
     });
   }
 }

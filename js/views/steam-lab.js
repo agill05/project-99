@@ -5,8 +5,20 @@ import { state } from '../state.js';
 
 export function renderRuangSteamView() {
   const userKelas = state.currentUser?.kelas || 'ALL';
+  const allLkpd = state.cachedData.lkpd || [];
+
   const pertemuanList = (state.cachedData.pertemuan || [])
-    .filter((p) => p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas))
+    .filter((p) => {
+      const isPublishedAndClassMatch = p.status === 'Publish' && (p.id_kelas === 'ALL' || p.id_kelas === userKelas);
+      if (!isPublishedAndClassMatch) return false;
+
+      return allLkpd.some(
+        (l) =>
+          l.id_pertemuan === p.id_pertemuan &&
+          l.status === 'Publish' &&
+          (l.fitur_kanvas === 'TRUE' || l.fitur_kanvas === true)
+      );
+    })
     .sort((a, b) => Number(a.nomor_pertemuan) - Number(b.nomor_pertemuan));
 
   const optionsHtml =
@@ -14,7 +26,7 @@ export function renderRuangSteamView() {
       ? pertemuanList
         .map((p) => `<option value="${p.id_pertemuan}">Pertemuan ${p.nomor_pertemuan}: ${p.judul_pertemuan}</option>`)
         .join('')
-      : '<option value="">-- Belum ada pertemuan aktif --</option>';
+      : '<option value="">-- Belum ada pertemuan STEAM aktif --</option>';
 
   const defaultPtm = pertemuanList[0] || null;
 
@@ -52,7 +64,7 @@ export function renderRuangSteamView() {
             <p id="steam-pertemuan-deskripsi" class="text-slate-300 font-medium mt-0.5">
               ${defaultPtm
       ? defaultPtm.deskripsi || 'Silakan pilih modul pertemuan di samping.'
-      : 'Belum ada modul tersedia.'
+      : 'Belum ada modul STEAM aktif yang tersedia.'
     }
             </p>
           </div>
@@ -206,6 +218,5 @@ export async function submitSteamLabToTeacher() {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.updateSteamPertemuanInfo = updateSteamPertemuanInfo;
 window.submitSteamLabToTeacher = submitSteamLabToTeacher;

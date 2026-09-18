@@ -138,6 +138,7 @@ export function renderGuruGameView(container) {
 export function renderGuruSoalView(container) {
   const soalList = state.cachedData.soal_evaluasi || [];
   const evalList = state.cachedData.evaluasi || [];
+  const ptmList = state.cachedData.pertemuan || [];
 
   container.innerHTML = `
     <div class="space-y-4 text-xs">
@@ -160,19 +161,29 @@ export function renderGuruSoalView(container) {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           ${evalList.length === 0 
             ? `<div class="p-4 bg-white rounded-2xl border text-slate-400 italic">Belum ada modul evaluasi yang dibuat.</div>`
-            : evalList.map((ev) => `
-              <div class="bg-white p-4 rounded-3xl border flex items-center justify-between shadow-xs">
-                <div>
-                  <span class="px-2.5 py-0.5 bg-blue-50 text-brand-blue font-bold text-[10px] rounded-full border border-blue-200">
-                    ⏳ Durasi: ${ev.durasi_menit || 30} Menit
-                  </span>
-                  <h4 class="font-black text-brand-navy mt-1.5 text-xs">${ev.judul_evaluasi}</h4>
-                </div>
-                <button onclick="openEvaluasiModal('${ev.id_evaluasi}')" class="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-xl font-bold hover:bg-amber-200 transition text-[11px]">
-                  Edit Durasi ⏱️
-                </button>
-              </div>
-            `).join('')
+            : evalList.map((ev) => {
+                const ptmObj = ptmList.find((p) => String(p.id_pertemuan) === String(ev.id_pertemuan));
+                const labelPertemuan = ptmObj ? `Pertemuan ${ptmObj.nomor_pertemuan}` : 'Pertemuan -';
+
+                return `
+                  <div class="bg-white p-4 rounded-3xl border flex items-center justify-between shadow-xs">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="px-2.5 py-0.5 bg-purple-50 text-purple-700 font-bold text-[10px] rounded-full border border-purple-200">
+                          📌 ${labelPertemuan}
+                        </span>
+                        <span class="px-2.5 py-0.5 bg-blue-50 text-brand-blue font-bold text-[10px] rounded-full border border-blue-200">
+                          ⏳ Durasi: ${ev.durasi_menit || 30} Menit
+                        </span>
+                      </div>
+                      <h4 class="font-black text-brand-navy mt-1.5 text-xs">${ev.judul_evaluasi}</h4>
+                    </div>
+                    <button onclick="openEvaluasiModal('${ev.id_evaluasi}')" class="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-xl font-bold hover:bg-amber-200 transition text-[11px] shrink-0 ml-2">
+                      Edit Durasi ⏱️
+                    </button>
+                  </div>
+                `;
+              }).join('')
           }
         </div>
       </div>
@@ -180,22 +191,35 @@ export function renderGuruSoalView(container) {
       <!-- Bank Soal -->
       <div class="space-y-2 pt-2">
         <h4 class="font-black text-brand-navy text-xs font-heading">📝 Daftar Soal Pilihan Ganda:</h4>
-        ${soalList
-          .map(
-            (s, idx) => `
-              <div class="bg-white p-4 rounded-3xl border space-y-1">
-                <div class="flex items-center justify-between border-b pb-1">
-                  <span class="font-black text-brand-navy">#${idx + 1} Kunci:${s.kunci_jawaban}</span>
-                  <div class="flex items-center gap-1">
-                    <button onclick="openSoalModal('${s.id_soal}')" class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
-                    <button onclick="deleteSoal('${s.id_soal}')" class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+        ${soalList.length === 0
+          ? `<div class="p-4 bg-white rounded-2xl border text-slate-400 italic">Belum ada soal dalam bank soal.</div>`
+          : soalList
+            .map(
+              (s, idx) => {
+                const evObj = evalList.find((ev) => String(ev.id_evaluasi) === String(s.id_evaluasi));
+                const ptmObjOfSoal = evObj ? ptmList.find((p) => String(p.id_pertemuan) === String(evObj.id_pertemuan)) : null;
+                const soalPtmLabel = ptmObjOfSoal ? `Pertemuan ${ptmObjOfSoal.nomor_pertemuan}` : (evObj ? 'Modul Evaluasi' : 'Umum');
+
+                return `
+                  <div class="bg-white p-4 rounded-3xl border space-y-1">
+                    <div class="flex items-center justify-between border-b pb-1 gap-2">
+                      <div class="flex items-center gap-2">
+                        <span class="font-black text-brand-navy">#${idx + 1} Kunci:${s.kunci_jawaban}</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[9px] rounded-md border border-slate-200">
+                          📌 ${soalPtmLabel}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button onclick="openSoalModal('${s.id_soal}')" class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold hover:bg-amber-200 transition">Edit</button>
+                        <button onclick="deleteSoal('${s.id_soal}')" class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg font-bold hover:bg-red-200 transition">Hapus</button>
+                      </div>
+                    </div>
+                    <p class="font-bold text-slate-800">${s.pertanyaan}</p>
                   </div>
-                </div>
-                <p class="font-bold text-slate-800">${s.pertanyaan}</p>
-              </div>
-            `
-          )
-          .join('')}
+                `;
+              }
+            )
+            .join('')}
       </div>
     </div>
   `;

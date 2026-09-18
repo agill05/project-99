@@ -24,9 +24,9 @@ export function renderEvaluasiView(ptmId) {
   const username = state.currentUser ? state.currentUser.username : 'guest';
 
   const existingSub = (state.cachedData.submissions || []).find((s) =>
-    s.username_siswa === username &&
-    s.id_pertemuan === ptmId &&
-    s.tipe_sub === 'evaluasi'
+    String(s.username_siswa || '').trim().toLowerCase() === String(username).trim().toLowerCase() &&
+    String(s.id_pertemuan || '').trim() === String(ptmId).trim() &&
+    String(s.tipe_sub || '').trim().toLowerCase() === 'evaluasi'
   );
 
   if (existingSub) {
@@ -50,7 +50,7 @@ export function renderEvaluasiView(ptmId) {
         </div>
 
         <div class="p-3 bg-blue-50 border border-blue-200 text-brand-navy rounded-xl text-left text-[11px] font-medium">
-          💡 <b>Informasi:</b> Jawaban evaluasi telah tersimpan secara permanen di database server guru.
+          💡 <b>Informasi:</b> Jawaban evaluasi telah tersimpan secara permanen di database server guru dan tidak dapat diisi ulang.
         </div>
       </div>
     `;
@@ -84,7 +84,7 @@ export function renderEvaluasiView(ptmId) {
           <p class="font-bold flex items-center gap-1">⚠️ Aturan & Petunjuk Kuis:</p>
           <p>• Timer waktu mundur akan berjalan otomatis setelah kamu menekan tombol di bawah.</p>
           <p>• Jika waktu habis (00:00), seluruh jawaban terisi akan <b>terkirim otomatis</b> ke guru.</p>
-          <p>• Waktu pengerjaan tetap berjalan meskipun halaman di-refresh.</p>
+          <p>• Pengisian hanya diperbolehkan <b>1 (satu) kali</b> untuk setiap siswa.</p>
         </div>
 
         <button onclick="startEvaluasiQuiz('${ptmId}', '${evalObj.id_evaluasi}')" class="w-full py-4 bg-brand-emerald hover:bg-emerald-600 text-white font-black text-sm rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
@@ -241,24 +241,44 @@ export function selectEvalOption(soalId, option) {
 }
 
 export async function submitEvaluasiSiswa(ptmId, idEvaluasi, isAutoSubmit = false) {
+  if (!requireStudentAuth()) return;
+
+  const username = state.currentUser ? state.currentUser.username : 'guest';
+
+  const existingSub = (state.cachedData.submissions || []).find((s) =>
+    String(s.username_siswa || '').trim().toLowerCase() === String(username).trim().toLowerCase() &&
+    String(s.id_pertemuan || '').trim() === String(ptmId).trim() &&
+    String(s.tipe_sub || '').trim().toLowerCase() === 'evaluasi'
+  );
+
+  if (existingSub) {
+    clearEvaluasiTimer();
+    showToast('warning', 'Kamu sudah pernah mengirimkan evaluasi untuk pertemuan ini!');
+    switchView('evaluasi-ptm', ptmId);
+    return;
+  }
+
+  const btn = document.getElementById('btn-submit-eval-siswa');
+  if (btn) {
+    if (btn.disabled) return;
+    setButtonLoading(btn, true, isAutoSubmit ? '⏱️ Auto-Sending...' : '🚀 Mengirim Evaluasi...', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
+  }
+
   clearEvaluasiTimer();
 
-  const soalList = (state.cachedData.soal_evaluasi || []).filter((s) => s.id_evaluasi === idEvaluasi);
+  const soalList = (state.cachedData.soal_evaluasi || []).filter((s) => String(s.id_evaluasi) === String(idEvaluasi));
   let benar = 0;
   soalList.forEach((s) => {
     if (state.evaluasiAnswers[s.id_soal] === s.kunci_jawaban) benar++;
   });
 
   const score = Math.round((benar / Math.max(soalList.length, 1)) * 100);
-  const btn = document.getElementById('btn-submit-eval-siswa');
-  if (btn) setButtonLoading(btn, true, isAutoSubmit ? '⏱️ Auto-Sending...' : '🚀 Mengirim Evaluasi...', '🚀 Kirim Jawaban Evaluasi & Hitung Skor');
-
-  const username = state.currentUser ? state.currentUser.username : 'guest';
   const startKey = `EVAL_START_${idEvaluasi}_${username}`;
 
   const res = await apiPost({
     action: 'submit_evaluasi',
     id_pertemuan: ptmId,
+    id_evaluasi: idEvaluasi,
     username_siswa: username,
     nama_siswa: state.currentUser ? state.currentUser.name : 'Guest',
     kelas: state.currentUser ? state.currentUser.kelas : '-',
@@ -281,7 +301,19 @@ export async function submitEvaluasiSiswa(ptmId, idEvaluasi, isAutoSubmit = fals
       confirmButtonColor: '#0D6EFD'
     });
   } else {
-    Swal.fire({ icon: 'error', title: 'Gagal Mengirim Evaluasi', text: res.message });
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Gagal Mengirim Evaluasi', 
+      text: res.message || 'Terjadi kesalahan saat menyimpan jawaban.' 
+    }).then(() => {
+      if (res.message && res.message.includes('sudah pernah')) {
+        localStorage.removeItem(startKey);
+        state.evaluasiAnswers = {};
+        fetchAllInitialData(true).then(() => {
+          switchView('evaluasi-ptm', ptmId);
+        });
+      }
+    });
   }
 }
 

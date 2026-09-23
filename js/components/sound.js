@@ -62,8 +62,8 @@ export function playClick() {
 }
 
 export function playSuccess() {
-    playTone(523.25, 0.12, 'sine', 0.15);       // C5
-    playTone(783.99, 0.18, 'sine', 0.15, 0.1);  // G5
+    playTone(523.25, 0.12, 'sine', 0.15);     
+    playTone(783.99, 0.18, 'sine', 0.15, 0.1);
 }
 
 export function playError() {

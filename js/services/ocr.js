@@ -268,5 +268,4 @@ export function parseQuestionsFromText(text) {
   return questions;
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.uploadPdfToDrive = uploadPdfToDrive;

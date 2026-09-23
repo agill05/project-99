@@ -259,7 +259,6 @@ export function populateKelasSelects() {
       kelasList.map((k) => `<option value="${k.nama_kelas}">${k.nama_kelas}</option>`).join('');
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.openUserModal = openUserModal;
 window.closeUserModal = closeUserModal;
 window.handleUserSubmit = handleUserSubmit;

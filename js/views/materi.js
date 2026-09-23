@@ -147,5 +147,4 @@ export async function submitReviewMateri(idMateri, ptmId) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.submitReviewMateri = submitReviewMateri;

@@ -384,5 +384,4 @@ export async function submitGameSiswa(ptmId, idGame, tipe) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.submitGameSiswa = submitGameSiswa;

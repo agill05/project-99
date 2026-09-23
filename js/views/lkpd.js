@@ -3,6 +3,23 @@ import { CACHE_KEY } from '../config.js';
 import { apiPost, fetchAllInitialData } from '../services/api.js';
 import { state } from '../state.js';
 
+export function getYoutubeEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/
+  ];
+  for (const re of patterns) {
+    const match = trimmed.match(re);
+    if (match && match[1]) return `https://www.youtube.com/embed/${match[1]}`;
+  }
+  return '';
+}
+
 export function renderLkpdView(ptmId) {
   const lkpdObj = (state.cachedData.lkpd || []).find((l) => l.id_pertemuan === ptmId && l.status === 'Publish');
   if (!lkpdObj) return `<div class="p-8 text-center text-slate-400">LKPD belum tersedia pada pertemuan ini.</div>`;
@@ -18,6 +35,7 @@ export function renderLkpdView(ptmId) {
   const isiTeks = lkpdObj.isi_teks || '';
   const hasPdfOverlay = Boolean(lkpdObj.peta_field_json && lkpdObj.file_pdf_url);
   const isPdfLkpd = lkpdObj.tipe_lkpd === 'pdf_interaktif' || Boolean(lkpdObj.file_pdf_url);
+  const videoEmbedUrl = getYoutubeEmbedUrl(lkpdObj.video_url || '');
 
   return `
     <div class="max-w-4xl mx-auto space-y-4 text-xs">
@@ -31,6 +49,19 @@ export function renderLkpdView(ptmId) {
         </div>
         <p class="text-slate-600 font-medium leading-relaxed">${lkpdObj.instruksi}</p>
       </div>
+
+      <!-- Video Bahan Ajar (YouTube) -->
+      ${videoEmbedUrl
+      ? `
+      <div class="bg-white p-5 rounded-3xl border shadow-sm space-y-2">
+        <h4 class="font-black text-brand-navy border-b pb-2">🎬 Video Bahan Ajar</h4>
+        <div class="rounded-2xl overflow-hidden border bg-black aspect-video">
+          <iframe src="${videoEmbedUrl}" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+      `
+      : ''
+    }
 
       <!-- KONDISI A: LKPD Tipe PDF Overlay -->
       ${isPdfLkpd
@@ -174,6 +205,5 @@ export async function submitLkpdSiswa(ptmId, idLkpd, questionCount) {
   }
 }
 
-// Ekspos ke window agar bisa dipanggil dari atribut onclick/onchange di HTML
 window.saveLkpdDraft = saveLkpdDraft;
 window.submitLkpdSiswa = submitLkpdSiswa;

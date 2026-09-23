@@ -676,6 +676,7 @@ export function openLkpdModal(idLkpd = null) {
   const pdfUrlElem = document.getElementById('lkpd-form-pdf-url');
   const isiTeksElem = document.getElementById('lkpd-form-isi-teks');
   const gambarUrlElem = document.getElementById('lkpd-form-gambar-url');
+  const videoUrlElem = document.getElementById('lkpd-form-video-url');
   const soalTextElem = document.getElementById('lkpd-form-soal-text');
   const kanvasElem = document.getElementById('lkpd-form-kanvas');
 
@@ -703,6 +704,7 @@ export function openLkpdModal(idLkpd = null) {
       if (pdfUrlElem) pdfUrlElem.value = l.file_pdf_url || '';
       if (isiTeksElem) isiTeksElem.value = l.isi_teks || '';
       if (gambarUrlElem) gambarUrlElem.value = l.gambar_url || '';
+      if (videoUrlElem) videoUrlElem.value = l.video_url || '';
 
       let questions = [];
       try {
@@ -723,6 +725,7 @@ export function openLkpdModal(idLkpd = null) {
     if (pdfUrlElem) pdfUrlElem.value = '';
     if (isiTeksElem) isiTeksElem.value = '';
     if (gambarUrlElem) gambarUrlElem.value = '';
+    if (videoUrlElem) videoUrlElem.value = '';
     if (soalTextElem) soalTextElem.value = '';
     if (kanvasElem) kanvasElem.checked = false;
     if (tipeElem) tipeElem.value = 'pdf_interaktif';
@@ -795,6 +798,7 @@ export async function handleLkpdSubmit(e) {
     peta_field_json: petaFieldVal,
     isi_teks: document.getElementById('lkpd-form-isi-teks').value,
     gambar_url: document.getElementById('lkpd-form-gambar-url').value,
+    video_url: document.getElementById('lkpd-form-video-url').value,
     soal_json: soalArr,
     fitur_kanvas: document.getElementById('lkpd-form-kanvas').checked
   };
@@ -817,6 +821,7 @@ export async function handleLkpdSubmit(e) {
       file_pdf_url: payload.file_pdf_url,
       file_drive_id: payload.file_drive_id,
       gambar_url: payload.gambar_url,
+      video_url: payload.video_url,
       soal_json: typeof payload.soal_json === 'object' ? JSON.stringify(payload.soal_json) : payload.soal_json,
       fitur_kanvas: payload.fitur_kanvas ? 'TRUE' : 'FALSE',
       status: 'Publish',

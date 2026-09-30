@@ -1,0 +1,21 @@
+{
+  "name": "E-LKPD Interaktif IPA STEAM - UNG",
+  "short_name": "E-LKPD STEAM",
+  "description": "Platform E-LKPD Interaktif IPA berbasis STEAM Universitas Negeri Gorontalo",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B2545",
+  "theme_color": "#0B2545",
+  "categories": ["education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

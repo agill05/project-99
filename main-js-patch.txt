@@ -1,3 +1,0 @@
-Di js/main.js, tambah SATU baris setelah import './services/sw-register.js';
-
-import './services/pwa-install.js';

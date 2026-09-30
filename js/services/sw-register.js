@@ -64,3 +64,11 @@ export async function triggerOutboxFlushManual() {
 }
 
 window.addEventListener('online', triggerOutboxFlushManual);
+
+if ('serviceWorker' in navigator) {
+  if (document.readyState === 'complete') {
+    registerServiceWorkerAndSync();
+  } else {
+    window.addEventListener('load', registerServiceWorkerAndSync);
+  }
+}

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const SHELL_CACHE = `elkpd-steam-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `elkpd-steam-runtime-${CACHE_VERSION}`;
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwguqi5nD3KayEz0iGmQdD5CUzRZSYimP0Y6MRynOa1tRnjjrRcCkPcN4W-_pEn8LNOcg/exec';
@@ -6,10 +6,12 @@ const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwguqi5nD3KayEz0iGm
 const SHELL_ASSETS = [
     './',
     './index.html',
-    './manifest.webmanifest',
+    './manifest.json',
     './css/style.css',
     './icons/icon-192.png',
     './icons/icon-512.png',
+    './icons/icon-maskable-192.png',
+    './icons/icon-maskable-512.png',
     './js/main.js',
     './js/config.js',
     './js/state.js',
